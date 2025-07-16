@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Take-Home Pay Result</title>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Ubuntu', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            color: #333;
+        }
+
+        .result-box h2 {
+            background-color: #005a83;
+            color: white;
+            padding: 1rem;
+            margin: -2rem -2rem 2rem -2rem;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        p {
+            font-size: 1.1rem;
+            margin: 0.6rem 0;
+        }
+
+        strong {
+            color: #045c84;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 1.5rem;
+            text-decoration: none;
+            color: #045c84;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .highlight {
+            font-weight: bold;
+            font-size: 1.3rem;
+            color: #f87004;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="result-box">
+            <h2>Take-Home Pay Result</h2>
+            <p><strong>Gross Salary:</strong> R{{ results.gross | round(2) }}</p>
+            <p><strong>Travel Allowance:</strong> R{{ results.travel | round(2) }}</p>
+            <p><strong>PAYE:</strong> R{{ results.monthly_tax | round(2) }}</p>
+            <p><strong>UIF:</strong> R{{ results.uif | round(2) }}</p>
+            <p><strong>Pension (Employee):</strong> R{{ results.pension_employee | round(2) }}</p>
+            <p><strong class="highlight">Take-Home Pay: R{{ results.take_home | round(2) }}</strong></p>
+
+            <a href="/">← Back to calculator</a>
+        </div>
+    </div>
+</body>
+</html>

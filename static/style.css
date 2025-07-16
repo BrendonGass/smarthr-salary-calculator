@@ -1,0 +1,103 @@
+
+body {
+    font-family: 'Ubuntu', sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 20px;
+}
+
+.logo {
+    width: 200px;
+    margin-bottom: 10px;
+}
+
+.container {
+    max-width: 700px;
+    margin: auto;
+    background: #fff;
+    padding: 25px;
+    border-radius: 12px;
+    box-shadow: 0 0 12px rgba(0,0,0,0.1);
+}
+
+h1 {
+    text-align: center;
+    color: #045c84;
+}
+
+#intro-text {
+    background-color: #eef6fa;
+    border-left: 5px solid #045c84;
+    padding: 12px 15px;
+    margin-bottom: 20px;
+    font-size: 15px;
+    border-radius: 6px;
+}
+
+.accordion {
+    background-color: #005a83;
+    color: white;
+    cursor: pointer;
+    padding: 14px;
+    width: 100%;
+    text-align: left;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+    border-radius: 5px;
+    margin-top: 10px;
+}
+
+.accordion.active, .accordion:hover {
+    background-color: #207088;
+}
+
+.accordion .icon-right {
+    float: right;
+    width: 30px;
+    height: 30px;
+    margin-left: 10px;
+    filter: brightness(0) invert(1);
+}
+
+.panel {
+    padding: 10px 20px;
+    background-color: #f9f9f9;
+    display: none;
+    border-radius: 0 0 5px 5px;
+    margin-bottom: 10px;
+}
+
+label {
+    font-weight: bold;
+    display: block;
+    margin-top: 10px;
+}
+
+input[type="number"], input[type="text"], input[type="email"] {
+    width: 100%;
+    padding: 8px;
+    margin-top: 4px;
+    box-sizing: border-box;
+}
+
+button {
+    background-color: #f47c04;
+    color: white;
+    border: none;
+    padding: 12px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 6px;
+    margin-top: 15px;
+    width: 100%;
+}
+
+button:hover {
+    background-color: #c87048;
+}
+
+.button-clear {
+    background-color: #838484;
+}
