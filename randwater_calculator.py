@@ -445,7 +445,7 @@ def parse_group(form, prefix):
     return result
 
 def calculate_tax(income, settings):
-    """Calculate tax using SARS brackets for Rand Water"""
+    """Calculate tax using SARS brackets"""
     try:
         tax_brackets = json.loads(settings.get('tax_brackets', '[]'))
         
@@ -479,6 +479,7 @@ def calculate_tax(income, settings):
         (857901, 1817000, 0.41, 251258),
         (1817001, float('inf'), 0.45, 644489),
     ]
+    
     for lower, upper, rate, base in brackets:
         if income <= upper:
             return base + (income - lower) * rate
@@ -587,6 +588,21 @@ def get_active_randwater_employees():
                         basic_salary = float(row['TPE']) if 'TPE' in df.columns and pd.notna(row['TPE']) else 0
                         ctc = float(row['CTC']) if 'CTC' in df.columns and pd.notna(row['CTC']) else 0
                         
+                        # Extract access dates from Excel
+                        access_granted = str(row.get('ACCESSGRANTED', session['last_upload']['upload_time'][:10])) if 'ACCESSGRANTED' in df.columns and pd.notna(row.get('ACCESSGRANTED')) else session['last_upload']['upload_time'][:10]
+                        access_expires = str(row.get('ACCESSEXPIRES', '2024-12-31')) if 'ACCESSEXPIRES' in df.columns and pd.notna(row.get('ACCESSEXPIRES')) else '2024-12-31'
+                        
+                        # Calculate actual days remaining
+                        try:
+                            from datetime import datetime, date
+                            expiry_date = datetime.strptime(access_expires, '%Y-%m-%d').date()
+                            today = date.today()
+                            days_remaining = (expiry_date - today).days
+                            is_expired = days_remaining < 0
+                        except:
+                            days_remaining = 132
+                            is_expired = False
+                        
                         employee = {
                             'employee_id': employee_id,
                             'first_name': first_name,
@@ -596,11 +612,11 @@ def get_active_randwater_employees():
                             'job_title': job_title,
                             'basic_salary': basic_salary,
                             'ctc': ctc,
-                            'access_granted': session['last_upload']['upload_time'][:10],
-                            'access_expires': '2024-12-31',
-                            'days_remaining': 132,
+                            'access_granted': access_granted,
+                            'access_expires': access_expires,
+                            'days_remaining': days_remaining,
                             'package_submitted': False,
-                            'is_expired': False
+                            'is_expired': is_expired
                         }
                         employees.append(employee)
                     
@@ -891,7 +907,26 @@ def manage_employee_access():
     if not session.get('admin') and not session.get('isRandWaterAdmin'):
         return redirect(url_for('randwater_admin_login'))
     
-    return render_template('manage_employee_access.html', config=RANDWATER_CONFIG)
+    # Get active employees and calculate stats
+    active_employees = get_active_randwater_employees()
+    total_employees = len(active_employees)
+    
+    # Calculate access statistics
+    active_access = len([e for e in active_employees if not e.get('is_expired', False)])
+    expired_access = len([e for e in active_employees if e.get('is_expired', False)])
+    pending_submissions = len([e for e in active_employees if not e.get('package_submitted', False)])
+    
+    stats = {
+        'total_employees': total_employees,
+        'active_access': active_access,
+        'expired_access': expired_access,
+        'pending_submissions': pending_submissions
+    }
+    
+    return render_template('manage_employee_access.html', 
+                         config=RANDWATER_CONFIG, 
+                         stats=stats,
+                         active_employees=active_employees)
 
 @app.route('/manage_packages')
 def manage_packages():
@@ -946,39 +981,189 @@ def employee_details(employee_id):
 
 @app.route('/admin/randwater/employee-payslip/<employee_id>')
 def employee_payslip(employee_id):
-    """Rand Water Admin - Get employee payslip data"""
+    """Rand Water Admin - Get employee payslip data from uploaded SAP file"""
     if not session.get('admin') and not session.get('isRandWaterAdmin'):
         return jsonify({'error': 'Unauthorized'}), 401
 
+    def safe_float(value, default=0.0):
+        """Safely convert value to float, handling text values like 'Yes', 'No'"""
+        if pd.isna(value) or value is None:
+            return default
+        try:
+            # Handle text values that should be numeric
+            if isinstance(value, str):
+                value = value.strip().upper()
+                if value in ['YES', 'NO', 'N/A', '']:
+                    return default
+                # Try to convert to float
+                return float(value)
+            return float(value)
+        except (ValueError, TypeError):
+            return default
+
     try:
-        # Get employee data from active employees
-        active_employees = get_active_randwater_employees()
-        employee = next((e for e in active_employees if e['employee_id'] == employee_id), None)
+        # Check if we have uploaded SAP data
+        if not session.get('last_upload'):
+            return jsonify({'error': 'No SAP data uploaded. Please upload employee data first.'}), 400
         
-        if not employee:
-            return jsonify({'error': 'Employee not found'}), 404
+        # Read the uploaded Excel file to get actual employee data
+        import pandas as pd
+        filepath = session['last_upload']['filepath']
         
-        # Create payslip data based on employee information
+        if not os.path.exists(filepath):
+            return jsonify({'error': 'Uploaded file not found. Please re-upload SAP data.'}), 400
+        
+        # Read the Excel file
+        df = pd.read_excel(filepath)
+        
+        # Find the employee in the uploaded data
+        employee_row = None
+        for index, row in df.iterrows():
+            if 'EMPLOYEECODE' in df.columns and str(row['EMPLOYEECODE']) == str(employee_id):
+                employee_row = row
+                break
+        
+        if employee_row is None:
+            return jsonify({'error': f'Employee {employee_id} not found in uploaded SAP data'}), 404
+        
+        # Extract actual values from the Excel file using the correct column names
         payslip_data = {
             'success': True,
-            'employee': employee,
+            'employee': {
+                'employee_id': str(employee_row['EMPLOYEECODE']) if 'EMPLOYEECODE' in df.columns else employee_id,
+                'first_name': str(employee_row['FIRSTNAME']) if 'FIRSTNAME' in df.columns else '',
+                'surname': str(employee_row['SURNAME']) if 'SURNAME' in df.columns else '',
+                'grade_band': str(employee_row['BAND']) if 'BAND' in df.columns else 'O-Q',
+                'department': str(employee_row['DEPARTMENT']) if 'DEPARTMENT' in df.columns else 'General',
+                'job_title': str(employee_row['JOBLONG']) if 'JOBLONG' in df.columns else 'Employee',
+                'basic_salary': safe_float(employee_row.get('TPE', 0)),
+                'ctc': safe_float(employee_row.get('CTC', 0))
+            },
             'payslip': {
-                'basic_salary': employee.get('basic_salary', 0),
-                'car_allowance': employee.get('ctc', 0) * 0.15,
-                'medical_aid': employee.get('ctc', 0) * 0.08,
-                'pension': employee.get('ctc', 0) * 0.07,
-                'bonus': employee.get('ctc', 0) * 0.1,
-                'total_earnings': employee.get('ctc', 0) * 0.4,
-                'tax': employee.get('ctc', 0) * 0.25,
-                'net_pay': employee.get('ctc', 0) * 0.15
+                'basic_salary': safe_float(employee_row.get('TPE', 0)),
+                'car_allowance': safe_float(employee_row.get('CAR', 0)),
+                'cellphone_allowance': safe_float(employee_row.get('CELLPHONEALLOWANCE', 0)),
+                'data_service_allowance': safe_float(employee_row.get('DATASERVICEALLOWANCE', 0)),
+                'housing_allowance': safe_float(employee_row.get('HOUSING', 0)),
+                'pension': safe_float(employee_row.get('pension', 0)),
+                'medical_aid': safe_float(employee_row.get('MEDICAL', 0)),
+                'bonus': safe_float(employee_row.get('BONUSPROVISION', 0)),
+                'critical_skills': safe_float(employee_row.get('CRITICALSKILLS', 0)),
+                'cash_allowance': safe_float(employee_row.get('CASH', 0))
             }
+        }
+        
+        # Calculate bonus provision (monthly amount deducted from package)
+        bonus_provision_monthly = payslip_data['payslip']['bonus'] / 12 if payslip_data['payslip']['bonus'] > 0 else 0
+        
+        # Calculate employer contributions (excluding UIF and SDL)
+        # These would come from Excel columns like EMPLOYERPENSION, EMPLOYERMEDICAL, etc.
+        employer_pension = safe_float(employee_row.get('EMPLOYERPENSION', 0))
+        employer_medical = safe_float(employee_row.get('EMPLOYERMEDICAL', 0))
+        employer_other = safe_float(employee_row.get('EMPLOYEROTHER', 0))
+        
+        total_employer_contributions = employer_pension + employer_medical + employer_other
+        
+        # Calculate total earnings (excluding bonus provision - it's not paid monthly)
+        payslip_data['payslip']['total_earnings'] = (
+            payslip_data['payslip']['basic_salary'] +
+            payslip_data['payslip']['car_allowance'] +
+            payslip_data['payslip']['cellphone_allowance'] +
+            payslip_data['payslip']['data_service_allowance'] +
+            payslip_data['payslip']['housing_allowance'] +
+            payslip_data['payslip']['critical_skills'] +
+            payslip_data['payslip']['cash_allowance']
+            # Note: bonus is NOT included in monthly earnings
+        )
+        
+        # Calculate UIF (1% of basic salary, capped at R177.12 per month)
+        uif_rate = 0.01  # 1%
+        uif_amount = min(payslip_data['payslip']['basic_salary'] * uif_rate, 177.12)
+        payslip_data['payslip']['uif'] = round(uif_amount, 2)
+        
+        # Calculate tax using the COMPLETE tax calculation system from your existing code
+        settings = load_tax_settings()
+        
+        # Get age and medical info (you can extract these from Excel if available)
+        age = 35  # Default age - you can extract from Excel data if available
+        has_medical = payslip_data['payslip']['medical_aid'] > 0
+        dependants = 0  # This could be extracted from Excel data if available
+        
+        # Calculate taxable income (including travel allowance rules)
+        travel_allowance = payslip_data['payslip'].get('car_allowance', 0)
+        annual_travel_taxable = travel_allowance * 12 * 0.8  # 80% of travel allowance is taxable
+        gross_excluding_travel = payslip_data['payslip']['total_earnings'] - travel_allowance
+        taxable_income = gross_excluding_travel * 12 + annual_travel_taxable
+        
+        # Calculate pension deductions (capped at 27.5% of taxable income or R350,000)
+        pension_employee = payslip_data['payslip'].get('pension', 0)
+        total_pension_deductible = (pension_employee + employer_pension) * 12
+        total_pension_deductible = min(total_pension_deductible, 0.275 * taxable_income, 350000)
+        
+        taxable_income -= total_pension_deductible
+        
+        # PAYE calculation using SARS brackets
+        annual_tax = calculate_tax(taxable_income, settings)
+        
+        # Apply age-based rebates
+        rebate = settings.get('rebate_primary', 17235)
+        if age >= 65:
+            rebate += settings.get('rebate_secondary', 9444)
+        if age >= 75:
+            rebate += settings.get('rebate_tertiary', 3145)
+        
+        annual_tax -= rebate
+        annual_tax = max(0, annual_tax)
+        
+        # Medical tax credits (complete logic from your existing system)
+        if has_medical:
+            credit = settings.get('medical_main', 364)
+            if dependants >= 1:
+                credit += settings.get('medical_first', 364)
+            if dependants > 1:
+                credit += (dependants - 1) * settings.get('medical_additional', 246)
+            annual_tax -= credit * 12
+        
+        annual_tax = max(0, annual_tax)
+        monthly_tax = round(annual_tax / 12, 2)
+        payslip_data['payslip']['tax'] = monthly_tax
+        
+        # Calculate bonus tax provision (monthly tax on bonus)
+        if payslip_data['payslip']['bonus'] > 0:
+            # Calculate tax on annual bonus using marginal rate
+            bonus_tax_rate = 0.31  # Default marginal rate - you can calculate this more precisely
+            bonus_tax_monthly = (payslip_data['payslip']['bonus'] * bonus_tax_rate) / 12
+            payslip_data['payslip']['bonus_tax_provision'] = round(bonus_tax_monthly, 2)
+        else:
+            payslip_data['payslip']['bonus_tax_provision'] = 0
+        
+        # Calculate total deductions including UIF, tax, and bonus tax provision
+        total_deductions = (
+            payslip_data['payslip']['pension'] + 
+            payslip_data['payslip']['medical_aid'] + 
+            payslip_data['payslip']['uif'] + 
+            payslip_data['payslip']['tax'] +
+            payslip_data['payslip']['bonus_tax_provision']
+        )
+        payslip_data['payslip']['total_deductions'] = round(total_deductions, 2)
+        
+        # Calculate net pay
+        payslip_data['payslip']['net_pay'] = payslip_data['payslip']['total_earnings'] - total_deductions
+        
+        # Add package breakdown information
+        payslip_data['payslip']['package_breakdown'] = {
+            'tctc_monthly': payslip_data['employee']['ctc'],
+            'bonus_provision_monthly': round(bonus_provision_monthly, 2),
+            'basic_salary_after_bonus': round(payslip_data['employee']['ctc'] - bonus_provision_monthly, 2),
+            'employer_contributions': round(total_employer_contributions, 2),
+            'other_earnings': round(payslip_data['payslip']['total_earnings'] - payslip_data['payslip']['basic_salary'], 2)
         }
         
         return jsonify(payslip_data)
         
     except Exception as e:
         logger.error(f"Error getting employee payslip: {str(e)}")
-        return jsonify({'error': 'Failed to load payslip data'}), 500
+        return jsonify({'error': f'Failed to load payslip data: {str(e)}'}), 500
 
 @app.route('/salary_simulator')
 def salary_simulator():
