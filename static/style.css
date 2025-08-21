@@ -1,103 +1,135 @@
+/* SmartHR Style Sheet for The Negotiator */
 
 body {
     font-family: 'Ubuntu', sans-serif;
-    background-color: #f5f5f5;
+    background-color: #f4f4f4;
     margin: 0;
-    padding: 20px;
-}
-
-.logo {
-    width: 200px;
-    margin-bottom: 10px;
-}
-
-.container {
-    max-width: 700px;
-    margin: auto;
-    background: #fff;
-    padding: 25px;
-    border-radius: 12px;
-    box-shadow: 0 0 12px rgba(0,0,0,0.1);
-}
-
-h1 {
+    padding: 0;
+    color: #333;
+  }
+  
+  /* Popup Overlay */
+  #popup {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: url('/static/images/popup-bg.jpg') center center/cover no-repeat;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  #popup::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+  }
+  
+  #popup-content {
+    position: relative;
+    z-index: 2;
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 450px;
     text-align: center;
-    color: #045c84;
-}
-
-#intro-text {
-    background-color: #eef6fa;
-    border-left: 5px solid #045c84;
-    padding: 12px 15px;
-    margin-bottom: 20px;
-    font-size: 15px;
-    border-radius: 6px;
-}
-
-.accordion {
-    background-color: #005a83;
+  }
+  
+  #popup-content img.logo {
+    max-height: 140px;
+    margin-bottom: 1rem;
+  }
+  
+  /* Logo Header */
+  .logo-header {
+    max-height: 130px;
+  }
+  
+  /* Accordion Styling */
+  .accordion-button {
+    background-color: #045c84;
     color: white;
-    cursor: pointer;
-    padding: 14px;
-    width: 100%;
-    text-align: left;
-    border: none;
-    outline: none;
-    font-size: 16px;
-    transition: background-color 0.3s ease;
-    border-radius: 5px;
-    margin-top: 10px;
-}
-
-.accordion.active, .accordion:hover {
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+  
+  .accordion-button:not(.collapsed) {
     background-color: #207088;
-}
-
-.accordion .icon-right {
-    float: right;
-    width: 30px;
-    height: 30px;
-    margin-left: 10px;
-    filter: brightness(0) invert(1);
-}
-
-.panel {
-    padding: 10px 20px;
-    background-color: #f9f9f9;
-    display: none;
-    border-radius: 0 0 5px 5px;
-    margin-bottom: 10px;
-}
-
-label {
-    font-weight: bold;
-    display: block;
-    margin-top: 10px;
-}
-
-input[type="number"], input[type="text"], input[type="email"] {
-    width: 100%;
-    padding: 8px;
-    margin-top: 4px;
-    box-sizing: border-box;
-}
-
-button {
-    background-color: #f47c04;
     color: white;
+  }
+  
+  .accordion-body {
+    background-color: white;
+    padding: 1rem;
+  }
+  
+  .accordion-item {
     border: none;
-    padding: 12px;
-    font-size: 16px;
-    cursor: pointer;
+    margin-bottom: 1rem;
+  }
+  
+  /* Tile Layout */
+  .tile-section {
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    background-color: white;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.08);
+  }
+  
+  /* Inputs and Labels */
+  label.form-label {
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+  
+  input.form-control, select.form-select {
     border-radius: 6px;
-    margin-top: 15px;
-    width: 100%;
-}
-
-button:hover {
+    padding: 0.5rem;
+  }
+  
+  /* Buttons */
+  .btn-primary {
+    background-color: #f47c04;
+    border: none;
+  }
+  
+  .btn-primary:hover {
     background-color: #c87048;
-}
-
-.button-clear {
-    background-color: #838484;
-}
+  }
+  
+  .btn-outline-primary {
+    border-color: #045c84;
+    color: #045c84;
+  }
+  
+  .btn-outline-primary:hover {
+    background-color: #045c84;
+    color: white;
+  }
+  
+  /* Icon Style */
+  .icon-style {
+    width: 22px;
+    height: 22px;
+  }
+  
+  /* Admin Link */
+  #popup-content .text-end img {
+    filter: brightness(0.2);
+    transition: 0.2s ease;
+  }
+  
+  #popup-content .text-end img:hover {
+    filter: brightness(1);
+    cursor: pointer;
+  }
+  

@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rand Water - SMTP Configuration</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --randwater-primary: #0066CC;
+      --randwater-secondary: #00A3E0;
+      --randwater-accent: #FF6600;
+      --randwater-dark: #003366;
+      --randwater-light: #E6F3FF;
+    }
+    
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      background-color: #f8f9fa;
+      font-size: 0.9rem;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .randwater-header {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      padding: 1.5rem 0;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .randwater-logo {
+      max-height: 80px;
+      filter: brightness(0) invert(1);
+    }
+    
+    .gosmarthr-logo {
+      max-height: 100px;
+      margin-top: 8px;
+    }
+    
+    .branding {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      margin-right: 1rem;
+    }
+    
+    .page-header {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-left: 4px solid var(--randwater-accent);
+    }
+    
+    .page-header h1 {
+      color: var(--randwater-dark);
+      margin-bottom: 0.5rem;
+    }
+    
+    .page-header p {
+      color: #6c757d;
+      margin: 0;
+    }
+    
+    .config-container {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .config-section {
+      margin-bottom: 2rem;
+    }
+    
+    .config-section h5 {
+      color: var(--randwater-dark);
+      margin-bottom: 1rem;
+      border-bottom: 2px solid var(--randwater-light);
+      padding-bottom: 0.5rem;
+    }
+    
+    .form-label {
+      font-weight: 600;
+      color: var(--randwater-dark);
+    }
+    
+    .form-control:focus {
+      border-color: var(--randwater-primary);
+      box-shadow: 0 0 0 0.2rem rgba(0, 102, 204, 0.25);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 2rem;
+      font-weight: 600;
+    }
+    
+    .btn-outline-secondary {
+      border-color: var(--randwater-secondary);
+      color: var(--randwater-secondary);
+    }
+    
+    .btn-outline-secondary:hover {
+      background-color: var(--randwater-secondary);
+      color: white;
+    }
+    
+    .btn-success {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 2rem;
+      font-weight: 600;
+    }
+    
+    .status-indicator {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: 8px;
+    }
+    
+    .status-enabled {
+      background-color: #28a745;
+    }
+    
+    .status-disabled {
+      background-color: #dc3545;
+    }
+    
+    .help-text {
+      font-size: 0.85rem;
+      color: #6c757d;
+      margin-top: 0.25rem;
+    }
+    
+    .test-result {
+      padding: 1rem;
+      border-radius: 8px;
+      margin-top: 1rem;
+    }
+    
+    .test-success {
+      background-color: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+    
+    .test-error {
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+  </style>
+</head>
+<body>
+  <div class="randwater-header">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <div class="d-flex align-items-center">
+            <img src="{{ config.company_logo }}" alt="Rand Water Logo" class="randwater-logo me-3">
+            <div>
+              <div class="tagline">SMTP Configuration</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 text-end">
+          <div class="branding">
+            <img src="/static/images/smarthr_logo_white.png" alt="SmartHR Logo" class="gosmarthr-logo">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Navigation -->
+    <div class="mb-4">
+      <a href="{{ url_for('super_admin_dashboard') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Super Admin Dashboard
+      </a>
+    </div>
+
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1><i class="fas fa-server"></i> SMTP Configuration</h1>
+      <p>Configure email server settings for sending automated emails to employees</p>
+    </div>
+
+    <!-- Current Status -->
+    <div class="config-container">
+      <div class="config-section">
+        <h5><i class="fas fa-info-circle"></i> Current Status</h5>
+        <div class="row">
+          <div class="col-md-6">
+            <p>
+              <span class="status-indicator {% if smtp_config.enabled %}status-enabled{% else %}status-disabled{% endif %}"></span>
+              <strong>Email System:</strong> 
+              {% if smtp_config.enabled %}
+                <span class="text-success">Enabled</span>
+              {% else %}
+                <span class="text-danger">Disabled</span>
+              {% endif %}
+            </p>
+            <p><strong>SMTP Server:</strong> {{ smtp_config.smtp_server }}</p>
+            <p><strong>Port:</strong> {{ smtp_config.smtp_port }}</p>
+            <p><strong>TLS:</strong> {% if smtp_config.use_tls %}Enabled{% else %}Disabled{% endif %}</p>
+          </div>
+          <div class="col-md-6">
+            <p><strong>From Email:</strong> {{ smtp_config.from_email or 'Not configured' }}</p>
+            <p><strong>From Name:</strong> {{ smtp_config.from_name }}</p>
+            <p><strong>Username:</strong> {{ smtp_config.username or 'Not configured' }}</p>
+            <p><strong>Password:</strong> {{ smtp_config.password or 'Not configured' }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Configuration Form -->
+    <form method="POST" action="{{ url_for('smtp_config_management') }}">
+      <div class="config-container">
+        <div class="config-section">
+          <h5><i class="fas fa-cog"></i> Server Configuration</h5>
+          <div class="row">
+            <div class="col-md-6">
+              <label for="smtp_server" class="form-label">SMTP Server</label>
+              <input type="text" class="form-control" id="smtp_server" name="smtp_server" 
+                     value="{{ smtp_config.smtp_server }}" required>
+              <div class="help-text">e.g., smtp.gmail.com, smtp.office365.com</div>
+            </div>
+            <div class="col-md-6">
+              <label for="smtp_port" class="form-label">SMTP Port</label>
+              <input type="number" class="form-control" id="smtp_port" name="smtp_port" 
+                     value="{{ smtp_config.smtp_port }}" required>
+              <div class="help-text">Common ports: 587 (TLS), 465 (SSL), 25 (Standard)</div>
+            </div>
+          </div>
+          <div class="row mt-3">
+            <div class="col-md-6">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="use_tls" name="use_tls" 
+                       {% if smtp_config.use_tls %}checked{% endif %}>
+                <label class="form-check-label" for="use_tls">
+                  Use TLS/SSL Encryption
+                </label>
+              </div>
+              <div class="help-text">Enable for secure email transmission</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <h5><i class="fas fa-user"></i> Authentication</h5>
+          <div class="row">
+            <div class="col-md-6">
+              <label for="username" class="form-label">Username/Email</label>
+              <input type="email" class="form-control" id="username" name="username" 
+                     value="{{ smtp_config.username }}" required>
+              <div class="help-text">Your email address or username</div>
+            </div>
+            <div class="col-md-6">
+              <label for="password" class="form-label">Password/App Password</label>
+              <input type="password" class="form-control" id="password" name="password" 
+                     value="{{ smtp_config.password }}" required>
+              <div class="help-text">Your email password or app-specific password</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <h5><i class="fas fa-envelope"></i> Sender Information</h5>
+          <div class="row">
+            <div class="col-md-6">
+              <label for="from_email" class="form-label">From Email Address</label>
+              <input type="email" class="form-control" id="from_email" name="from_email" 
+                     value="{{ smtp_config.from_email }}" required>
+              <div class="help-text">Email address that will appear as sender</div>
+            </div>
+            <div class="col-md-6">
+              <label for="from_name" class="form-label">From Name</label>
+              <input type="text" class="form-control" id="from_name" name="from_name" 
+                     value="{{ smtp_config.from_name }}" required>
+              <div class="help-text">Display name for the sender</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <h5><i class="fas fa-toggle-on"></i> System Control</h5>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="enabled" name="enabled" 
+                   {% if smtp_config.enabled %}checked{% endif %}>
+            <label class="form-check-label" for="enabled">
+              Enable Email System
+            </label>
+          </div>
+          <div class="help-text">Enable or disable the entire email functionality</div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row mt-4">
+          <div class="col-md-6">
+            <button type="submit" class="btn btn-primary me-2">
+              <i class="fas fa-save"></i> Save Configuration
+            </button>
+            <button type="button" class="btn btn-success" onclick="testConnection()">
+              <i class="fas fa-plug"></i> Test Connection
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <!-- Test Results -->
+    <div id="testResult" class="config-container" style="display: none;">
+      <div class="config-section">
+        <h5><i class="fas fa-clipboard-check"></i> Connection Test Results</h5>
+        <div id="testResultContent"></div>
+      </div>
+    </div>
+
+    <!-- Help Information -->
+    <div class="config-container">
+      <div class="config-section">
+        <h5><i class="fas fa-question-circle"></i> Configuration Help</h5>
+        <div class="row">
+          <div class="col-md-6">
+            <h6>Gmail Setup:</h6>
+            <ul>
+              <li>SMTP Server: smtp.gmail.com</li>
+              <li>Port: 587</li>
+              <li>Enable TLS</li>
+              <li>Use App Password (not regular password)</li>
+            </ul>
+          </div>
+          <div class="col-md-6">
+            <h6>Office 365 Setup:</h6>
+            <ul>
+              <li>SMTP Server: smtp.office365.com</li>
+              <li>Port: 587</li>
+              <li>Enable TLS</li>
+              <li>Use your Office 365 credentials</li>
+            </ul>
+          </div>
+        </div>
+        <div class="alert alert-info mt-3">
+          <i class="fas fa-info-circle"></i>
+          <strong>Note:</strong> For Gmail, you'll need to enable 2-factor authentication and generate an App Password. 
+          Regular passwords won't work due to security restrictions.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function testConnection() {
+      const btn = event.target;
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+      btn.disabled = true;
+      
+      fetch('{{ url_for("test_smtp_connection") }}', {
+        method: 'POST',
+      })
+      .then(response => response.json())
+      .then(data => {
+        const resultDiv = document.getElementById('testResult');
+        const contentDiv = document.getElementById('testResultContent');
+        
+        if (data.success) {
+          contentDiv.innerHTML = `
+            <div class="test-result test-success">
+              <i class="fas fa-check-circle"></i> <strong>Success!</strong> ${data.message}
+            </div>
+          `;
+        } else {
+          contentDiv.innerHTML = `
+            <div class="test-result test-error">
+              <i class="fas fa-times-circle"></i> <strong>Failed!</strong> ${data.error}
+            </div>
+          `;
+        }
+        
+        resultDiv.style.display = 'block';
+        resultDiv.scrollIntoView({ behavior: 'smooth' });
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        const resultDiv = document.getElementById('testResult');
+        const contentDiv = document.getElementById('testResultContent');
+        
+        contentDiv.innerHTML = `
+          <div class="test-result test-error">
+            <i class="fas fa-times-circle"></i> <strong>Error!</strong> Connection test failed: ${error.message}
+          </div>
+        `;
+        
+        resultDiv.style.display = 'block';
+        resultDiv.scrollIntoView({ behavior: 'smooth' });
+      })
+      .finally(() => {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rand Water - Unified Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      background: url('/static/images/popup-bg.jpg') no-repeat center center fixed;
+      background-size: cover;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      z-index: 1;
+    }
+    
+    .login-container {
+      position: relative;
+      z-index: 2;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+      overflow: hidden;
+      max-width: 500px;
+      width: 90%;
+    }
+    
+
+    
+    .login-header {
+      background: linear-gradient(135deg, #0066CC 0%, #00A3E0 100%);
+      color: white;
+      padding: 2rem;
+      text-align: center;
+    }
+    
+    .login-header img {
+      max-height: 80px;
+      filter: brightness(0) invert(1);
+      margin-bottom: 1rem;
+    }
+    
+    .login-header h2 {
+      margin: 0;
+      font-weight: bold;
+      font-size: 1.8rem;
+    }
+    
+    .login-header p {
+      margin: 0.5rem 0 0 0;
+      opacity: 0.9;
+      font-size: 0.9rem;
+    }
+    
+    .login-body {
+      padding: 2rem;
+    }
+    
+    .tab-content {
+      margin-top: 1rem;
+    }
+    
+    .nav-tabs .nav-link {
+      border: none;
+      color: #666;
+      font-weight: 500;
+      padding: 0.75rem 1.5rem;
+    }
+    
+    .nav-tabs .nav-link.active {
+      background: linear-gradient(135deg, #0066CC 0%, #00A3E0 100%);
+      color: white;
+      border-radius: 25px;
+    }
+    
+    .form-control {
+      border-radius: 25px;
+      padding: 0.75rem 1.25rem;
+      border: 2px solid #e9ecef;
+    }
+    
+    .form-control:focus {
+      border-color: #0066CC;
+      box-shadow: 0 0 0 0.2rem rgba(0, 102, 204, 0.25);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #0066CC 0%, #00A3E0 100%);
+      border: none;
+      border-radius: 25px;
+      padding: 0.75rem 2rem;
+      font-weight: 500;
+    }
+    
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #045c84 0%, #207088 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .admin-link {
+      text-align: center;
+      margin-top: 1rem;
+    }
+    
+    .admin-link a {
+      color: #666;
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    
+    .admin-link a:hover {
+      color: #207088;
+    }
+    
+    .admin-link img {
+      width: 24px;
+      margin-right: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-header">
+      <img src="/static/images/randwater-logo.png" alt="Rand Water">
+      <h2>Rand Water Portal</h2>
+      <p style="margin: 0; opacity: 0.9;">Unified Login System</p>
+    </div>
+    
+    <div class="login-body">
+      <ul class="nav nav-tabs" id="loginTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+          <button class="nav-link active" id="login-tab" data-bs-toggle="tab" data-bs-target="#login" type="button" role="tab">
+            🔐 Login
+          </button>
+        </li>
+        <li class="nav-item" role="presentation">
+          <button class="nav-link" id="create-tab" data-bs-toggle="tab" data-bs-target="#create" type="button" role="tab">
+            ➕ Create User
+          </button>
+        </li>
+      </ul>
+      
+      <div class="tab-content" id="loginTabsContent">
+        <!-- Login Tab -->
+        <div class="tab-pane fade show active" id="login" role="tabpanel">
+          <form id="loginForm">
+            <div class="mb-3">
+              <label for="loginId" class="form-label">Username</label>
+              <input type="text" class="form-control" id="loginId" placeholder="Enter your username" required>
+            </div>
+            <div class="mb-3">
+              <label for="loginPassword" class="form-label">Password</label>
+              <input type="password" class="form-control" id="loginPassword" placeholder="Enter your password" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Login</button>
+          </form>
+          
+          <!-- Login Information -->
+          <div class="mt-4 p-3 bg-light rounded">
+            <h6 class="text-muted mb-2">Login Credentials:</h6>
+            <div class="row text-center">
+              <div class="col-4">
+                <small class="text-muted">Super Admin</small><br>
+                <code>SuperAdmin</code><br>
+                <code>SmartHR2024!SuperAdmin</code>
+              </div>
+              <div class="col-4">
+                <small class="text-muted">Randwater Admin</small><br>
+                <code>RandWaterAdmin</code><br>
+                <code>RandWater2024!</code>
+              </div>
+              <div class="col-4">
+                <small class="text-muted">Employee</small><br>
+                <code>RW[ID]</code><br>
+                <code>Any password</code>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Create User Tab -->
+        <div class="tab-pane fade" id="create" role="tabpanel">
+          <form id="createForm">
+            <div class="mb-3">
+              <label for="createUsername" class="form-label">Username</label>
+              <input type="text" class="form-control" id="createUsername" placeholder="Choose a unique username" required>
+            </div>
+            <div class="mb-3">
+              <label for="createPassword" class="form-label">Password</label>
+              <input type="password" class="form-control" id="createPassword" placeholder="Choose a password" required>
+            </div>
+            <div class="mb-3">
+              <label for="createConfirmPassword" class="form-label">Confirm Password</label>
+              <input type="password" class="form-control" id="createConfirmPassword" placeholder="Confirm your password" required>
+            </div>
+            <div class="mb-3">
+              <label for="createFirstName" class="form-label">First Name</label>
+              <input type="text" class="form-control" id="createFirstName" placeholder="Enter first name" required>
+            </div>
+            <div class="mb-3">
+              <label for="createSurname" class="form-label">Surname</label>
+              <input type="text" class="form-control" id="createSurname" placeholder="Enter surname" required>
+            </div>
+            <div class="mb-3">
+              <label for="createEmail" class="form-label">Email Address</label>
+              <input type="email" class="form-control" id="createEmail" placeholder="Enter email address" required>
+            </div>
+            <div class="mb-3">
+              <label for="createIdNumber" class="form-label">ID Number</label>
+              <input type="text" class="form-control" id="createIdNumber" placeholder="Enter ID number" required>
+            </div>
+            <div class="mb-3">
+              <label for="createPasskey" class="form-label">Admin Passkey</label>
+              <input type="password" class="form-control" id="createPasskey" placeholder="Enter admin passkey" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">Create User & Continue</button>
+          </form>
+        </div>
+      </div>
+      
+
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check if user is already logged in
+      if (sessionStorage.getItem('userID')) {
+        window.location.href = '/dashboard';
+      }
+      
+      // Login form handler
+      document.getElementById('loginForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const username = document.getElementById('loginId').value.trim();
+        const password = document.getElementById('loginPassword').value;
+        
+        if (username && password) {
+          // Submit to unified login endpoint
+          fetch('/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+          }).then(response => {
+            if (response.redirected) {
+              window.location.href = response.url;
+            } else {
+              // Handle error
+              alert('Login failed. Please check your credentials.');
+            }
+          }).catch(error => {
+            console.error('Login error:', error);
+            alert('Login failed. Please try again.');
+          });
+        }
+      });
+      
+      // Create user form handler
+      document.getElementById('createForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const username = document.getElementById('createUsername').value.trim();
+        const password = document.getElementById('createPassword').value;
+        const confirmPassword = document.getElementById('createConfirmPassword').value;
+        const firstName = document.getElementById('createFirstName').value.trim();
+        const surname = document.getElementById('createSurname').value.trim();
+        const email = document.getElementById('createEmail').value.trim();
+        const idNumber = document.getElementById('createIdNumber').value.trim();
+        const passkey = document.getElementById('createPasskey').value;
+        
+        // Validation
+        if (!username || !password || !firstName || !surname || !email || !idNumber || !passkey) {
+          alert('Please fill in all required fields.');
+          return;
+        }
+        
+        if (password !== confirmPassword) {
+          alert('Passwords do not match. Please try again.');
+          return;
+        }
+        
+        if (password.length < 6) {
+          alert('Password must be at least 6 characters long.');
+          return;
+        }
+        
+        // Check if username already exists
+        if (localStorage.getItem(`user_profile_${username}`)) {
+          alert('Username already exists. Please choose a different username.');
+          return;
+        }
+        
+        // Verify admin passkey
+        const adminPasskey = localStorage.getItem('admin_passkey') || 'admin123'; // Default passkey
+        if (passkey !== adminPasskey) {
+          alert('Invalid admin passkey. Please contact your administrator.');
+          return;
+        }
+        
+        // Create user profile in localStorage
+        const userProfile = {
+          username: username,
+          password: password,
+          firstName: firstName,
+          surname: surname,
+          email: email,
+          idNumber: idNumber,
+          created_at: new Date().toISOString()
+        };
+        
+        localStorage.setItem(`user_profile_${username}`, JSON.stringify(userProfile));
+        
+        // Set session and redirect
+        sessionStorage.setItem('userID', username);
+        sessionStorage.setItem('calculatorMode', 'basic'); // Default mode for new users
+        window.location.href = '/dashboard';
+      });
+    });
+  </script>
+</body>
+</html> 

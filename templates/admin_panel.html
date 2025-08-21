@@ -1,0 +1,819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Negotiator - Admin Panel</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      background-color: #f8f9fa;
+      font-size: 0.9rem;
+    }
+    
+    .header-band {
+      background: linear-gradient(135deg, #045c84 0%, #207088 50%, #f47c04 100%);
+      color: white;
+      padding: 1.5rem 0;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .header-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .header-left {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+    
+    .header-center {
+      text-align: center;
+      flex-grow: 1;
+    }
+    
+    .header-right {
+      text-align: right;
+    }
+    
+    .header-band h2 {
+      margin: 0;
+      font-weight: bold;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      font-size: 1.5rem;
+    }
+    
+    .header-band img {
+      max-height: 100px;
+      filter: brightness(0) invert(1);
+    }
+    
+    .user-access {
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+    
+    .form-control, .form-select {
+      border-radius: 8px;
+      border: 2px solid #e9ecef;
+    }
+    
+    .form-control:focus, .form-select:focus {
+      border-color: #207088;
+      box-shadow: 0 0 0 0.2rem rgba(32, 112, 136, 0.25);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #207088 0%, #045c84 100%);
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 2rem;
+      font-weight: 500;
+    }
+    
+    .btn-primary:hover {
+      background: linear-gradient(135deg, #045c84 0%, #207088 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+    
+    .nav-tabs .nav-link {
+      border: none;
+      color: #666;
+      font-weight: 500;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px 8px 0 0;
+      transition: all 0.3s ease;
+    }
+    
+    .nav-tabs .nav-link:hover {
+      background-color: #f8f9fa;
+      color: #207088;
+    }
+    
+    .nav-tabs .nav-link.active {
+      background: linear-gradient(135deg, #207088 0%, #045c84 100%);
+      color: white;
+    }
+    
+    .tab-content {
+      background: white;
+      border-radius: 0 0 15px 15px;
+      padding: 2rem;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .client-logo-preview {
+      max-width: 200px;
+      max-height: 100px;
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+      margin-top: 1rem;
+    }
+    
+    .color-palette {
+      display: flex;
+      gap: 10px;
+      margin-top: 1rem;
+    }
+    
+    .color-swatch {
+      width: 50px;
+      height: 50px;
+      border-radius: 8px;
+      border: 2px solid #ccc;
+      cursor: pointer;
+    }
+    
+    .card {
+      border: none;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      margin-bottom: 1.5rem;
+    }
+    
+    .card-header {
+      border-radius: 15px 15px 0 0 !important;
+      border: none;
+      font-weight: bold;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    
+    .btn-outline-danger {
+      border-color: white;
+      color: white;
+    }
+    
+    .btn-outline-danger:hover {
+      background-color: white;
+      border-color: white;
+      color: #dc3545;
+    }
+    
+    .text-orange {
+      color: #f47c04 !important;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="header-band">
+    <div class="container">
+      <div class="header-content">
+        <div class="header-left">
+          <div class="user-access">
+            <strong>Super User Access</strong>
+          </div>
+        </div>
+        <div class="header-center">
+          <img src="/static/images/gosmarthr-logo.png" alt="SmartHR">
+          <h2>The Negotiator Admin Panel</h2>
+        </div>
+        <div class="header-right">
+          <a href="/logout" class="btn btn-outline-danger btn-sm">🚪 Logout</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Tab Navigation -->
+    <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="users-tab" data-bs-toggle="tab" data-bs-target="#users" type="button" role="tab">
+          👥 User Management
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="offers-tab" data-bs-toggle="tab" data-bs-target="#offers" type="button" role="tab">
+          📋 Offer Management
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="clients-tab" data-bs-toggle="tab" data-bs-target="#clients" type="button" role="tab">
+          🏢 Client Management
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tax-tab" data-bs-toggle="tab" data-bs-target="#tax" type="button" role="tab">
+          💰 Tax Parameters
+        </button>
+      </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content" id="adminTabsContent">
+      <!-- User Management Tab -->
+      <div class="tab-pane fade show active" id="users" role="tabpanel">
+        <h4 class="text-orange mb-4">User Management</h4>
+        
+        <!-- Admin Passkey Section -->
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">🔑 Admin Passkey</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-6">
+                <label for="adminPasskey" class="form-label">Current Admin Passkey</label>
+                <div class="input-group">
+                  <input type="password" class="form-control" id="adminPasskey" readonly>
+                  <button class="btn btn-outline-secondary" type="button" onclick="togglePasskeyVisibility()">
+                    👁️ Show/Hide
+                  </button>
+                </div>
+              </div>
+          <div class="col-md-6">
+                <label for="newPasskey" class="form-label">New Admin Passkey</label>
+                <div class="input-group">
+                  <input type="password" class="form-control" id="newPasskey" placeholder="Enter new passkey">
+                  <button class="btn btn-primary" type="button" onclick="updateAdminPasskey()">
+                    Update Passkey
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- User Management Section -->
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">👥 User Management</h5>
+          </div>
+          <div class="card-body">
+            <button class="btn btn-primary mb-3" onclick="viewAllUsers()">
+              View All Users
+            </button>
+            <div id="usersList"></div>
+          </div>
+        </div>
+
+        <!-- Danger Zone -->
+        <div class="card border-danger">
+          <div class="card-header bg-danger text-dark">
+            <h5 class="mb-0">⚠️ Danger Zone</h5>
+          </div>
+          <div class="card-body">
+            <p class="text-muted">These actions cannot be undone.</p>
+            <button class="btn btn-danger" onclick="clearAllData()">
+              🗑️ Clear All Data
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Offer Management Tab -->
+      <div class="tab-pane fade" id="offers" role="tabpanel">
+        <h4 class="text-orange mb-4">Offer Management</h4>
+        
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">📋 All Offers Overview</h5>
+          </div>
+          <div class="card-body">
+            <button class="btn btn-primary mb-3" onclick="viewAllOffers()">
+              View All Offers
+            </button>
+            <div id="offersList"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Client Management Tab -->
+      <div class="tab-pane fade" id="clients" role="tabpanel">
+        <h4 class="text-orange mb-4">Client Management</h4>
+        
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">🏢 Add New Client</h5>
+          </div>
+          <div class="card-body">
+            <form id="clientForm">
+              <div class="row">
+                <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="clientName" class="form-label">Client Name</label>
+                    <input type="text" class="form-control" id="clientName" name="clientName" required>
+                  </div>
+                  <div class="mb-3">
+                    <label for="clientCode" class="form-label">Client Code</label>
+                    <input type="text" class="form-control" id="clientCode" name="clientCode" required>
+                  </div>
+          </div>
+          <div class="col-md-6">
+                  <div class="mb-3">
+                    <label for="clientLogo" class="form-label">Client Logo</label>
+                    <input type="file" class="form-control" id="clientLogo" name="clientLogo" accept="image/*">
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Color Palette</label>
+                    <div class="color-palette">
+                      <div class="color-swatch" style="background-color: #045c84;" onclick="selectColor('#045c84')"></div>
+                      <div class="color-swatch" style="background-color: #207088;" onclick="selectColor('#207088')"></div>
+                      <div class="color-swatch" style="background-color: #f47c04;" onclick="selectColor('#f47c04')"></div>
+                      <div class="color-swatch" style="background-color: #28a745;" onclick="selectColor('#28a745')"></div>
+                      <div class="color-swatch" style="background-color: #dc3545;" onclick="selectColor('#dc3545')"></div>
+                    </div>
+                    <input type="hidden" id="selectedColor" name="selectedColor" value="#045c84">
+                  </div>
+                </div>
+              </div>
+              <div id="logoPreview" class="client-logo-preview" style="display: none;">
+                <p class="text-muted">Logo Preview</p>
+              </div>
+              <button type="submit" class="btn btn-primary">Add Client</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tax Parameters Tab -->
+      <div class="tab-pane fade" id="tax" role="tabpanel">
+        <h4 class="text-orange mb-4">Tax Settings Configuration</h4>
+        
+        <form id="taxSettingsForm">
+          <div class="row">
+            <div class="col-md-6">
+              <h5 class="text-orange">Rebates</h5>
+              <div class="mb-3">
+                <label for="rebate_primary" class="form-label">Primary Rebate (R)</label>
+                <input type="number" class="form-control" id="rebate_primary" name="rebate_primary" step="0.01" required>
+              </div>
+              <div class="mb-3">
+                <label for="rebate_secondary" class="form-label">Secondary Rebate (65+) (R)</label>
+                <input type="number" class="form-control" id="rebate_secondary" name="rebate_secondary" step="0.01" required>
+              </div>
+              <div class="mb-3">
+                <label for="rebate_tertiary" class="form-label">Tertiary Rebate (75+) (R)</label>
+                <input type="number" class="form-control" id="rebate_tertiary" name="rebate_tertiary" step="0.01" required>
+              </div>
+            </div>
+            
+            <div class="col-md-6">
+              <h5 class="text-orange">UIF & Medical Aid</h5>
+              <div class="mb-3">
+                <label for="uif_ceiling" class="form-label">UIF Ceiling (R)</label>
+                <input type="number" class="form-control" id="uif_ceiling" name="uif_ceiling" step="0.01" required>
+              </div>
+              <div class="mb-3">
+                <label for="medical_main" class="form-label">Medical Aid Main Member (R)</label>
+                <input type="number" class="form-control" id="medical_main" name="medical_main" step="0.01" required>
+              </div>
+              <div class="mb-3">
+                <label for="medical_first" class="form-label">Medical Aid First Dependant (R)</label>
+                <input type="number" class="form-control" id="medical_first" name="medical_first" step="0.01" required>
+              </div>
+              <div class="mb-3">
+                <label for="medical_additional" class="form-label">Medical Aid Additional Dependants (R)</label>
+                <input type="number" class="form-control" id="medical_additional" name="medical_additional" step="0.01" required>
+              </div>
+          </div>
+        </div>
+
+          <button type="submit" class="btn btn-primary">Save Tax Settings</button>
+      </form>
+
+        <div class="mt-4">
+          <h5 class="text-orange">Tax Brackets</h5>
+          <div class="card">
+            <div class="card-header">
+              <div class="d-flex justify-content-between align-items-center">
+                <h6 class="mb-0">Income Tax Brackets</h6>
+                <button type="button" class="btn btn-sm btn-primary" onclick="addTaxBracket()">
+                  ➕ Add Bracket
+                </button>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="taxBracketsContainer">
+                <!-- Tax brackets will be dynamically added here -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      loadTaxSettings();
+      loadTaxBrackets();
+      loadAdminPasskey();
+      setupFormHandlers();
+      setupLogoPreview();
+    });
+
+    function loadTaxSettings() {
+      const settings = {
+        rebate_primary: 17235,
+        rebate_secondary: 9444,
+        rebate_tertiary: 3145,
+        uif_ceiling: 177.12,
+        medical_main: 364,
+        medical_first: 364,
+        medical_additional: 246
+      };
+      
+      // Load from localStorage if available
+      const savedSettings = localStorage.getItem('tax_settings');
+      if (savedSettings) {
+        Object.assign(settings, JSON.parse(savedSettings));
+      }
+      
+      // Populate form fields
+      Object.keys(settings).forEach(key => {
+        const element = document.getElementById(key);
+        if (element) {
+          element.value = settings[key];
+        }
+      });
+    }
+
+    function loadAdminPasskey() {
+      const passkey = localStorage.getItem('admin_passkey') || 'admin123';
+      document.getElementById('adminPasskey').value = passkey;
+    }
+
+    function setupFormHandlers() {
+      // Tax settings form
+      document.getElementById('taxSettingsForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const settings = {};
+        
+        for (let [key, value] of formData.entries()) {
+          settings[key] = parseFloat(value);
+        }
+        
+        localStorage.setItem('tax_settings', JSON.stringify(settings));
+        alert('Tax settings saved successfully!');
+      });
+
+      // Client form
+      document.getElementById('clientForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        const client = {
+          name: formData.get('clientName'),
+          code: formData.get('clientCode'),
+          color: document.getElementById('selectedColor').value,
+          logo: document.getElementById('logoPreview').querySelector('img')?.src || null,
+          created_at: new Date().toISOString()
+        };
+        
+        // Store client data
+        const clients = JSON.parse(localStorage.getItem('clients') || '[]');
+        clients.push(client);
+        localStorage.setItem('clients', JSON.stringify(clients));
+        
+        alert('Client added successfully!');
+        this.reset();
+        document.getElementById('logoPreview').style.display = 'none';
+      });
+    }
+
+    function setupLogoPreview() {
+      document.getElementById('clientLogo').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = function(e) {
+            const preview = document.getElementById('logoPreview');
+            preview.innerHTML = `<img src="${e.target.result}" style="max-width: 100%; max-height: 80px;">`;
+            preview.style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    function togglePasskeyVisibility() {
+      const input = document.getElementById('adminPasskey');
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    function updateAdminPasskey() {
+      const newPasskey = document.getElementById('newPasskey').value;
+      if (newPasskey) {
+        localStorage.setItem('admin_passkey', newPasskey);
+        document.getElementById('adminPasskey').value = newPasskey;
+        document.getElementById('newPasskey').value = '';
+        alert('Admin passkey updated successfully!');
+      } else {
+        alert('Please enter a new passkey.');
+      }
+    }
+
+    function selectColor(color) {
+      document.getElementById('selectedColor').value = color;
+      // Update visual feedback
+      document.querySelectorAll('.color-swatch').forEach(swatch => {
+        swatch.style.border = '2px solid #ccc';
+      });
+      event.target.style.border = '3px solid #333';
+    }
+
+    function viewAllUsers() {
+      const usersList = document.getElementById('usersList');
+      const users = [];
+      
+      // Get all user profiles from localStorage
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('user_profile_')) {
+          const user = JSON.parse(localStorage.getItem(key));
+          const username = key.replace('user_profile_', '');
+          
+          // Count offers for this user
+          let openOffers = 0;
+          let completedOffers = 0;
+          
+          for (let j = 0; j < localStorage.length; j++) {
+            const offerKey = localStorage.key(j);
+            if (offerKey.startsWith(`offer_${username}_`)) {
+              if (offerKey.includes('_completed_')) {
+                completedOffers++;
+              } else {
+                openOffers++;
+              }
+            }
+          }
+          
+          users.push({
+            ...user,
+            username,
+            openOffers,
+            completedOffers,
+            status: user.blocked ? 'Blocked' : 'Active'
+          });
+        }
+      }
+      
+      if (users.length === 0) {
+        usersList.innerHTML = '<div class="alert alert-info">No users found.</div>';
+        return;
+      }
+      
+      let html = '<div class="table-responsive"><table class="table table-striped">';
+      html += '<thead><tr><th>Username</th><th>Full Name</th><th>Email</th><th>Status</th><th>Open Offers</th><th>Completed Offers</th><th>Actions</th></tr></thead><tbody>';
+      
+      users.forEach(user => {
+        html += `<tr>
+          <td>${user.username}</td>
+          <td>${user.firstName} ${user.surname}</td>
+          <td>${user.email}</td>
+          <td><span class="badge ${user.status === 'Active' ? 'bg-success' : 'bg-danger'}">${user.status}</span></td>
+          <td>${user.openOffers}</td>
+          <td>${user.completedOffers}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-primary" onclick="toggleUserBlock('${user.username}')">
+              ${user.status === 'Active' ? 'Block' : 'Unblock'}
+            </button>
+            <button class="btn btn-sm btn-outline-info" onclick="viewUserOffers('${user.username}')">
+              View Offers
+            </button>
+            <button class="btn btn-sm btn-outline-dark" onclick="deleteUser('${user.username}')">
+              Delete
+            </button>
+          </td>
+        </tr>`;
+      });
+      
+      html += '</tbody></table></div>';
+      usersList.innerHTML = html;
+    }
+
+    function toggleUserBlock(username) {
+      const userKey = `user_profile_${username}`;
+      const user = JSON.parse(localStorage.getItem(userKey));
+      user.blocked = !user.blocked;
+      localStorage.setItem(userKey, JSON.stringify(user));
+      viewAllUsers(); // Refresh the list
+    }
+
+    function viewUserOffers(username) {
+      const offers = [];
+      
+      // Get all offers for this user
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith(`offer_${username}_`)) {
+          const offer = JSON.parse(localStorage.getItem(key));
+          const offerId = key.replace(`offer_${username}_`, '');
+          offers.push({
+            id: offerId,
+            ...offer
+          });
+        }
+      }
+      
+      if (offers.length === 0) {
+        alert('No offers found for this user.');
+        return;
+      }
+      
+      let message = `Offers for ${username}:\n\n`;
+      offers.forEach(offer => {
+        const status = offer.id.includes('_completed_') ? 'Completed' : 'Open';
+        const date = new Date(offer.saved_at).toLocaleDateString();
+        message += `${status}: ${offer.first_name} ${offer.surname} - ${date}\n`;
+      });
+      
+      alert(message);
+    }
+
+    function deleteUser(username) {
+      if (confirm(`Are you sure you want to delete user "${username}" and all their offers?`)) {
+        // Delete user profile
+        localStorage.removeItem(`user_profile_${username}`);
+        
+        // Delete all offers for this user
+        const keysToDelete = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key.startsWith(`offer_${username}_`)) {
+            keysToDelete.push(key);
+          }
+        }
+        keysToDelete.forEach(key => localStorage.removeItem(key));
+        
+        alert(`User "${username}" and all their offers have been deleted.`);
+        viewAllUsers(); // Refresh the list
+      }
+    }
+
+    function viewAllOffers() {
+      const offersList = document.getElementById('offersList');
+      const offers = [];
+      
+      // Get all offers from all users
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key.startsWith('offer_')) {
+          const offer = JSON.parse(localStorage.getItem(key));
+          const parts = key.split('_');
+          const username = parts[1];
+          const offerId = parts.slice(2).join('_');
+          const status = offerId.includes('_completed_') ? 'Completed' : 'Open';
+          
+          offers.push({
+            key,
+            username,
+            offerId,
+            status,
+            ...offer
+          });
+        }
+      }
+      
+      if (offers.length === 0) {
+        offersList.innerHTML = '<div class="alert alert-info">No offers found.</div>';
+        return;
+      }
+      
+      let html = '<div class="table-responsive"><table class="table table-striped">';
+      html += '<thead><tr><th>User</th><th>ID Number</th><th>Name</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody>';
+      
+      offers.forEach(offer => {
+        const date = new Date(offer.saved_at).toLocaleDateString();
+        const idNumber = offer.offerId.replace('_completed_', '');
+        html += `<tr>
+          <td>${offer.username}</td>
+          <td><strong>${idNumber}</strong></td>
+          <td>${offer.first_name} ${offer.surname}</td>
+          <td><span class="badge ${offer.status === 'Open' ? 'bg-warning' : 'bg-success'}">${offer.status}</span></td>
+          <td>${date}</td>
+          <td>
+            <button class="btn btn-sm btn-outline-danger" onclick="deleteOffer('${offer.key}')">
+              Delete
+            </button>
+          </td>
+        </tr>`;
+      });
+      
+      html += '</tbody></table></div>';
+      offersList.innerHTML = html;
+    }
+
+    function deleteOffer(offerKey) {
+      if (confirm('Are you sure you want to delete this offer?')) {
+        localStorage.removeItem(offerKey);
+        alert('Offer deleted successfully!');
+        viewAllOffers(); // Refresh the list
+      }
+    }
+
+    function clearAllData() {
+      if (confirm('Are you sure you want to clear ALL data? This action cannot be undone!')) {
+        localStorage.clear();
+        alert('All data has been cleared.');
+        location.reload();
+      }
+    }
+
+    // Tax Bracket Functions
+    function loadTaxBrackets() {
+      const container = document.getElementById('taxBracketsContainer');
+      const brackets = JSON.parse(localStorage.getItem('taxBrackets') || '[]');
+      
+      if (brackets.length === 0) {
+        // Load default SARS tax brackets for 2024/25
+        const defaultBrackets = [
+          { lowEnd: 0, highEnd: 237100, rate: 18, baseAmount: 0 },
+          { lowEnd: 237101, highEnd: 370500, rate: 26, baseAmount: 42678 },
+          { lowEnd: 370501, highEnd: 512800, rate: 31, baseAmount: 77362 },
+          { lowEnd: 512801, highEnd: 673000, rate: 36, baseAmount: 121475 },
+          { lowEnd: 673001, highEnd: 857900, rate: 39, baseAmount: 179147 },
+          { lowEnd: 857901, highEnd: 1817000, rate: 41, baseAmount: 251258 },
+          { lowEnd: 1817001, highEnd: 999999999, rate: 45, baseAmount: 644489 }
+        ];
+        localStorage.setItem('taxBrackets', JSON.stringify(defaultBrackets));
+        brackets.push(...defaultBrackets);
+      }
+      
+      renderTaxBrackets(brackets);
+    }
+
+    function renderTaxBrackets(brackets) {
+      const container = document.getElementById('taxBracketsContainer');
+      
+      if (brackets.length === 0) {
+        container.innerHTML = '<div class="alert alert-info">No tax brackets defined. Click "Add Bracket" to create the first one.</div>';
+        return;
+      }
+      
+      let html = '<div class="table-responsive"><table class="table table-striped">';
+      html += '<thead><tr><th>Low End (R)</th><th>High End (R)</th><th>Tax Rate (%)</th><th>Base Amount (R)</th><th>Actions</th></tr></thead><tbody>';
+      
+              brackets.forEach((bracket, index) => {
+          html += `<tr>
+            <td><input type="number" class="form-control form-control-sm" value="${bracket.lowEnd || 0}" onchange="updateBracketLowEnd(${index}, this.value)"></td>
+            <td><input type="number" class="form-control form-control-sm" value="${bracket.highEnd || bracket.threshold || 0}" onchange="updateBracketHighEnd(${index}, this.value)"></td>
+            <td><input type="number" class="form-control form-control-sm" value="${bracket.rate}" min="0" max="100" step="0.1" onchange="updateBracketRate(${index}, this.value)"></td>
+            <td><input type="number" class="form-control form-control-sm" value="${bracket.baseAmount || 0}" onchange="updateBracketBaseAmount(${index}, this.value)"></td>
+            <td>
+              <button class="btn btn-sm btn-outline-dark" onclick="removeTaxBracket(${index})">
+                🗑️ Remove
+              </button>
+            </td>
+          </tr>`;
+        });
+      
+      html += '</tbody></table></div>';
+      container.innerHTML = html;
+    }
+
+    function addTaxBracket() {
+      const brackets = JSON.parse(localStorage.getItem('taxBrackets') || '[]');
+      brackets.push({ lowEnd: 0, highEnd: 0, rate: 18, baseAmount: 0 });
+      localStorage.setItem('taxBrackets', JSON.stringify(brackets));
+      renderTaxBrackets(brackets);
+    }
+
+    function updateBracketLowEnd(index, value) {
+      const brackets = JSON.parse(localStorage.getItem('taxBrackets') || '[]');
+      brackets[index].lowEnd = parseFloat(value) || 0;
+      localStorage.setItem('taxBrackets', JSON.stringify(brackets));
+    }
+
+    function updateBracketHighEnd(index, value) {
+      const brackets = JSON.parse(localStorage.getItem('taxBrackets') || '[]');
+      brackets[index].highEnd = parseFloat(value) || 0;
+      localStorage.setItem('taxBrackets', JSON.stringify(brackets));
+    }
+
+    function updateBracketRate(index, value) {
+      const brackets = JSON.parse(localStorage.getItem('taxBrackets') || '[]');
+      brackets[index].rate = parseFloat(value) || 0;
+      localStorage.setItem('taxBrackets', JSON.stringify(brackets));
+    }
+
+    function updateBracketBaseAmount(index, value) {
+      const brackets = JSON.parse(localStorage.getItem('taxBrackets') || '[]');
+      brackets[index].baseAmount = parseFloat(value) || 0;
+      localStorage.setItem('taxBrackets', JSON.stringify(brackets));
+    }
+
+    function removeTaxBracket(index) {
+      if (confirm('Are you sure you want to remove this tax bracket?')) {
+        const brackets = JSON.parse(localStorage.getItem('taxBrackets') || '[]');
+        brackets.splice(index, 1);
+        localStorage.setItem('taxBrackets', JSON.stringify(brackets));
+        renderTaxBrackets(brackets);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Negotiator – Net Pay Modeler</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      background-color: #f4f4f4;
+      font-size: 0.9rem;
+    }
+    
+    /* Colored header band */
+    .header-band {
+      background: linear-gradient(135deg, #045c84 0%, #207088 50%, #f47c04 100%);
+      color: white;
+      padding: 1.5rem 0;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .header-band h2 {
+      margin: 0;
+      font-weight: bold;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      font-size: 1.5rem;
+    }
+    
+    .header-band img {
+      max-height: 120px;
+      filter: brightness(0) invert(1);
+    }
+    
+    .tile-section {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background-color: white;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+    }
+    .grey-box {
+      background-color: #eee;
+      padding: 0.4rem;
+      border-radius: 4px;
+      font-weight: bold;
+      color: #666;
+      font-size: 0.85rem;
+    }
+    
+    /* Net Pay Target */
+    .netpay-target {
+      background: linear-gradient(135deg, #e8f5e8 0%, #d4edda 100%);
+      border: 2px solid #28a745;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    
+    .netpay-target h3 {
+      color: #28a745;
+      margin-bottom: 0.5rem;
+      font-size: 1.2rem;
+    }
+    
+    .target-input {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #207088;
+      text-align: center;
+      border: 2px solid #28a745;
+      border-radius: 6px;
+      padding: 0.5rem;
+      background-color: white;
+    }
+    
+    /* Required Gross Display */
+    .required-gross {
+      background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+      border: 2px solid #ffc107;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    
+    .required-gross h3 {
+      color: #856404;
+      margin-bottom: 0.5rem;
+      font-size: 1.2rem;
+    }
+    
+    .gross-amount {
+      font-size: 2rem;
+      font-weight: bold;
+      color: #f47c04;
+    }
+    
+    /* Dynamic item styling */
+    .dynamic-item {
+      background-color: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 4px;
+      padding: 0.5rem;
+      margin-bottom: 0.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+    }
+    
+    .remove-btn {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      padding: 0.2rem 0.4rem;
+      cursor: pointer;
+      font-size: 0.7rem;
+    }
+    
+    .remove-btn:hover {
+      background-color: #c82333;
+    }
+    
+    /* Dependants field */
+    .dependants-field {
+      display: none;
+      margin-top: 0.5rem;
+      padding: 0.5rem;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      border-left: 3px solid #207088;
+      font-size: 0.85rem;
+    }
+    
+    /* Compact form styling */
+    .form-control, .form-select {
+      padding: 0.375rem 0.5rem;
+      font-size: 0.85rem;
+    }
+    
+    .form-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    
+    .section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+      color: #207088;
+      margin-bottom: 0.5rem;
+    }
+    
+    .net-pay-highlight {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: #f47c04;
+    }
+    
+    /* Age display */
+    .age-display {
+      background-color: #e3f2fd;
+      color: #1976d2;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: bold;
+      display: inline-block;
+      margin-left: 0.5rem;
+    }
+    
+    /* Calculate button */
+    .calculate-btn {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.75rem 2rem;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin: 1rem 0;
+    }
+    
+    .calculate-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+    }
+    
+    /* Mode toggle */
+    .mode-toggle {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-bottom: 1rem;
+      justify-content: center;
+    }
+    
+    .toggle-btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid #dee2e6;
+      background-color: #f8f9fa;
+      cursor: pointer;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    
+    .toggle-btn.active {
+      background-color: #207088;
+      color: white;
+      border-color: #207088;
+    }
+    
+    /* Popup styles */
+    #popup {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      background: url('/static/images/popup-bg.jpg') center center/cover no-repeat;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    #popup::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: rgba(0,0,0,0.6);
+    }
+    #popup-content {
+      position: relative;
+      z-index: 2;
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      width: 100%;
+      max-width: 450px;
+      text-align: center;
+    }
+    #popup-content img.logo {
+      max-height: 140px;
+      margin-bottom: 1rem;
+    }
+    .popup-footer {
+      margin-top: 1rem;
+    }
+    .popup-footer img {
+      width: 30px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<!-- POPUP -->
+<div id="popup">
+  <div id="popup-content">
+    <img src="/static/images/gosmarthr-logo.png" class="logo" alt="SmartHR logo">
+    <h4>Welcome to The Negotiator</h4>
+    <form id="popup-form">
+      <input type="text" id="popup-id" class="form-control mb-2" placeholder="ID Number" required>
+      <select id="popup-mode" class="form-select mb-3">
+        <option value="">Select Calculator Mode</option>
+        <option value="basic">Basic Salary Calculator</option>
+        <option value="ctc">CTC Package Calculator</option>
+        <option value="netpay" selected>Net Pay Modeler</option>
+      </select>
+      <button type="submit" class="btn btn-primary w-100">Get Started</button>
+    </form>
+    <div class="popup-footer text-end">
+      <a href="/admin"><img src="/static/images/admin-icon.png" title="Admin Login" /></a>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN FORM -->
+<div id="main-form" style="display: none;">
+  <!-- Colored Header Band -->
+  <div class="header-band">
+    <div class="container">
+      <div class="text-center">
+        <img src="/static/images/gosmarthr-logo.png" alt="SmartHR">
+        <h2>The Negotiator – Net Pay Modeler</h2>
+      </div>
+    </div>
+  </div>
+
+  <div class="container mb-4">
+    <!-- Personal Details -->
+    <div class="tile-section">
+      <div class="section-title">
+        <img src="/static/images/personal-icon.png" width="20">Personal Details
+        <span class="age-display" id="age-display" style="display: none;">Age: <span id="calculated-age"></span></span>
+      </div>
+      <div class="row g-2 mt-1">
+        <div class="col-md-4"><input type="text" class="form-control" id="name" placeholder="Full Name"></div>
+        <div class="col-md-4"><input type="text" class="form-control" id="id_number" placeholder="ID Number"></div>
+        <div class="col-md-4"><input type="email" class="form-control" id="email" placeholder="Email"></div>
+        <div class="col-md-4"><input type="text" class="form-control" id="job_title" placeholder="Job Title"></div>
+        <div class="col-md-4"><input type="text" class="form-control" id="department" placeholder="Department"></div>
+      </div>
+    </div>
+
+    <!-- Net Pay Target -->
+    <div class="netpay-target">
+      <h3>🎯 Desired Net Pay</h3>
+      <input type="number" class="form-control target-input" id="target_netpay" placeholder="Enter your desired net pay">
+    </div>
+
+    <!-- Mode Selection -->
+    <div class="tile-section">
+      <div class="section-title">📊 Calculation Mode</div>
+      <div class="mode-toggle">
+        <button type="button" class="toggle-btn active" data-mode="basic">Basic Salary Mode</button>
+        <button type="button" class="toggle-btn" data-mode="ctc">CTC Package Mode</button>
+      </div>
+      <p class="text-muted text-center mb-0">Select whether you want to calculate based on basic salary or total CTC package</p>
+    </div>
+
+    <!-- Required Gross Display -->
+    <div class="required-gross" id="required-gross" style="display: none;">
+      <h3>💰 Required Gross Salary</h3>
+      <div class="gross-amount">R <span id="required_gross_amount">0.00</span></div>
+      <p class="text-muted mb-0">This is the minimum gross salary needed to achieve your desired net pay</p>
+    </div>
+
+    <div class="row">
+      <!-- Earnings and Deductions -->
+      <div class="col-md-6">
+        <div class="tile-section">
+          <div class="section-title"><img src="/static/images/income-icon.png" width="20">Additional Earnings</div>
+          <div id="earnings-list"></div>
+          <div class="row g-2">
+            <div class="col-8">
+              <select id="earning-dropdown" class="form-select">
+                <option value="">Select earning to add</option>
+                <option value="Travel Allowance">Travel Allowance</option>
+                <option value="Cellphone Allowance">Cellphone Allowance</option>
+                <option value="Internet Allowance">Internet Allowance</option>
+                <option value="Entertainment Allowance">Entertainment Allowance</option>
+                <option value="Medical Allowance">Medical Allowance</option>
+                <option value="Bonus">Bonus</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="col-4">
+              <input type="number" class="form-control" id="earning-value" placeholder="Amount" style="display: none;">
+            </div>
+          </div>
+        </div>
+
+        <div class="tile-section">
+          <div class="section-title"><img src="/static/images/deductions-icon.png" width="20">Deductions</div>
+          <div class="mb-2 grey-box">PAYE: R <span id="paye_val">0.00</span></div>
+          <div class="mb-2 grey-box">UIF (EE): R <span id="uif_ee_val">0.00</span></div>
+          <div id="deduction-list"></div>
+          <div class="row g-2">
+            <div class="col-8">
+              <select id="deduction-dropdown" class="form-select">
+                <option value="">Select deduction</option>
+                <option value="Pension (EE)">Pension (EE)</option>
+                <option value="Medical Aid (EE)">Medical Aid (EE)</option>
+                <option value="Union">Union</option>
+                <option value="Personnel Club">Personnel Club</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="col-4">
+              <input type="number" class="form-control" id="deduction-value" placeholder="Amount" style="display: none;">
+            </div>
+          </div>
+          
+          <!-- Dependants field for Medical Aid -->
+          <div class="dependants-field" id="dependants-field">
+            <label for="dependants" class="form-label">Number of Dependants:</label>
+            <input type="number" class="form-control" id="dependants" placeholder="0" min="0" max="10">
+          </div>
+        </div>
+      </div>
+
+      <!-- Employer Contributions and Results -->
+      <div class="col-md-6">
+        <div class="tile-section">
+          <div class="section-title"><img src="/static/images/pension-icon.png" width="20">Employer Contributions</div>
+          <div class="mb-2 grey-box">UIF (ER): R <span id="uif_er_val">0.00</span></div>
+          <div class="mb-2 grey-box">SDL: R <span id="sdl_val">0.00</span></div>
+          <div id="employer-list"></div>
+          <div class="row g-2">
+            <div class="col-8">
+              <select id="employer-dropdown" class="form-select">
+                <option value="">Select contribution</option>
+                <option value="Pension (ER)">Pension (ER)</option>
+                <option value="Medical Aid (ER)">Medical Aid (ER)</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="col-4">
+              <input type="number" class="form-control" id="employer-value" placeholder="Amount" style="display: none;">
+            </div>
+          </div>
+        </div>
+
+        <div class="tile-section">
+          <div class="section-title">📈 Results</div>
+          <div class="mb-2 grey-box">Calculated Net Pay: R <span id="calculated_netpay">0.00</span></div>
+          <div class="mb-2 grey-box">Difference: R <span id="difference">0.00</span></div>
+          <button class="calculate-btn w-100" id="calculate-btn">Calculate Required Gross</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const popup = document.getElementById("popup");
+    const popupForm = document.getElementById("popup-form");
+
+    let currentMode = 'basic';
+    let targetNetPay = 0;
+
+    if (sessionStorage.getItem("userID") && sessionStorage.getItem("calculatorMode")) {
+      popup.style.display = "none";
+      document.getElementById("main-form").style.display = "block";
+      document.getElementById("id_number").value = sessionStorage.getItem("userID");
+      calculateAgeFromID(sessionStorage.getItem("userID"));
+    }
+
+    popupForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      const id = document.getElementById("popup-id").value;
+      const mode = document.getElementById("popup-mode").value;
+      if (id && mode) {
+        sessionStorage.setItem("userID", id);
+        sessionStorage.setItem("calculatorMode", mode);
+        
+        // Redirect to the appropriate calculator mode
+        if (mode === 'basic') {
+          window.location.href = '/basic';
+        } else if (mode === 'ctc') {
+          window.location.href = '/ctc';
+        } else {
+          // Net Pay mode - stay on current page
+          popup.style.display = "none";
+          document.getElementById("main-form").style.display = "block";
+          document.getElementById("id_number").value = id;
+          calculateAgeFromID(id);
+        }
+      }
+    });
+
+    // ID Number age calculation
+    document.getElementById('id_number').addEventListener('input', function() {
+      if (this.value.length >= 6) {
+        calculateAgeFromID(this.value);
+      }
+    });
+
+    function calculateAgeFromID(idNumber) {
+      if (idNumber.length >= 6) {
+        const year = parseInt(idNumber.substring(0, 2));
+        const month = parseInt(idNumber.substring(2, 4));
+        const day = parseInt(idNumber.substring(4, 6));
+        
+        // Determine century (assuming 1900s for years 00-29, 2000s for 30-99)
+        const fullYear = year <= 29 ? 2000 + year : 1900 + year;
+        
+        const birthDate = new Date(fullYear, month - 1, day);
+        const today = new Date();
+        let age = today.getFullYear() - birthDate.getFullYear();
+        
+        // Adjust age if birthday hasn't occurred this year
+        if (today.getMonth() < birthDate.getMonth() || 
+            (today.getMonth() === birthDate.getMonth() && today.getDate() < birthDate.getDate())) {
+          age--;
+        }
+        
+        document.getElementById('calculated-age').textContent = age;
+        document.getElementById('age-display').style.display = 'inline-block';
+      }
+    }
+
+    // Target net pay input
+    document.getElementById('target_netpay').addEventListener('input', function() {
+      targetNetPay = parseFloat(this.value) || 0;
+      if (targetNetPay > 0) {
+        document.getElementById('calculate-btn').disabled = false;
+      } else {
+        document.getElementById('calculate-btn').disabled = true;
+      }
+    });
+
+    // Mode toggle functionality
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const mode = this.dataset.mode;
+        currentMode = mode;
+        
+        // Update active button
+        document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+        this.classList.add('active');
+      });
+    });
+
+    // Calculate button
+    document.getElementById('calculate-btn').addEventListener('click', function() {
+      calculateRequiredGross();
+    });
+
+    function calculateRequiredGross() {
+      // This is a simplified calculation - in reality, you'd need complex tax calculations
+      // For now, we'll use a rough estimate
+      
+      const additionalEarnings = getTotalEarnings();
+      const deductions = getTotalDeductions();
+      const employerContributions = getTotalEmployer();
+      
+      // Rough calculation (this would need proper tax calculation logic)
+      let requiredGross = targetNetPay + deductions - additionalEarnings;
+      
+      // Add some buffer for taxes (rough estimate)
+      requiredGross = requiredGross * 1.3; // 30% buffer for taxes
+      
+      document.getElementById('required_gross_amount').textContent = requiredGross.toFixed(2);
+      document.getElementById('required-gross').style.display = 'block';
+      
+      // Update calculated net pay (this would be calculated from the required gross)
+      const calculatedNet = requiredGross - deductions + additionalEarnings;
+      document.getElementById('calculated_netpay').textContent = calculatedNet.toFixed(2);
+      
+      const difference = targetNetPay - calculatedNet;
+      document.getElementById('difference').textContent = difference.toFixed(2);
+      
+      // Color code the difference
+      const diffElement = document.getElementById('difference');
+      if (difference > 0) {
+        diffElement.style.color = '#dc3545'; // Red for shortfall
+      } else if (difference < 0) {
+        diffElement.style.color = '#28a745'; // Green for surplus
+      } else {
+        diffElement.style.color = '#6c757d'; // Gray for exact
+      }
+    }
+
+    function getTotalEarnings() {
+      const earnings = document.querySelectorAll('#earnings-list .dynamic-item');
+      let total = 0;
+      earnings.forEach(item => {
+        const amount = parseFloat(item.querySelector('span:nth-child(2)').textContent.replace('R ', '')) || 0;
+        total += amount;
+      });
+      return total;
+    }
+
+    function getTotalDeductions() {
+      const deductions = document.querySelectorAll('#deduction-list .dynamic-item');
+      let total = 0;
+      deductions.forEach(item => {
+        const amount = parseFloat(item.querySelector('span:nth-child(2)').textContent.replace('R ', '')) || 0;
+        total += amount;
+      });
+      return total;
+    }
+
+    function getTotalEmployer() {
+      const employer = document.querySelectorAll('#employer-list .dynamic-item');
+      let total = 0;
+      employer.forEach(item => {
+        const amount = parseFloat(item.querySelector('span:nth-child(2)').textContent.replace('R ', '')) || 0;
+        total += amount;
+      });
+      return total;
+    }
+
+    // Earnings dropdown functionality
+    document.getElementById('earning-dropdown').addEventListener('change', function() {
+      const value = this.value;
+      const valueInput = document.getElementById('earning-value');
+      
+      if (value) {
+        valueInput.style.display = 'block';
+        valueInput.placeholder = value === 'Other' ? 'Enter amount' : 'Amount';
+        valueInput.focus();
+      } else {
+        valueInput.style.display = 'none';
+        valueInput.value = '';
+      }
+    });
+
+    // Add earning when value is entered
+    document.getElementById('earning-value').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && this.value) {
+        addEarning();
+      }
+    });
+
+    // Employer dropdown functionality
+    document.getElementById('employer-dropdown').addEventListener('change', function() {
+      const value = this.value;
+      const valueInput = document.getElementById('employer-value');
+      
+      if (value) {
+        valueInput.style.display = 'block';
+        valueInput.placeholder = value === 'Other' ? 'Enter amount' : 'Amount';
+        valueInput.focus();
+      } else {
+        valueInput.style.display = 'none';
+        valueInput.value = '';
+      }
+    });
+
+    // Add employer contribution when value is entered
+    document.getElementById('employer-value').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && this.value) {
+        addEmployer();
+      }
+    });
+
+    // Deductions dropdown functionality
+    document.getElementById('deduction-dropdown').addEventListener('change', function() {
+      const value = this.value;
+      const valueInput = document.getElementById('deduction-value');
+      const dependantsField = document.getElementById('dependants-field');
+      
+      if (value) {
+        valueInput.style.display = 'block';
+        valueInput.placeholder = value === 'Other' ? 'Enter amount' : 'Amount';
+        valueInput.focus();
+        
+        // Show dependants field for Medical Aid
+        if (value === 'Medical Aid (EE)') {
+          dependantsField.style.display = 'block';
+        } else {
+          dependantsField.style.display = 'none';
+        }
+      } else {
+        valueInput.style.display = 'none';
+        valueInput.value = '';
+        dependantsField.style.display = 'none';
+      }
+    });
+
+    // Add deduction when value is entered
+    document.getElementById('deduction-value').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && this.value) {
+        addDeduction();
+      }
+    });
+
+    function addEarning() {
+      const dropdown = document.getElementById('earning-dropdown');
+      const valueInput = document.getElementById('earning-value');
+      const list = document.getElementById('earnings-list');
+      
+      if (dropdown.value && valueInput.value) {
+        const item = document.createElement('div');
+        item.className = 'dynamic-item';
+        item.innerHTML = `
+          <span style="flex: 1; font-weight: bold;">${dropdown.value}:</span>
+          <span style="flex: 1;">R ${parseFloat(valueInput.value).toFixed(2)}</span>
+          <button type="button" class="remove-btn" onclick="this.parentElement.remove()">×</button>
+        `;
+        list.appendChild(item);
+        
+        // Reset inputs
+        dropdown.value = '';
+        valueInput.value = '';
+        valueInput.style.display = 'none';
+      }
+    }
+
+    function addEmployer() {
+      const dropdown = document.getElementById('employer-dropdown');
+      const valueInput = document.getElementById('employer-value');
+      const list = document.getElementById('employer-list');
+      
+      if (dropdown.value && valueInput.value) {
+        const item = document.createElement('div');
+        item.className = 'dynamic-item';
+        item.innerHTML = `
+          <span style="flex: 1; font-weight: bold;">${dropdown.value}:</span>
+          <span style="flex: 1;">R ${parseFloat(valueInput.value).toFixed(2)}</span>
+          <button type="button" class="remove-btn" onclick="this.parentElement.remove()">×</button>
+        `;
+        list.appendChild(item);
+        
+        // Reset inputs
+        dropdown.value = '';
+        valueInput.value = '';
+        valueInput.style.display = 'none';
+      }
+    }
+
+    function addDeduction() {
+      const dropdown = document.getElementById('deduction-dropdown');
+      const valueInput = document.getElementById('deduction-value');
+      const list = document.getElementById('deduction-list');
+      
+      if (dropdown.value && valueInput.value) {
+        const item = document.createElement('div');
+        item.className = 'dynamic-item';
+        item.innerHTML = `
+          <span style="flex: 1; font-weight: bold;">${dropdown.value}:</span>
+          <span style="flex: 1;">R ${parseFloat(valueInput.value).toFixed(2)}</span>
+          <button type="button" class="remove-btn" onclick="this.parentElement.remove()">×</button>
+        `;
+        list.appendChild(item);
+        
+        // Reset inputs
+        dropdown.value = '';
+        valueInput.value = '';
+        valueInput.style.display = 'none';
+        document.getElementById('dependants-field').style.display = 'none';
+      }
+    }
+  });
+</script>
+</body>
+</html> 

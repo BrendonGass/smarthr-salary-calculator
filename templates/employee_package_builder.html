@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rand Water - Package Builder</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --randwater-primary: #0066CC;
+      --randwater-secondary: #00A3E0;
+      --randwater-accent: #FF6600;
+      --randwater-dark: #003366;
+      --randwater-light: #E6F3FF;
+    }
+    
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      background-color: #f8f9fa;
+      font-size: 0.9rem;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .randwater-header {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      padding: 1.5rem 0;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .randwater-header h1 {
+      margin: 0;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      font-size: 1.8rem;
+    }
+    
+    .randwater-header .tagline {
+      font-size: 1rem;
+      opacity: 0.9;
+      margin-top: 0.5rem;
+    }
+    
+         .randwater-logo {
+       max-height: 80px;
+       filter: brightness(0) invert(1);
+     }
+     
+     .gosmarthr-logo {
+       max-height: 80px;
+       margin-top: 8px;
+     }
+     
+     .branding {
+       display: flex;
+       flex-direction: column;
+       align-items: flex-end;
+       gap: 8px;
+       margin-right: 1rem;
+     }
+     
+                       .powered-by {
+         font-size: 0.8rem;
+         opacity: 0.9;
+         text-transform: uppercase;
+         letter-spacing: 1px;
+         font-weight: 600;
+         color: var(--randwater-accent);
+       }
+    
+    .user-info {
+      background: rgba(255,255,255,0.1);
+      border-radius: 10px;
+      padding: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .tile-section {
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      background-color: white;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .section-header {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      padding: 0.75rem 1rem;
+      margin: -1rem -1rem 1rem -1rem;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+    }
+    
+    .sap-data-section {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      padding: 0.75rem 1rem;
+      margin: -1rem -1rem 1rem -1rem;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+    }
+    
+    .locked-field {
+      background-color: #e9ecef;
+      border: 1px solid #ced4da;
+      color: #6c757d;
+      cursor: not-allowed;
+    }
+    
+    .editable-field {
+      background-color: #fff;
+      border: 1px solid var(--randwater-primary);
+    }
+    
+    .running-total {
+      background: linear-gradient(135deg, var(--randwater-accent) 0%, #ff8533 100%);
+      color: white;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    
+    .running-total h3 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    
+    .running-total .subtitle {
+      opacity: 0.9;
+      font-size: 0.9rem;
+    }
+    
+    .form-control:focus {
+      border-color: var(--randwater-primary);
+      box-shadow: 0 0 0 0.2rem rgba(0, 102, 204, 0.25);
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 2rem;
+      font-weight: 600;
+    }
+    
+    .btn-success {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 2rem;
+      font-weight: 600;
+    }
+    
+    .warning-badge {
+      background: #fff3cd;
+      color: #856404;
+      padding: 0.5rem;
+      border-radius: 5px;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      border-left: 4px solid #ffc107;
+    }
+    
+    .info-badge {
+      background: #d1ecf1;
+      color: #0c5460;
+      padding: 0.5rem;
+      border-radius: 5px;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+      border-left: 4px solid #17a2b8;
+    }
+    
+    .notifications {
+      background: var(--randwater-light);
+      border: 1px solid var(--randwater-secondary);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .notification-item {
+      background: white;
+      border-radius: 6px;
+      padding: 0.75rem;
+      margin-bottom: 0.5rem;
+      border-left: 4px solid var(--randwater-primary);
+    }
+  </style>
+</head>
+<body>
+  <div class="randwater-header">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <div class="d-flex align-items-center">
+            <img src="{{ config.company_logo }}" alt="Rand Water Logo" class="randwater-logo me-3">
+            <div>
+              <div class="tagline">Design Your Compensation Package</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 text-end">
+                     <div class="branding">
+             <img src="/static/images/smarthr_logo_white.png" alt="SmartHR Logo" class="gosmarthr-logo">
+           </div>
+        </div>
+      </div>
+      
+      <div class="user-info">
+        <div class="row">
+          <div class="col-md-6">
+            <strong>Employee ID:</strong> {{ session.employee_id }}<br>
+            <strong>Grade Band:</strong> {{ session.grade_band }}
+          </div>
+          <div class="col-md-6 text-end">
+            <a href="{{ url_for('employee_logout') }}" class="btn btn-outline-light btn-sm">
+              <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Navigation -->
+    <div class="mb-4">
+      <a href="{{ url_for('employee_login') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Login
+      </a>
+    </div>
+
+    <!-- Notifications -->
+    {% if notifications %}
+    <div class="notifications">
+      <h6><i class="fas fa-bell"></i> Notifications</h6>
+      {% for notification in notifications %}
+      <div class="notification-item">
+        <strong>{{ notification.type }}</strong><br>
+        {{ notification.message }}
+        <small class="text-muted d-block mt-1">
+          {{ notification.created_date.split('T')[0] }}
+        </small>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Running Total -->
+    <div class="running-total">
+      <h3 id="current-tctc-display">R {{ "%.2f"|format(package.package_components.basic_salary + package.package_components.provident_fund + package.package_components.car_allowance + package.package_components.cellphone_allowance + package.package_components.data_service_allowance + package.package_components.housing_allowance + package.package_components.medical_aid + package.package_components.bonus) }}</h3>
+      <div class="subtitle">Current Total Cost to Company</div>
+      <div class="mt-2">
+        <small>
+          Limit: R {{ "%.2f"|format(package.tctc_limit) }} | 
+          Remaining: R {{ "%.2f"|format(package.tctc_limit - (package.package_components.basic_salary + package.package_components.provident_fund + package.package_components.car_allowance + package.package_components.cellphone_allowance + package.package_components.data_service_allowance + package.package_components.housing_allowance + package.package_components.medical_aid + package.package_components.bonus)) }}
+        </small>
+      </div>
+    </div>
+
+    <!-- SAP Data Section (Read-only) -->
+    <div class="tile-section">
+      <div class="sap-data-section">
+        <i class="fas fa-database"></i> SAP Package Data (Read-only)
+      </div>
+      
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Basic Salary</label>
+            <input type="text" class="form-control locked-field" 
+                   value="R {{ "%.2f"|format(package.package_components.basic_salary) }}" readonly>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Cellphone Allowance</label>
+            <input type="text" class="form-control locked-field" 
+                   value="R {{ "%.2f"|format(package.package_components.cellphone_allowance) }}" readonly>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Data Service Allowance</label>
+            <input type="text" class="form-control locked-field" 
+                   value="R {{ "%.2f"|format(package.package_components.data_service_allowance) }}" readonly>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Housing Allowance</label>
+            <input type="text" class="form-control locked-field" 
+                   value="R {{ "%.2f"|format(package.package_components.housing_allowance) }}" readonly>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Medical Aid</label>
+            <input type="text" class="form-control locked-field" 
+                   value="R {{ "%.2f"|format(package.package_components.medical_aid) }}" readonly>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Medical Aid Option</label>
+            <input type="text" class="form-control locked-field" 
+                   value="{{ package.package_components.medical_aid_option }}" readonly>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Other Allowances</label>
+            <input type="text" class="form-control locked-field" 
+                   value="R 0.00" readonly>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Editable Package Components -->
+    <div class="tile-section">
+      <div class="section-header">
+        <i class="fas fa-edit"></i> Package Components (Editable)
+      </div>
+      
+      <form id="packageForm">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label class="form-label">Provident Fund</label>
+              <input type="number" class="form-control editable-field" id="provident_fund" 
+                     value="{{ package.package_components.provident_fund }}" 
+                     step="0.01" min="0" max="{{ package.tctc_limit }}" onchange="updatePackage()">
+              <div class="warning-badge">
+                <i class="fas fa-info-circle"></i> 
+                Should be 50-70% of TCTC
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Car Allowance</label>
+              <input type="number" class="form-control editable-field" id="car_allowance" 
+                     value="{{ package.package_components.car_allowance }}" 
+                     step="0.01" min="0" max="{{ package.tctc_limit }}" onchange="updatePackage()">
+              <div class="warning-badge">
+                <i class="fas fa-info-circle"></i> 
+                Should be at least 30% of TCTC
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="mb-3">
+              <label class="form-label">Annual Bonus (13th Cheque)</label>
+              <input type="number" class="form-control editable-field" id="bonus" 
+                     value="{{ package.package_components.bonus }}" 
+                     step="0.01" min="0" max="{{ package.tctc_limit }}" onchange="updatePackage()">
+              <div class="warning-badge">
+                <i class="fas fa-info-circle"></i> 
+                Should be 10-70% of TCTC
+              </div>
+            </div>
+            
+            <div class="mb-3">
+              <label class="form-label">Basic Salary</label>
+              <input type="number" class="form-control editable-field" id="basic_salary" 
+                     value="{{ package.package_components.basic_salary }}" 
+                     step="0.01" min="0" max="{{ package.tctc_limit }}" onchange="updatePackage()">
+              <div class="warning-badge">
+                <i class="fas fa-info-circle"></i> 
+                Adjustable within TCTC limit
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Deductions Section (Read-only) -->
+    <div class="tile-section">
+      <div class="section-header">
+        <i class="fas fa-minus-circle"></i> Deductions (Calculated)
+      </div>
+      
+      <div class="row">
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Monthly Tax (PAYE)</label>
+            <input type="text" class="form-control locked-field" id="monthly_tax" 
+                   value="R 0.00" readonly>
+            <div class="info-badge">
+              <i class="fas fa-info-circle"></i> 
+              Calculated using SARS tax brackets
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">UIF Contribution</label>
+            <input type="text" class="form-control locked-field" id="uif_contribution" 
+                   value="R 0.00" readonly>
+            <div class="info-badge">
+              <i class="fas fa-info-circle"></i> 
+              1% of gross pay (max R148.72)
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="mb-3">
+            <label class="form-label">Medical Aid Contribution</label>
+            <input type="text" class="form-control locked-field" id="medical_aid_contribution" 
+                   value="R {{ "%.2f"|format(package.package_components.medical_aid) }}" readonly>
+            <div class="info-badge">
+              <i class="fas fa-info-circle"></i> 
+              Fixed from SAP data
+            </div>
+          </div>
+          
+          <div class="mb-3">
+            <label class="form-label">Total Deductions</label>
+            <input type="text" class="form-control locked-field" id="total_deductions" 
+                   value="R 0.00" readonly>
+            <div class="info-badge">
+              <i class="fas fa-info-circle"></i> 
+              Sum of all deductions
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Net Pay Calculation -->
+    <div class="tile-section">
+      <div class="section-header">
+        <i class="fas fa-calculator"></i> Net Pay Calculation
+      </div>
+      
+      <div class="row">
+        <div class="col-md-6">
+          <button type="button" class="btn btn-primary" onclick="calculateNetPay()">
+            <i class="fas fa-calculator"></i> Calculate Net Pay
+          </button>
+        </div>
+        <div class="col-md-6">
+          <div id="netPayResult"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="tile-section text-center">
+      <button type="button" class="btn btn-success btn-lg" onclick="submitPackage()">
+        <i class="fas fa-check-circle"></i> Submit Package
+      </button>
+      <p class="text-muted mt-2">
+        <i class="fas fa-info-circle"></i> 
+        Once submitted, your access will be revoked and changes cannot be made.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    // Calculate current TCTC from package components
+    function calculateCurrentTCTC() {
+      const basicSalary = parseFloat(document.getElementById('basic_salary').value) || 0;
+      const providentFund = parseFloat(document.getElementById('provident_fund').value) || 0;
+      const carAllowance = parseFloat(document.getElementById('car_allowance').value) || 0;
+      const bonus = parseFloat(document.getElementById('bonus').value) || 0;
+      
+      // Fixed components from SAP (read-only)
+      const cellphoneAllowance = {{ package.package_components.cellphone_allowance }};
+      const dataServiceAllowance = {{ package.package_components.data_service_allowance }};
+      const housingAllowance = {{ package.package_components.housing_allowance }};
+      const medicalAid = {{ package.package_components.medical_aid }};
+      
+      return basicSalary + providentFund + carAllowance + bonus + 
+             cellphoneAllowance + dataServiceAllowance + housingAllowance + medicalAid;
+    }
+    
+    // Calculate and display deductions
+    function calculateDeductions() {
+      const currentTCTC = calculateCurrentTCTC();
+      
+      // UIF calculation (1% of gross, max R148.72)
+      const uif = Math.min(currentTCTC * 0.01, 148.72);
+      
+      // Tax calculation (simplified - you can enhance this with actual SARS brackets)
+      const annualIncome = currentTCTC * 12;
+      let monthlyTax = 0;
+      
+      if (annualIncome <= 237100) {
+        monthlyTax = (annualIncome * 0.18) / 12;
+      } else if (annualIncome <= 370500) {
+        monthlyTax = (42678 + (annualIncome - 237100) * 0.26) / 12;
+      } else if (annualIncome <= 512800) {
+        monthlyTax = (77362 + (annualIncome - 370500) * 0.31) / 12;
+      } else if (annualIncome <= 673000) {
+        monthlyTax = (121475 + (annualIncome - 512800) * 0.36) / 12;
+      } else {
+        monthlyTax = (179147 + (annualIncome - 673000) * 0.39) / 12;
+      }
+      
+      // Medical aid is fixed from SAP data
+      const medicalAid = {{ package.package_components.medical_aid }};
+      
+      // Total deductions
+      const totalDeductions = monthlyTax + uif + medicalAid;
+      
+      // Update display
+      document.getElementById('monthly_tax').value = 'R ' + monthlyTax.toFixed(2);
+      document.getElementById('uif_contribution').value = 'R ' + uif.toFixed(2);
+      document.getElementById('medical_aid_contribution').value = 'R ' + medicalAid.toFixed(2);
+      document.getElementById('total_deductions').value = 'R ' + totalDeductions.toFixed(2);
+      
+      // Update running total
+      updateRunningTotal();
+    }
+    
+    // Update running total display
+    function updateRunningTotal() {
+      const currentTCTC = calculateCurrentTCTC();
+      const tctcLimit = {{ package.tctc_limit }};
+      const remaining = tctcLimit - currentTCTC;
+      
+      // Update the running total display (you'll need to add an ID to this element)
+      const runningTotalElement = document.getElementById('current-tctc-display');
+      if (runningTotalElement) {
+        runningTotalElement.textContent = 'R ' + currentTCTC.toFixed(2);
+      }
+      
+      // Show warning if exceeding limit
+      if (currentTCTC > tctcLimit) {
+        showWarning('TCTC limit exceeded! Current: R' + currentTCTC.toFixed(2) + ', Limit: R' + tctcLimit.toFixed(2));
+      } else {
+        hideWarning();
+      }
+    }
+    
+    // Show warning message
+    function showWarning(message) {
+      let warningDiv = document.getElementById('tctc-warning');
+      if (!warningDiv) {
+        warningDiv = document.createElement('div');
+        warningDiv.id = 'tctc-warning';
+        warningDiv.className = 'alert alert-warning mt-3';
+        warningDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + message;
+        document.getElementById('packageForm').appendChild(warningDiv);
+      } else {
+        warningDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + message;
+        warningDiv.style.display = 'block';
+      }
+    }
+    
+    // Hide warning message
+    function hideWarning() {
+      const warningDiv = document.getElementById('tctc-warning');
+      if (warningDiv) {
+        warningDiv.style.display = 'none';
+      }
+    }
+    
+    // Update package function
+    function updatePackage() {
+      calculateDeductions();
+      
+      // Validate individual field limits
+      const basicSalary = parseFloat(document.getElementById('basic_salary').value) || 0;
+      const tctcLimit = {{ package.tctc_limit }};
+      
+      if (basicSalary > tctcLimit) {
+        document.getElementById('basic_salary').value = tctcLimit;
+        showWarning('Basic salary cannot exceed TCTC limit');
+      }
+    }
+    
+    // Calculate net pay
+    function calculateNetPay() {
+      calculateDeductions();
+      const currentTCTC = calculateCurrentTCTC();
+      const totalDeductions = parseFloat(document.getElementById('total_deductions').value.replace('R ', '')) || 0;
+      const netPay = currentTCTC - totalDeductions;
+      
+      document.getElementById('netPayResult').innerHTML = `
+        <div class="alert alert-info">
+          <h5>Net Pay Calculation</h5>
+          <p><strong>Gross Pay:</strong> R ${currentTCTC.toFixed(2)}</p>
+          <p><strong>Total Deductions:</strong> R ${totalDeductions.toFixed(2)}</p>
+          <p><strong>Net Take Home:</strong> R ${netPay.toFixed(2)}</p>
+        </div>
+      `;
+    }
+    
+    // Submit package
+    function submitPackage() {
+      const currentTCTC = calculateCurrentTCTC();
+      const tctcLimit = {{ package.tctc_limit }};
+      
+      if (currentTCTC > tctcLimit) {
+        alert('Cannot submit package: TCTC limit exceeded!');
+        return;
+      }
+      
+      if (confirm('Are you sure you want to submit this package? This action cannot be undone.')) {
+        // Submit logic here
+        alert('Package submitted successfully!');
+      }
+    }
+    
+    // Initialize calculations on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      calculateDeductions();
+    });
+  </script>
+</body>
+</html>

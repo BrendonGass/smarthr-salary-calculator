@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Login - SmartHR</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container d-flex justify-content-center align-items-center" style="height: 100vh;">
+    <div class="tile-section p-4 shadow text-center" style="max-width: 420px; width: 100%;">
+      <img src="/static/images/gosmarthr-logo.png" class="logo-header mb-3" alt="SmartHR Logo">
+      <h4 class="text-primary mb-4">Admin Login</h4>
+
+      {% if error %}
+        <div class="text-danger text-center mb-3">{{ error }}</div>
+      {% endif %}
+
+      <form method="POST" action="/admin">
+        <div class="mb-3 text-start">
+          <label for="username" class="form-label">Username</label>
+          <input type="text" class="form-control" name="username" required>
+        </div>
+        <div class="mb-4 text-start">
+          <label for="password" class="form-label">Password</label>
+          <input type="password" class="form-control" name="password" required>
+        </div>
+        <button type="submit" class="btn btn-primary w-100">Login</button>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

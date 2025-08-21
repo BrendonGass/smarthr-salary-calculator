@@ -1,0 +1,15 @@
+# Randwater Logo Placeholder
+# 
+# This file should be replaced with the actual Randwater logo image.
+# 
+# Recommended specifications:
+# - Format: PNG (transparent background preferred)
+# - Dimensions: 200x80 pixels (or similar aspect ratio)
+# - File size: Under 100KB
+# - Colors: Should work well on both light and dark backgrounds
+# 
+# The logo will be displayed in the header of all Randwater templates
+# and will be automatically inverted (made white) for the dark header background.
+# 
+# Current path: /static/images/randwater-logo.png
+# Referenced in: RANDWATER_CONFIG['company_logo']

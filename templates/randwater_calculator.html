@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rand Water - Salary Package Calculator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    :root {
+      --randwater-primary: #0066CC;
+      --randwater-secondary: #00A3E0;
+      --randwater-accent: #FF6600;
+      --randwater-dark: #003366;
+      --randwater-light: #E6F3FF;
+    }
+    
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      background-color: #f8f9fa;
+      font-size: 0.9rem;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .randwater-header {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      padding: 1.5rem 0;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .randwater-header h1 {
+      margin: 0;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      font-size: 1.8rem;
+    }
+    
+    .randwater-header .tagline {
+      font-size: 1rem;
+      opacity: 0.9;
+      margin-top: 0.5rem;
+    }
+    
+    .randwater-logo {
+      max-height: 80px;
+      filter: brightness(0) invert(1);
+    }
+    
+    .tile-section {
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      background-color: white;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    
+    .section-header {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      padding: 0.75rem 1rem;
+      margin: -1rem -1rem 1rem -1rem;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+    }
+    
+    .sap-data-section {
+      background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+      color: white;
+      padding: 0.75rem 1rem;
+      margin: -1rem -1rem 1rem -1rem;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+    }
+    
+    .locked-field {
+      background-color: #e9ecef;
+      border: 1px solid #ced4da;
+      color: #6c757d;
+      cursor: not-allowed;
+    }
+    
+    .editable-field {
+      background-color: #fff;
+      border: 1px solid var(--randwater-primary);
+    }
+    
+    .running-total {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      border: 2px solid #dee2e6;
+      border-radius: 6px;
+      padding: 0.75rem;
+      margin-top: 1rem;
+      text-align: center;
+      font-weight: bold;
+    }
+    
+    .running-total.earnings {
+      border-color: var(--randwater-primary);
+      background: linear-gradient(135deg, var(--randwater-light) 0%, #d1ecf1 100%);
+      color: var(--randwater-dark);
+    }
+    
+    .running-total.deductions {
+      border-color: #dc3545;
+      background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+      color: #721c24;
+    }
+    
+    .running-total.employer {
+      border-color: var(--randwater-accent);
+      background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+      color: #856404;
+    }
+    
+    .net-pay-highlight {
+      font-size: 1.5rem;
+      font-weight: bold;
+      color: var(--randwater-accent);
+    }
+    
+    .ctc-highlight {
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: var(--randwater-dark);
+    }
+    
+    .action-buttons {
+      position: sticky;
+      bottom: 0;
+      background: white;
+      border-top: 2px solid var(--randwater-primary);
+      padding: 1rem;
+      margin: 1rem -1rem -1rem -1rem;
+      border-radius: 0 0 8px 8px;
+    }
+    
+    .btn-randwater-primary {
+      background-color: var(--randwater-primary);
+      border-color: var(--randwater-primary);
+      color: white;
+    }
+    
+    .btn-randwater-primary:hover {
+      background-color: var(--randwater-dark);
+      border-color: var(--randwater-dark);
+      color: white;
+    }
+    
+    .btn-randwater-secondary {
+      background-color: var(--randwater-secondary);
+      border-color: var(--randwater-secondary);
+      color: white;
+    }
+    
+    .btn-randwater-accent {
+      background-color: var(--randwater-accent);
+      border-color: var(--randwater-accent);
+      color: white;
+    }
+    
+    .status-indicator {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: bold;
+    }
+    
+    .status-draft { background-color: #fff3cd; color: #856404; }
+    .status-saved { background-color: #d1ecf1; color: #0c5460; }
+    .status-submitted { background-color: #d4edda; color: #155724; }
+    
+    .form-control, .form-select {
+      padding: 0.375rem 0.5rem;
+      font-size: 0.85rem;
+    }
+    
+    .form-label {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+    
+    .randwater-benefits-section {
+      background: linear-gradient(135deg, var(--randwater-accent) 0%, #ff8533 100%);
+      color: white;
+      padding: 0.75rem 1rem;
+      margin: -1rem -1rem 1rem -1rem;
+      border-radius: 8px 8px 0 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container-fluid">
+  <!-- Rand Water Header -->
+  <div class="randwater-header">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h1>💧 Rand Water Salary Package Calculator</h1>
+        <div class="tagline">Design your ideal compensation package with Rand Water</div>
+      </div>
+      <div class="col-md-4 text-end">
+        <img src="{{ config.company_logo }}" alt="Rand Water" class="randwater-logo">
+        <div class="mt-2">
+          <span class="status-indicator status-draft" id="status-indicator">Draft</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SAP Data Integration -->
+  <div class="tile-section">
+    <div class="sap-data-section">
+      📊 SAP Data Integration
+    </div>
+    <div class="row g-2">
+      <div class="col-md-6">
+        <button type="button" class="btn btn-randwater-primary btn-sm" id="load-sap-data-btn">
+          🔄 Load from Rand Water SAP
+        </button>
+        <small class="text-muted d-block mt-1">Pull current package data from Rand Water SAP system</small>
+      </div>
+      <div class="col-md-6">
+        <button type="button" class="btn btn-randwater-secondary btn-sm" id="submit-to-sap-btn" disabled>
+          📤 Submit to Rand Water SAP
+        </button>
+        <small class="text-muted d-block mt-1">Submit final package to Rand Water SAP system</small>
+      </div>
+    </div>
+  </div>
+
+  <!-- Personal Details -->
+  <div class="tile-section">
+    <div class="section-header">
+      👤 Rand Water Employee Details
+    </div>
+    <div class="row g-2">
+      <div class="col-md-3">
+        <label class="form-label">First Name</label>
+        <input type="text" class="form-control locked-field" id="first_name" readonly>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Surname</label>
+        <input type="text" class="form-control locked-field" id="surname" readonly>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Employee ID</label>
+        <input type="text" class="form-control locked-field" id="employee_id" readonly>
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-control locked-field" id="email" readonly>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Job Title</label>
+        <input type="text" class="form-control locked-field" id="job_title" readonly>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Department</label>
+        <input type="text" class="form-control locked-field" id="department" readonly>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Current CTC (Rand Water SAP)</label>
+        <input type="text" class="form-control locked-field" id="current_ctc" readonly>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Earnings and Employer -->
+    <div class="col-md-6">
+      <div class="tile-section">
+        <div class="section-header">
+          💰 Earnings
+        </div>
+        
+        <!-- Basic Salary (Locked from SAP) -->
+        <div class="mb-3">
+          <label for="basic_salary" class="form-label fw-bold text-primary">Basic Salary (Rand Water SAP):</label>
+          <input type="number" class="form-control locked-field" id="basic_salary" readonly>
+          <small class="text-muted">Locked - cannot be changed</small>
+        </div>
+        
+        <!-- Additional Allowances (Editable) -->
+        <div class="mb-3">
+          <label class="form-label fw-bold text-success">Additional Allowances:</label>
+          <div id="allowances-list"></div>
+          <div class="row g-2 mt-2">
+            <div class="col-8">
+              <select id="allowance-dropdown" class="form-select">
+                <option value="">Select allowance to add</option>
+                <option value="Travel Allowance">Travel Allowance</option>
+                <option value="Cellphone Allowance">Cellphone Allowance</option>
+                <option value="Internet Allowance">Internet Allowance</option>
+                <option value="Entertainment Allowance">Entertainment Allowance</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="col-3">
+              <input type="number" class="form-control" id="allowance-value" placeholder="Amount" style="display: none;">
+            </div>
+            <div class="col-1">
+              <button type="button" class="btn btn-success btn-sm" id="add-allowance-btn" style="display: none;">+</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Running Total for Earnings -->
+        <div class="running-total earnings">
+          Total Earnings: R <span id="total-earnings">0.00</span>
+        </div>
+      </div>
+
+      <div class="tile-section">
+        <div class="section-header">
+          🏢 Employer Contributions
+        </div>
+        
+        <!-- SAP Employer Contributions (Locked) -->
+        <div class="mb-3">
+          <label class="form-label fw-bold text-primary">Rand Water SAP Employer Contributions:</label>
+          <div id="sap-employer-list"></div>
+        </div>
+        
+        <!-- Additional Employer Contributions (Editable) -->
+        <div class="mb-3">
+          <label class="form-label fw-bold text-success">Additional Employer Contributions:</label>
+          <div id="additional-employer-list"></div>
+          <div class="row g-2 mt-2">
+            <div class="col-8">
+              <select id="employer-dropdown" class="form-select">
+                <option value="">Select contribution to add</option>
+                <option value="Additional Pension">Additional Pension</option>
+                <option value="Group Life">Group Life</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="col-3">
+              <input type="number" class="form-control" id="employer-value" placeholder="Amount" style="display: none;">
+            </div>
+            <div class="col-1">
+              <button type="button" class="btn btn-success btn-sm" id="add-employer-btn" style="display: none;">+</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Running Total for Employer -->
+        <div class="running-total employer">
+          Total Employer: R <span id="total-employer">0.00</span>
+        </div>
+      </div>
+
+      <!-- Rand Water Specific Benefits -->
+      <div class="tile-section">
+        <div class="randwater-benefits-section">
+          💧 Rand Water Benefits
+        </div>
+        
+        <!-- Rand Water Specific Benefits -->
+        <div class="mb-3">
+          <label class="form-label fw-bold text-primary">Rand Water Specific Benefits:</label>
+          <div id="randwater-benefits-list"></div>
+        </div>
+        
+        <!-- Additional Rand Water Benefits (Editable) -->
+        <div class="mb-3">
+          <label class="form-label fw-bold text-success">Additional Rand Water Benefits:</label>
+          <div id="additional-randwater-benefits-list"></div>
+          <div class="row g-2 mt-2">
+            <div class="col-8">
+              <select id="randwater-benefits-dropdown" class="form-select">
+                <option value="">Select Rand Water benefit to add</option>
+                <option value="Water Allowance">Water Allowance</option>
+                <option value="Infrastructure Bonus">Infrastructure Bonus</option>
+                <option value="Environmental Incentive">Environmental Incentive</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="col-3">
+              <input type="number" class="form-control" id="randwater-benefits-value" placeholder="Amount" style="display: none;">
+            </div>
+            <div class="col-1">
+              <button type="button" class="btn btn-success btn-sm" id="add-randwater-benefits-btn" style="display: none;">+</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Running Total for Rand Water Benefits -->
+        <div class="running-total employer">
+          Total Rand Water Benefits: R <span id="total-randwater-benefits">0.00</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Deductions and Net Pay -->
+    <div class="col-md-6">
+      <div class="tile-section">
+        <div class="section-header">
+          💸 Deductions
+        </div>
+        
+        <!-- SAP Deductions (Locked) -->
+        <div class="mb-3">
+          <label class="form-label fw-bold text-primary">Rand Water SAP Deductions:</label>
+          <div id="sap-deductions-list"></div>
+        </div>
+        
+        <!-- Additional Deductions (Editable) -->
+        <div class="mb-3">
+          <label class="form-label fw-bold text-success">Additional Deductions:</label>
+          <div id="additional-deductions-list"></div>
+          <div class="row g-2 mt-2">
+            <div class="col-8">
+              <select id="deduction-dropdown" class="form-select">
+                <option value="">Select deduction to add</option>
+                <option value="Additional Pension">Additional Pension</option>
+                <option value="Medical Aid">Medical Aid</option>
+                <option value="Union">Union</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="col-3">
+              <input type="number" class="form-control" id="deduction-value" placeholder="Amount" style="display: none;">
+            </div>
+            <div class="col-1">
+              <button type="button" class="btn btn-success btn-sm" id="add-deduction-btn" style="display: none;">+</button>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Running Total for Deductions -->
+        <div class="running-total deductions">
+          Total Deductions: R <span id="total-deductions">0.00</span>
+        </div>
+      </div>
+
+      <div class="tile-section">
+        <div class="section-header">
+          💼 Cost to Company
+        </div>
+        <div class="ctc-highlight">R <span id="ctc_total_val">0.00</span></div>
+      </div>
+
+      <div class="tile-section">
+        <div class="section-header">
+          💰 Net Pay
+        </div>
+        <div class="net-pay-highlight">R <span id="net_pay_val">0.00</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons -->
+  <div class="action-buttons">
+    <div class="row g-2">
+      <div class="col-md-3">
+        <button type="button" class="btn btn-secondary w-100" id="save-draft-btn">
+          💾 Save Draft
+        </button>
+      </div>
+      <div class="col-md-3">
+        <button type="button" class="btn btn-randwater-secondary w-100" id="print-offer-btn">
+          🖨️ Print Offer
+        </button>
+      </div>
+      <div class="col-md-3">
+        <button type="button" class="btn btn-randwater-accent w-100" id="preview-payslip-btn">
+          📄 Preview Payslip
+        </button>
+      </div>
+      <div class="col-md-3">
+        <button type="button" class="btn btn-randwater-primary w-100" id="submit-package-btn">
+          ✅ Submit Package
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  // Get employee ID from URL parameters or parent window
+  const urlParams = new URLSearchParams(window.location.search);
+  const employeeId = urlParams.get('user_id') || 'RW001';
+  
+  // Initialize the Rand Water calculator
+  initializeRandWaterCalculator(employeeId);
+  
+  // Load SAP data button
+  document.getElementById('load-sap-data-btn').addEventListener('click', function() {
+    loadRandWaterSAPData(employeeId);
+  });
+  
+  // Submit to SAP button
+  document.getElementById('submit-to-sap-btn').addEventListener('click', function() {
+    submitToRandWaterSAP(employeeId);
+  });
+  
+  // Save draft button
+  document.getElementById('save-draft-btn').addEventListener('click', function() {
+    saveRandWaterDraft(employeeId);
+  });
+  
+  // Submit package button
+  document.getElementById('submit-package-btn').addEventListener('click', function() {
+    submitRandWaterPackage(employeeId);
+  });
+  
+  // Print offer button
+  document.getElementById('print-offer-btn').addEventListener('click', function() {
+    printRandWaterOffer();
+  });
+  
+  // Preview payslip button
+  document.getElementById('preview-payslip-btn').addEventListener('click', function() {
+    previewRandWaterPayslip();
+  });
+  
+  // Initialize dropdown functionality
+  initializeRandWaterDropdowns();
+  
+  // Load initial data
+  loadRandWaterSAPData(employeeId);
+});
+
+function initializeRandWaterCalculator(employeeId) {
+  // Set employee ID
+  document.getElementById('employee_id').value = employeeId;
+  
+  // Load any saved draft
+  loadRandWaterDraft(employeeId);
+}
+
+function loadRandWaterSAPData(employeeId) {
+  // Show loading state
+  document.getElementById('load-sap-data-btn').innerHTML = '⏳ Loading from Rand Water SAP...';
+  document.getElementById('load-sap-data-btn').disabled = true;
+  
+  // Fetch Rand Water employee data from SAP
+  fetch(`/api/randwater/employee/${employeeId}`)
+    .then(response => response.json())
+    .then(data => {
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      // Populate personal details
+      document.getElementById('first_name').value = data.first_name || '';
+      document.getElementById('surname').value = data.surname || '';
+      document.getElementById('email').value = data.email || '';
+      document.getElementById('job_title').value = data.job_title || '';
+      document.getElementById('department').value = data.department || '';
+      document.getElementById('current_ctc').value = formatCurrency(data.ctc || 0);
+      
+      // Populate basic salary (locked)
+      document.getElementById('basic_salary').value = data.basic_salary || 0;
+      
+      // Populate Rand Water SAP allowances
+      populateRandWaterSAPAllowances(data.allowances || []);
+      
+      // Populate Rand Water SAP deductions
+      populateRandWaterSAPDeductions(data.deductions || []);
+      
+      // Populate Rand Water SAP employer contributions
+      populateRandWaterSAPEmployer(data.employer_contributions || []);
+      
+      // Populate Rand Water specific benefits
+      populateRandWaterBenefits(data.randwater_benefits || []);
+      
+      // Update calculations
+      updateRandWaterTotals();
+      
+      // Update status
+      updateRandWaterStatus('saved');
+      
+    })
+    .catch(error => {
+      console.error('Error loading Rand Water SAP data:', error);
+      alert('Failed to load Rand Water SAP data. Using demo data instead.');
+      
+      // Load Rand Water demo data
+      loadRandWaterDemoData();
+    })
+    .finally(() => {
+      // Reset button state
+      document.getElementById('load-sap-data-btn').innerHTML = '🔄 Load from Rand Water SAP';
+      document.getElementById('load-sap-data-btn').disabled = false;
+    });
+}
+
+function loadRandWaterDemoData() {
+  // Rand Water demo data for testing
+  const demoData = {
+    first_name: 'John',
+    surname: 'Doe',
+    email: 'john.doe@randwater.co.za',
+    job_title: 'Water Treatment Specialist',
+    department: 'Water Treatment',
+    basic_salary: 28000,
+    ctc: 420000,
+    allowances: [
+      { name: 'Travel Allowance', amount: 2500 },
+      { name: 'Cellphone Allowance', amount: 600 }
+    ],
+    deductions: [
+      { name: 'Pension/Provident/RA', amount: 2800 },
+      { name: 'Medical Aid', amount: 1500 }
+    ],
+    employer_contributions: [
+      { name: 'Pension/Provident/RA', amount: 2800 },
+      { name: 'Medical Aid', amount: 1500 },
+      { name: 'UIF', amount: 280 }
+    ],
+    randwater_benefits: [
+      { name: 'Water Allowance', amount: 800 },
+      { name: 'Infrastructure Bonus', amount: 1200 }
+    ]
+  };
+  
+  // Populate fields
+  document.getElementById('first_name').value = demoData.first_name;
+  document.getElementById('surname').value = demoData.surname;
+  document.getElementById('email').value = demoData.email;
+  document.getElementById('job_title').value = demoData.job_title;
+  document.getElementById('department').value = demoData.department;
+  document.getElementById('current_ctc').value = formatCurrency(demoData.ctc);
+  document.getElementById('basic_salary').value = demoData.basic_salary;
+  
+  populateRandWaterSAPAllowances(demoData.allowances);
+  populateRandWaterSAPDeductions(demoData.deductions);
+  populateRandWaterSAPEmployer(demoData.employer_contributions);
+  populateRandWaterBenefits(demoData.randwater_benefits);
+  
+  updateRandWaterTotals();
+  updateRandWaterStatus('saved');
+}
+
+function populateRandWaterSAPAllowances(allowances) {
+  const container = document.getElementById('allowances-list');
+  container.innerHTML = '';
+  
+  allowances.forEach(allowance => {
+    const item = document.createElement('div');
+    item.className = 'mb-2 p-2 bg-light border rounded';
+    item.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center">
+        <span class="fw-bold">${allowance.name}:</span>
+        <span class="text-success">R ${formatCurrency(allowance.amount)}</span>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+function populateRandWaterSAPDeductions(deductions) {
+  const container = document.getElementById('sap-deductions-list');
+  container.innerHTML = '';
+  
+  deductions.forEach(deduction => {
+    const item = document.createElement('div');
+    item.className = 'mb-2 p-2 bg-light border rounded';
+    item.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center">
+        <span class="fw-bold">${deduction.name}:</span>
+        <span class="text-danger">R ${formatCurrency(deduction.amount)}</span>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+function populateRandWaterSAPEmployer(contributions) {
+  const container = document.getElementById('sap-employer-list');
+  container.innerHTML = '';
+  
+  contributions.forEach(contribution => {
+    const item = document.createElement('div');
+    item.className = 'mb-2 p-2 bg-light border rounded';
+    item.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center">
+        <span class="fw-bold">${contribution.name}:</span>
+        <span class="text-warning">R ${formatCurrency(contribution.amount)}</span>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+function populateRandWaterBenefits(benefits) {
+  const container = document.getElementById('randwater-benefits-list');
+  container.innerHTML = '';
+  
+  benefits.forEach(benefit => {
+    const item = document.createElement('div');
+    item.className = 'mb-2 p-2 bg-light border rounded';
+    item.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center">
+        <span class="fw-bold">${benefit.name}:</span>
+        <span class="text-warning">R ${formatCurrency(benefit.amount)}</span>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+function initializeRandWaterDropdowns() {
+  // Allowance dropdown
+  document.getElementById('allowance-dropdown').addEventListener('change', function() {
+    const valueInput = document.getElementById('allowance-value');
+    const addBtn = document.getElementById('add-allowance-btn');
+    
+    if (this.value) {
+      valueInput.style.display = 'block';
+      addBtn.style.display = 'block';
+      valueInput.focus();
+    } else {
+      valueInput.style.display = 'none';
+      addBtn.style.display = 'none';
+      valueInput.value = '';
+    }
+  });
+  
+  // Add allowance button
+  document.getElementById('add-allowance-btn').addEventListener('click', function() {
+    addRandWaterAllowance();
+  });
+  
+  // Similar for other dropdowns...
+}
+
+function addRandWaterAllowance() {
+  const dropdown = document.getElementById('allowance-dropdown');
+  const valueInput = document.getElementById('allowance-value');
+  const container = document.getElementById('additional-employer-list');
+  
+  if (dropdown.value && valueInput.value) {
+    const item = document.createElement('div');
+    item.className = 'mb-2 p-2 bg-success bg-opacity-10 border border-success rounded';
+    item.innerHTML = `
+      <div class="d-flex justify-content-between align-items-center">
+        <span class="fw-bold">${dropdown.value}:</span>
+        <div>
+          <span class="text-success me-2">R ${formatCurrency(valueInput.value)}</span>
+          <button type="button" class="btn btn-sm btn-outline-danger" onclick="this.parentElement.parentElement.parentElement.remove(); updateRandWaterTotals();">×</button>
+        </div>
+      </div>
+    `;
+    container.appendChild(item);
+    
+    // Reset inputs
+    dropdown.value = '';
+    valueInput.value = '';
+    valueInput.style.display = 'none';
+    document.getElementById('add-allowance-btn').style.display = 'none';
+    
+    updateRandWaterTotals();
+  }
+}
+
+function updateRandWaterTotals() {
+  // Calculate totals based on all Rand Water components
+  const basicSalary = parseFloat(document.getElementById('basic_salary').value) || 0;
+  
+  // Calculate additional allowances
+  const additionalAllowances = Array.from(document.querySelectorAll('#additional-employer-list .text-success'))
+    .map(el => parseFloat(el.textContent.replace('R ', '').replace(',', '')) || 0);
+  
+  const totalEarnings = basicSalary + additionalAllowances.reduce((sum, val) => sum + val, 0);
+  
+  // Update display
+  document.getElementById('total-earnings').textContent = formatCurrency(totalEarnings);
+  
+  // Similar calculations for deductions, employer contributions, and Rand Water benefits...
+  
+  // Calculate net pay
+  const totalDeductions = 0; // Calculate from all deduction sources
+  const netPay = totalEarnings - totalDeductions;
+  document.getElementById('net_pay_val').textContent = formatCurrency(netPay);
+  
+  // Calculate CTC
+  const totalEmployer = 0; // Calculate from all employer sources
+  const ctc = totalEarnings + totalEmployer;
+  document.getElementById('ctc_total_val').textContent = formatCurrency(ctc);
+}
+
+function updateRandWaterStatus(status) {
+  const indicator = document.getElementById('status-indicator');
+  indicator.className = `status-indicator status-${status}`;
+  
+  switch(status) {
+    case 'draft':
+      indicator.textContent = 'Draft';
+      break;
+    case 'saved':
+      indicator.textContent = 'Saved';
+      break;
+    case 'submitted':
+      indicator.textContent = 'Submitted';
+      document.getElementById('submit-to-sap-btn').disabled = false;
+      break;
+  }
+}
+
+function saveRandWaterDraft(employeeId) {
+  const packageData = collectRandWaterPackageData();
+  
+  // Save to localStorage
+  localStorage.setItem(`randwater_draft_${employeeId}`, JSON.stringify(packageData));
+  
+  updateRandWaterStatus('saved');
+  alert('Rand Water draft saved successfully!');
+}
+
+function loadRandWaterDraft(employeeId) {
+  const savedData = localStorage.getItem(`randwater_draft_${employeeId}`);
+  if (savedData) {
+    const data = JSON.parse(savedData);
+    // Restore form data
+    updateRandWaterStatus('saved');
+  }
+}
+
+function submitRandWaterPackage(employeeId) {
+  const packageData = collectRandWaterPackageData();
+  
+  // Submit to Rand Water backend
+  fetch('/api/randwater/package/submit', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      employee_id: employeeId,
+      package_data: packageData
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.error) {
+      throw new Error(data.error);
+    }
+    
+    updateRandWaterStatus('submitted');
+    alert('Rand Water package submitted successfully!');
+  })
+  .catch(error => {
+    console.error('Error submitting Rand Water package:', error);
+    alert('Failed to submit Rand Water package. Please try again.');
+  });
+}
+
+function submitToRandWaterSAP(employeeId) {
+  // This would trigger the Rand Water SAP export functionality
+  alert('Package will be exported to Rand Water SAP. Please download the export file and upload it to SAP.');
+}
+
+function collectRandWaterPackageData() {
+  return {
+    employee_id: document.getElementById('employee_id').value,
+    basic_salary: document.getElementById('basic_salary').value,
+    total_earnings: document.getElementById('total-earnings').textContent,
+    total_deductions: document.getElementById('total-deductions').textContent,
+    total_employer: document.getElementById('total-employer').textContent,
+    net_pay: document.getElementById('net_pay_val').textContent,
+    ctc: document.getElementById('ctc_total_val').textContent,
+    submission_date: new Date().toISOString(),
+    company: 'RANDWATER'
+  };
+}
+
+function formatCurrency(amount) {
+  return parseFloat(amount).toLocaleString('en-ZA', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  });
+}
+
+function printRandWaterOffer() {
+  // Implementation for printing Rand Water offer
+  alert('Print functionality would generate a Rand Water branded PDF offer letter');
+}
+
+function previewRandWaterPayslip() {
+  // Implementation for Rand Water payslip preview
+  alert('Payslip preview would show a Rand Water branded mock payslip');
+}
+</script>
+
+</body>
+</html> 

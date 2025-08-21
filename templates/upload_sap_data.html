@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rand Water - Upload SAP Data</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --randwater-primary: #0066CC;
+      --randwater-secondary: #00A3E0;
+      --randwater-accent: #FF6600;
+      --randwater-dark: #003366;
+      --randwater-light: #E6F3FF;
+    }
+    
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      background-color: #f8f9fa;
+      font-size: 0.9rem;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .randwater-header {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      padding: 1.5rem 0;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .randwater-header h1 {
+      margin: 0;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      font-size: 1.8rem;
+    }
+    
+    .randwater-header .tagline {
+      font-size: 1rem;
+      opacity: 0.9;
+      margin-top: 0.5rem;
+    }
+    
+    .randwater-logo {
+      max-height: 80px;
+      filter: brightness(0) invert(1);
+    }
+    
+    .upload-container {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .upload-header {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      padding: 1rem 1.5rem;
+      margin: -2rem -2rem 2rem -2rem;
+      border-radius: 12px 12px 0 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.2rem;
+      font-weight: bold;
+    }
+    
+    .upload-area {
+      border: 2px dashed var(--randwater-secondary);
+      border-radius: 12px;
+      padding: 3rem;
+      text-align: center;
+      background: var(--randwater-light);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+    
+    .upload-area:hover {
+      border-color: var(--randwater-primary);
+      background: #f0f8ff;
+    }
+    
+    .upload-area.dragover {
+      border-color: var(--randwater-accent);
+      background: #fff8f0;
+    }
+    
+    .upload-icon {
+      font-size: 4rem;
+      color: var(--randwater-secondary);
+      margin-bottom: 1rem;
+    }
+    
+    .file-input {
+      display: none;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 2rem;
+      font-weight: 600;
+    }
+    
+    .btn-secondary {
+      background: #6c757d;
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 2rem;
+      font-weight: 600;
+    }
+    
+    .requirements {
+      background: var(--randwater-light);
+      border: 1px solid var(--randwater-secondary);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .requirements h5 {
+      color: var(--randwater-primary);
+      margin-bottom: 1rem;
+    }
+    
+    .requirements ul {
+      margin-bottom: 0;
+    }
+    
+    .requirements li {
+      margin-bottom: 0.5rem;
+    }
+    
+    .sample-format {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .sample-format h5 {
+      color: var(--randwater-dark);
+      margin-bottom: 1rem;
+    }
+    
+    .sample-table {
+      font-size: 0.85rem;
+    }
+    
+    .sample-table th {
+      background-color: var(--randwater-light);
+      color: var(--randwater-dark);
+      font-weight: 600;
+    }
+    
+    .alert {
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 1.5rem;
+    }
+    
+    .alert-success {
+      background-color: #d4edda;
+      color: #155724;
+      border-left: 4px solid #28a745;
+    }
+    
+    .alert-danger {
+      background-color: #f8d7da;
+      color: #721c24;
+      border-left: 4px solid #dc3545;
+    }
+    
+    .alert-warning {
+      background-color: #fff3cd;
+      color: #856404;
+      border-left: 4px solid #ffc107;
+    }
+  </style>
+</head>
+<body>
+  <div class="randwater-header">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h1><i class="fas fa-upload"></i> Upload SAP Data</h1>
+          <div class="tagline">Create Employee Packages from SAP Excel Files</div>
+        </div>
+        <div class="col-md-4 text-end">
+          <img src="{{ config.company_logo }}" alt="Rand Water Logo" class="randwater-logo">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Navigation -->
+    <div class="mb-4">
+      <a href="{{ url_for('randwater_admin_panel') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ 'danger' if category == 'error' else category }}">
+            <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'info-circle' }}"></i> {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+
+
+
+    <!-- Requirements -->
+    <div class="requirements">
+      <h5><i class="fas fa-info-circle"></i> Upload Requirements</h5>
+      <ul>
+        <li><strong>File Format:</strong> Excel (.xlsx) files only</li>
+        <li><strong>Required Columns:</strong> Employee ID, Grade Band, Basic Salary, TCTC Limit</li>
+        <li><strong>Grade Bands:</strong> Only O, P, and Q band employees will be processed</li>
+        <li><strong>Data Validation:</strong> All monetary values must be numeric</li>
+        <li><strong>Access Period:</strong> Employees will get 30 days access to Package Builder (configurable in Manage Access section)</li>
+      </ul>
+    </div>
+
+    <!-- Sample Format -->
+    <div class="sample-format">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5><i class="fas fa-table"></i> Expected Excel Format (64 Fields)</h5>
+        <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#excelFormatTable" aria-expanded="false" aria-controls="excelFormatTable">
+          <i class="fas fa-eye"></i> Show/Hide Format
+        </button>
+      </div>
+      <div class="collapse" id="excelFormatTable">
+        <div class="table-responsive">
+          <table class="table table-sm sample-table">
+            <thead>
+              <tr>
+                <th>Field #</th>
+                <th>Field Name</th>
+                <th>Type</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>EMPLOYEECODE</td><td>Text</td><td>Employee ID</td></tr>
+              <tr><td>2</td><td>SURNAME</td><td>Text</td><td>Employee Surname</td></tr>
+              <tr><td>3</td><td>FIRSTNAME</td><td>Text</td><td>Employee First Name</td></tr>
+              <tr><td>4</td><td>TITLE</td><td>Text</td><td>Title (Mr, Ms, Dr)</td></tr>
+              <tr><td>5</td><td>BIRTHDATE</td><td>Date</td><td>Date of Birth</td></tr>
+              <tr><td>6</td><td>AGE</td><td>Number</td><td>Employee Age</td></tr>
+              <tr><td>7</td><td>RACE</td><td>Text</td><td>Race Classification</td></tr>
+              <tr><td>8</td><td>GENDER</td><td>Text</td><td>Gender (Male/Female)</td></tr>
+              <tr><td>9</td><td>DISABILITY</td><td>Text</td><td>Disability Status</td></tr>
+              <tr><td>10</td><td>DATEENGAGED</td><td>Date</td><td>Employment Start Date</td></tr>
+              <tr><td>11</td><td>YOS</td><td>Number</td><td>Years of Service</td></tr>
+              <tr><td>12</td><td>CostCenter</td><td>Text</td><td>Cost Center Code</td></tr>
+              <tr><td>13</td><td>PERSONNELAREADESCRIPTION</td><td>Text</td><td>Personnel Area</td></tr>
+              <tr><td>14</td><td>PERSONNELSUBAREADESCRIPTION</td><td>Text</td><td>Personnel Sub-Area</td></tr>
+              <tr><td>15</td><td>EMPLOYEEGROUPDESCRIPTION</td><td>Text</td><td>Employee Group</td></tr>
+              <tr><td>16</td><td>EMPLOYEESUBGROUPDESCRIPTION</td><td>Text</td><td>Employee Sub-Group</td></tr>
+              <tr><td>17</td><td>JOBID</td><td>Text</td><td>Job ID</td></tr>
+              <tr><td>18</td><td>JOBSHORT</td><td>Text</td><td>Job Short Description</td></tr>
+              <tr><td>19</td><td>JOBLONG</td><td>Text</td><td>Job Long Description</td></tr>
+              <tr><td>20</td><td>HAYUNIT</td><td>Text</td><td>Hay Unit</td></tr>
+              <tr><td>21</td><td>POSITIONID</td><td>Text</td><td>Position ID</td></tr>
+              <tr><td>22</td><td>POSTIONSHORT</td><td>Text</td><td>Position Short Description</td></tr>
+              <tr><td>23</td><td>POSITIONLONG</td><td>Text</td><td>Position Long Description</td></tr>
+              <tr><td>24</td><td>BAND</td><td>Text</td><td>Grade Band (O, P, Q)</td></tr>
+              <tr><td>25</td><td>PAYSCALELEVEL</td><td>Text</td><td>Pay Scale Level</td></tr>
+              <tr><td>26</td><td>PORTFOLIO</td><td>Text</td><td>Portfolio</td></tr>
+              <tr><td>27</td><td>DIVISION</td><td>Text</td><td>Division</td></tr>
+              <tr><td>28</td><td>DEPARTMENT</td><td>Text</td><td>Department</td></tr>
+              <tr><td>29</td><td>ORGANIZATIONALUNIT</td><td>Text</td><td>Organizational Unit</td></tr>
+              <tr><td>30</td><td>ORGANIZATIONALUNITLONG</td><td>Text</td><td>Organizational Unit Long</td></tr>
+              <tr><td>31</td><td>TPE</td><td>Number</td><td>Total Pensionable Emolument</td></tr>
+              <tr><td>32</td><td>CAR</td><td>Number</td><td>Car Allowance</td></tr>
+              <tr><td>33</td><td>CASH</td><td>Number</td><td>Cash Allowance</td></tr>
+              <tr><td>34</td><td>HOUSING</td><td>Number</td><td>Housing Allowance</td></tr>
+              <tr><td>35</td><td>CRITICALSKILLS</td><td>Number</td><td>Critical Skills Allowance</td></tr>
+              <tr><td>36</td><td>pension</td><td>Number</td><td>Pension/Provident Fund</td></tr>
+              <tr><td>37</td><td>PENSIONOPTION</td><td>Text</td><td>Pension Option</td></tr>
+              <tr><td>38</td><td>PENSIONERCONTRIBUTION</td><td>Number</td><td>Employer Pension Contribution</td></tr>
+              <tr><td>39</td><td>PENSIONEECONTRIBUTION</td><td>Number</td><td>Employee Pension Contribution</td></tr>
+              <tr><td>40</td><td>CASHOPTION</td><td>Text</td><td>Cash Option</td></tr>
+              <tr><td>41</td><td>MEDICAL</td><td>Number</td><td>Medical Aid</td></tr>
+              <tr><td>42</td><td>MEDICALOPTION</td><td>Text</td><td>Medical Aid Option</td></tr>
+              <tr><td>43</td><td>SPOUSE</td><td>Text</td><td>Spouse Coverage (Yes/No)</td></tr>
+              <tr><td>44</td><td>CHILDREN</td><td>Text</td><td>Number of Children</td></tr>
+              <tr><td>45</td><td>ADULTS</td><td>Text</td><td>Number of Adults</td></tr>
+              <tr><td>46</td><td>MEDICALEECONTRIBUTION</td><td>Number</td><td>Employee Medical Contribution</td></tr>
+              <tr><td>47</td><td>MEDICALERCONTRIBUTION</td><td>Number</td><td>Employer Medical Contribution</td></tr>
+              <tr><td>48</td><td>UIF</td><td>Number</td><td>UIF Contribution</td></tr>
+              <tr><td>49</td><td>GROUPLIFEEECONTRIBUTION</td><td>Number</td><td>Employee Group Life Contribution</td></tr>
+              <tr><td>50</td><td>GROUPLIFEERCONTRIBUTION</td><td>Number</td><td>Employer Group Life Contribution</td></tr>
+              <tr><td>51</td><td>BONUSPROVISION</td><td>Number</td><td>Annual Bonus</td></tr>
+              <tr><td>52</td><td>CTC</td><td>Number</td><td>Cost to Company</td></tr>
+              <tr><td>53</td><td>TCTC</td><td>Number</td><td>Total Cost to Company</td></tr>
+              <tr><td>54</td><td>LQ</td><td>Text</td><td>Low Quartile</td></tr>
+              <tr><td>55</td><td>MID</td><td>Text</td><td>Mid Range</td></tr>
+              <tr><td>56</td><td>HQ</td><td>Text</td><td>High Quartile</td></tr>
+              <tr><td>57</td><td>LQPACKAGE</td><td>Text</td><td>Low Quartile Package</td></tr>
+              <tr><td>58</td><td>MIDPACKAGE</td><td>Text</td><td>Mid Package</td></tr>
+              <tr><td>59</td><td>HQPACKAGE</td><td>Text</td><td>High Quartile Package</td></tr>
+              <tr><td>60</td><td>begda</td><td>Text</td><td>Begin Date</td></tr>
+              <tr><td>61</td><td>endda</td><td>Text</td><td>End Date</td></tr>
+              <tr><td>62</td><td>aedtm</td><td>Text</td><td>Last Modified</td></tr>
+              <tr><td>63</td><td>CELLPHONEALLOWANCE</td><td>Number</td><td>Cellphone Allowance</td></tr>
+              <tr><td>64</td><td>DATASERVICEALLOWANCE</td><td>Number</td><td>Data Service Allowance</td></tr>
+            </tbody>
+          </table>
+          <div class="mt-3">
+            <small class="text-muted">
+              <i class="fas fa-info-circle"></i> 
+              <strong>Note:</strong> The system automatically processes O, P, and Q band employees. 
+              Text fields can contain any value, numeric fields will default to 0 if invalid.
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- File Upload Section -->
+    <div class="upload-container">
+      <div class="upload-header">
+        <i class="fas fa-file-excel"></i> Upload SAP Excel File
+      </div>
+      
+      <form method="POST" enctype="multipart/form-data" id="uploadForm">
+        <div class="upload-area" id="uploadArea" onclick="document.getElementById('sapFile').click()">
+          <div class="upload-icon">
+            <i class="fas fa-cloud-upload-alt"></i>
+          </div>
+          <h4>Click to Select File</h4>
+          <p class="text-muted">or drag and drop your Excel file here</p>
+          <p class="text-muted">Supports .xlsx files only</p>
+        </div>
+        
+        <input type="file" id="sapFile" name="sap_file" class="file-input" 
+               accept=".xlsx" onchange="updateFileName()" required>
+        
+        <div id="fileInfo" class="mt-3" style="display: none;">
+          <div class="alert alert-info">
+            <i class="fas fa-file"></i> 
+            <strong>Selected File:</strong> <span id="fileName"></span>
+          </div>
+        </div>
+        
+                 <div class="text-center mt-4">
+           <button type="submit" class="btn btn-primary me-3" id="uploadBtn" disabled>
+             <i class="fas fa-upload"></i> Process File
+           </button>
+           <button type="button" class="btn btn-danger me-3" id="clearBtn" onclick="clearAllData()">
+             <i class="fas fa-trash"></i> Clear All Data
+           </button>
+         </div>
+      </form>
+    </div>
+
+    <!-- Processing Info -->
+    <div class="alert alert-info">
+      <h6><i class="fas fa-cogs"></i> What Happens After Upload?</h6>
+      <ol class="mb-0">
+        <li>Excel file is processed and validated</li>
+        <li>Employee packages are created for O-Q band employees</li>
+        <li>Employee access credentials are generated</li>
+        <li>Employees can log in to Package Builder using their Employee ID as username</li>
+        <li>Access expires after 30 days or package submission</li>
+      </ol>
+    </div>
+  </div>
+
+  <script>
+    function updateFileName() {
+      const fileInput = document.getElementById('sapFile');
+      const fileInfo = document.getElementById('fileInfo');
+      const fileName = document.getElementById('fileName');
+      const uploadBtn = document.getElementById('uploadBtn');
+      
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        fileName.textContent = file.name + ' (' + (file.size / 1024 / 1024).toFixed(2) + ' MB)';
+        fileInfo.style.display = 'block';
+        uploadBtn.disabled = false;
+      } else {
+        fileInfo.style.display = 'none';
+        uploadBtn.disabled = true;
+      }
+    }
+    
+    // Drag and drop functionality
+    const uploadArea = document.getElementById('uploadArea');
+    
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        const fileInput = document.getElementById('sapFile');
+        fileInput.files = files;
+        updateFileName();
+      }
+    });
+    
+    // Form validation
+    document.getElementById('uploadForm').addEventListener('submit', function(e) {
+      e.preventDefault(); // Prevent normal form submission
+      
+      const fileInput = document.getElementById('sapFile');
+      if (!fileInput.files.length) {
+        alert('Please select a file to upload.');
+        return false;
+      }
+      
+      // Show loading state
+      const uploadBtn = document.getElementById('uploadBtn');
+      uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+      uploadBtn.disabled = true;
+      
+      // Create FormData and submit via AJAX
+      const formData = new FormData();
+      formData.append('sap_file', fileInput.files[0]);
+      
+      fetch('/upload_sap_data', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Show success message
+          const fileInfo = document.getElementById('fileInfo');
+          fileInfo.innerHTML = `
+            <div class="alert alert-success">
+              <i class="fas fa-check-circle"></i> 
+              <strong>Upload Successful!</strong> File "${data.filename}" has been processed successfully.
+            </div>
+          `;
+          fileInfo.style.display = 'block';
+          
+          // Reset form
+          fileInput.value = '';
+          uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Process File';
+          uploadBtn.disabled = true;
+          
+          // Show success notification
+          showNotification('File uploaded successfully!', 'success');
+        } else {
+          // Show error message
+          const fileInfo = document.getElementById('fileInfo');
+          fileInfo.innerHTML = `
+            <div class="alert alert-danger">
+              <i class="fas fa-exclamation-triangle"></i> 
+              <strong>Upload Failed:</strong> ${data.error}
+            </div>
+          `;
+          fileInfo.style.display = 'block';
+          
+          // Reset button
+          uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Process File';
+          uploadBtn.disabled = false;
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        const fileInfo = document.getElementById('fileInfo');
+        fileInfo.innerHTML = `
+          <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle"></i> 
+            <strong>Upload Error:</strong> Failed to upload file. Please try again.
+          </div>
+        `;
+        fileInfo.style.display = 'block';
+        
+        // Reset button
+        uploadBtn.innerHTML = '<i class="fas fa-upload"></i> Process File';
+        uploadBtn.disabled = false;
+      });
+    });
+    
+    // Show notification function
+    function showNotification(message, type) {
+      const notification = document.createElement('div');
+      notification.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+      notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+      notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      `;
+      
+      document.body.appendChild(notification);
+      
+      // Auto-remove after 5 seconds
+      setTimeout(() => {
+        if (notification.parentNode) {
+          notification.remove();
+        }
+      }, 5000);
+    }
+    
+    // Clear all data function
+    function clearAllData() {
+      if (confirm('⚠️ WARNING: This will permanently delete ALL uploaded SAP data, employee packages, and access accounts!\n\nAre you sure you want to continue?')) {
+        fetch('/admin/randwater/clear-uploaded-data', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert('✅ All data cleared successfully!');
+            location.reload();
+          } else {
+            alert('❌ Error: ' + data.error);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('❌ Error clearing data: ' + error.message);
+        });
+      }
+    }
+    
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartHR - Security Settings</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --randwater-primary: #0066CC;
+      --randwater-secondary: #00A3E0;
+      --randwater-accent: #FF6600;
+      --randwater-dark: #003366;
+      --randwater-light: #E6F3FF;
+    }
+    
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      background-color: #f8f9fa;
+      font-size: 0.9rem;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .page-header {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      padding: 2rem 0;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .page-title {
+      margin: 0;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      font-size: 2.2rem;
+    }
+    
+    .branding {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      margin-right: 1rem;
+    }
+    
+    .gosmarthr-logo {
+      max-height: 100px;
+      margin-top: 8px;
+    }
+    
+    .main-section {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .section-header {
+      color: var(--randwater-dark);
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid var(--randwater-light);
+      padding-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .btn-back {
+      background: #6c757d;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-back:hover {
+      background: #5a6268;
+      color: white;
+      text-decoration: none;
+      transform: translateY(-2px);
+    }
+    
+    .btn-save {
+      background: var(--randwater-accent);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-save:hover {
+      background: #ff8533;
+      transform: translateY(-2px);
+    }
+    
+    .btn-reset {
+      background: #6c757d;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-reset:hover {
+      background: #5a6268;
+      transform: translateY(-2px);
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    .form-label {
+      font-weight: 600;
+      color: var(--randwater-dark);
+      margin-bottom: 0.5rem;
+    }
+    
+    .form-control:focus {
+      border-color: var(--randwater-primary);
+      box-shadow: 0 0 0 0.2rem rgba(0, 102, 204, 0.25);
+    }
+    
+    .form-select:focus {
+      border-color: var(--randwater-primary);
+      box-shadow: 0 0 0 0.2rem rgba(0, 102, 204, 0.25);
+    }
+    
+    .security-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+    
+    .status-enabled {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .status-disabled {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .status-warning {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+    
+    .security-card {
+      background: var(--randwater-light);
+      border: 2px solid var(--randwater-secondary);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .security-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .security-card h6 {
+      color: var(--randwater-dark);
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+    
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 60px;
+      height: 34px;
+    }
+    
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 26px;
+      width: 26px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+    
+    .input:checked + .slider {
+      background-color: var(--randwater-primary);
+    }
+    
+    .input:checked + .slider:before {
+      transform: translateX(26px);
+    }
+    
+    .security-level {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1rem;
+    }
+    
+    .security-level .level-indicator {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid #dee2e6;
+    }
+    
+    .level-low {
+      background-color: #dc3545;
+    }
+    
+    .level-medium {
+      background-color: #ffc107;
+    }
+    
+    .level-high {
+      background-color: #28a745;
+    }
+    
+    .level-very-high {
+      background-color: var(--randwater-primary);
+    }
+    
+    .audit-log {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: 1rem;
+      margin-top: 1rem;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    
+    .audit-entry {
+      padding: 0.5rem 0;
+      border-bottom: 1px solid #dee2e6;
+      font-size: 0.85rem;
+    }
+    
+    .audit-entry:last-child {
+      border-bottom: none;
+    }
+    
+    .audit-timestamp {
+      color: #6c757d;
+      font-weight: 600;
+    }
+    
+    .audit-action {
+      color: var(--randwater-primary);
+      font-weight: 600;
+    }
+    
+    .audit-user {
+      color: var(--randwater-dark);
+    }
+    
+    .audit-details {
+      color: #6c757d;
+      font-style: italic;
+    }
+    
+    .help-text {
+      color: #6c757d;
+      font-size: 0.85rem;
+      margin-top: 0.25rem;
+    }
+    
+    .warning-text {
+      color: #856404;
+      background-color: #fff3cd;
+      border: 1px solid #ffeaa7;
+      border-radius: 4px;
+      padding: 0.5rem;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="page-header">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h1 class="page-title">
+            <i class="fas fa-shield-alt"></i>
+            Security Settings
+          </h1>
+          <p class="text-light mb-0">
+            Configure system security, access controls, and audit logging
+          </p>
+        </div>
+        <div class="col-md-4 text-end">
+          <div class="branding">
+            <img src="/static/images/smarthr_logo_white.png" alt="SmartHR Logo" class="gosmarthr-logo">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Navigation -->
+    <div class="mb-4">
+      <a href="{{ url_for('super_admin_dashboard') }}" class="btn-back">
+        <i class="fas fa-arrow-left"></i> Back to Super Admin Dashboard
+      </a>
+    </div>
+
+    <!-- Security Overview -->
+    <div class="main-section">
+      <h5 class="section-header">
+        <i class="fas fa-chart-line"></i> Security Overview
+      </h5>
+      <div class="security-status status-enabled">
+        <i class="fas fa-check-circle"></i>
+        Overall Security Status: EXCELLENT
+      </div>
+      <div class="row">
+        <div class="col-md-3">
+          <div class="security-card text-center">
+            <h6>Session Security</h6>
+            <div class="security-level">
+              <div class="level-indicator level-high"></div>
+              <span>High</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="security-card text-center">
+            <h6>Password Policy</h6>
+            <div class="security-level">
+              <div class="level-indicator level-very-high"></div>
+              <span>Very High</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="security-card text-center">
+            <h6>Access Control</h6>
+            <div class="security-level">
+              <div class="level-indicator level-high"></div>
+              <span>High</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="security-card text-center">
+            <h6>Audit Logging</h6>
+            <div class="security-level">
+              <div class="level-indicator level-medium"></div>
+              <span>Medium</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Session Management -->
+    <div class="main-section">
+      <h5 class="section-header">
+        <i class="fas fa-clock"></i> Session Management
+      </h5>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Session Timeout (minutes)</label>
+            <input type="number" class="form-control" id="sessionTimeout" 
+                   value="{{ security_config.session_timeout }}" min="5" max="480">
+            <div class="help-text">Time before automatic logout due to inactivity</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Maximum Concurrent Sessions</label>
+            <input type="number" class="form-control" id="maxConcurrentSessions" 
+                   value="3" min="1" max="10">
+            <div class="help-text">Maximum number of active sessions per user</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Session Inactivity Warning</label>
+            <input type="number" class="form-control" id="sessionWarning" 
+                   value="5" min="1" max="30">
+            <div class="help-text">Minutes before timeout to show warning</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Force Logout on IP Change</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="forceLogoutIP" checked>
+              <span class="slider"></span>
+            </div>
+            <div class="help-text">Automatically logout user if IP address changes</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Remember Me Duration</label>
+            <select class="form-select" id="rememberMeDuration">
+              <option value="1">1 Day</option>
+              <option value="7" selected>7 Days</option>
+              <option value="30">30 Days</option>
+              <option value="0">Disabled</option>
+            </select>
+            <div class="help-text">How long to remember user login</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Session Encryption</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="sessionEncryption" checked>
+              <span class="slider"></span>
+            </div>
+            <div class="help-text">Encrypt session data for enhanced security</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Password Policy -->
+    <div class="main-section">
+      <h5 class="section-header">
+        <i class="fas fa-key"></i> Password Policy
+      </h5>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Minimum Password Length</label>
+            <input type="number" class="form-control" id="minPasswordLength" 
+                   value="8" min="6" max="20">
+            <div class="help-text">Minimum number of characters required</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password Expiry (days)</label>
+            <input type="number" class="form-control" id="passwordExpiry" 
+                   value="{{ security_config.password_expiry }}" min="30" max="365">
+            <div class="help-text">Days before password must be changed</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password History</label>
+            <input type="number" class="form-control" id="passwordHistory" 
+                   value="5" min="0" max="10">
+            <div class="help-text">Number of previous passwords to remember</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Require Uppercase Letters</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="requireUppercase" checked>
+              <span class="slider"></span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Require Lowercase Letters</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="requireLowercase" checked>
+              <span class="slider"></span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Require Numbers</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="requireNumbers" checked>
+              <span class="slider"></span>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Require Special Characters</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="requireSpecial" checked>
+              <span class="slider"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Access Control -->
+    <div class="main-section">
+      <h5 class="section-header">
+        <i class="fas fa-lock"></i> Access Control
+      </h5>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Maximum Login Attempts</label>
+            <input type="number" class="form-control" id="maxLoginAttempts" 
+                   value="{{ security_config.max_login_attempts }}" min="3" max="10">
+            <div class="help-text">Failed attempts before account lockout</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Account Lockout Duration (minutes)</label>
+            <input type="number" class="form-control" id="lockoutDuration" 
+                   value="{{ security_config.account_lockout_duration }}" min="5" max="1440">
+            <div class="help-text">Time account remains locked after failed attempts</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Require Two-Factor Authentication</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="require2FA" {% if security_config.require_2fa %}checked{% endif %}>
+              <span class="slider"></span>
+            </div>
+            <div class="help-text">Enforce 2FA for all admin accounts</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">IP Whitelist</label>
+            <textarea class="form-control" id="ipWhitelist" rows="4" 
+                      placeholder="192.168.1.0/24&#10;10.0.0.0/8&#10;172.16.0.0/12"></textarea>
+            <div class="help-text">Allowed IP ranges (one per line, CIDR notation)</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Geographic Restrictions</label>
+            <select class="form-select" id="geoRestrictions">
+              <option value="none">No Restrictions</option>
+              <option value="south_africa" selected>South Africa Only</option>
+              <option value="office_only">Office Locations Only</option>
+              <option value="custom">Custom Locations</option>
+            </select>
+            <div class="help-text">Restrict access by geographic location</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Time-based Access</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="timeBasedAccess">
+              <span class="slider"></span>
+            </div>
+            <div class="help-text">Restrict access to business hours only</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Audit & Logging -->
+    <div class="main-section">
+      <h5 class="section-header">
+        <i class="fas fa-clipboard-list"></i> Audit & Logging
+      </h5>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Audit Logging</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="auditLogging" {% if security_config.audit_logging %}checked{% endif %}>
+              <span class="slider"></span>
+            </div>
+            <div class="help-text">Log all user actions and system events</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Log Retention Period (days)</label>
+            <input type="number" class="form-control" id="logRetention" 
+                   value="90" min="30" max="1095">
+            <div class="help-text">How long to keep audit logs</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Log Level</label>
+            <select class="form-select" id="logLevel">
+              <option value="error">Error Only</option>
+              <option value="warning">Warning & Error</option>
+              <option value="info" selected>Info, Warning & Error</option>
+              <option value="debug">Debug (All)</option>
+            </select>
+            <div class="help-text">Level of detail in audit logs</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">Real-time Monitoring</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="realTimeMonitoring" checked>
+              <span class="slider"></span>
+            </div>
+            <div class="help-text">Monitor system activity in real-time</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Alert on Suspicious Activity</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="suspiciousAlerts" checked>
+              <span class="slider"></span>
+            </div>
+            <div class="help-text">Send alerts for unusual login patterns</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Backup Audit Logs</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="backupAuditLogs" checked>
+              <span class="slider"></span>
+            </div>
+            <div class="help-text">Automatically backup audit logs</div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Recent Audit Log -->
+      <div class="audit-log">
+        <h6 class="mb-3">Recent Audit Entries</h6>
+        <div class="audit-entry">
+          <span class="audit-timestamp">2024-08-19 14:35:22</span> | 
+          <span class="audit-action">SECURITY_SETTINGS_UPDATED</span> | 
+          <span class="audit-user">SuperAdmin</span> | 
+          <span class="audit-details">Updated session timeout from 30 to 45 minutes</span>
+        </div>
+        <div class="audit-entry">
+          <span class="audit-timestamp">2024-08-19 14:30:15</span> | 
+          <span class="audit-action">USER_LOGIN</span> | 
+          <span class="audit-user">RandWaterAdmin</span> | 
+          <span class="audit-details">Successful login from 192.168.1.100</span>
+        </div>
+        <div class="audit-entry">
+          <span class="audit-timestamp">2024-08-19 14:25:08</span> | 
+          <span class="audit-action">FAILED_LOGIN_ATTEMPT</span> | 
+          <span class="audit-user">Unknown</span> | 
+          <span class="audit-details">Failed login attempt for username 'admin' from 203.0.113.45</span>
+        </div>
+        <div class="audit-entry">
+          <span class="audit-timestamp">2024-08-19 14:20:33</span> | 
+          <span class="audit-action">CALCULATION_TABLES_UPDATED</span> | 
+          <span class="audit-user">SuperAdmin</span> | 
+          <span class="audit-details">Updated medical aid rates for Rand Water Option A</span>
+        </div>
+        <div class="audit-entry">
+          <span class="audit-timestamp">2024-08-19 14:15:17</span> | 
+          <span class="audit-action">USER_LOGOUT</span> | 
+          <span class="audit-user">RandWaterAdmin2</span> | 
+          <span class="audit-details">User logged out after 2 hours of activity</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advanced Security -->
+    <div class="main-section">
+      <h5 class="section-header">
+        <i class="fas fa-cogs"></i> Advanced Security
+      </h5>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">API Rate Limiting</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="apiRateLimiting" checked>
+              <span class="slider"></span>
+            </div>
+            <div class="help-text">Limit API requests to prevent abuse</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Rate Limit (requests per minute)</label>
+            <input type="number" class="form-control" id="rateLimit" 
+                   value="60" min="10" max="1000">
+            <div class="help-text">Maximum API requests per minute per user</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">CSRF Protection</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="csrfProtection" checked>
+              <span class="slider"></span>
+            </div>
+            <div class="help-text">Protect against Cross-Site Request Forgery</div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="form-group">
+            <label class="form-label">SQL Injection Protection</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="sqlInjectionProtection" checked>
+              <span class="slider"></span>
+            </div>
+            <div class="help-text">Enhanced protection against SQL injection attacks</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">XSS Protection</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="xssProtection" checked>
+              <span class="slider"></span>
+            </div>
+            <div class="help-text">Protect against Cross-Site Scripting attacks</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Content Security Policy</label>
+            <div class="toggle-switch">
+              <input type="checkbox" id="contentSecurityPolicy" checked>
+              <span class="slider"></span>
+            </div>
+            <div class="help-text">Enforce strict content security policies</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="warning-text">
+        <i class="fas fa-exclamation-triangle"></i>
+        <strong>Warning:</strong> Advanced security settings should only be modified by experienced system administrators. 
+        Incorrect settings may affect system functionality or user access.
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="main-section text-center">
+      <button class="btn btn-save me-3" onclick="saveSecuritySettings()">
+        <i class="fas fa-save"></i> Save Security Settings
+      </button>
+      <button class="btn btn-reset" onclick="resetSecuritySettings()">
+        <i class="fas fa-undo"></i> Reset to Defaults
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // Save security settings
+    function saveSecuritySettings() {
+      // Collect all form values
+      const settings = {
+        session_timeout: document.getElementById('sessionTimeout').value,
+        max_concurrent_sessions: document.getElementById('maxConcurrentSessions').value,
+        session_warning: document.getElementById('sessionWarning').value,
+        force_logout_ip: document.getElementById('forceLogoutIP').checked,
+        remember_me_duration: document.getElementById('rememberMeDuration').value,
+        session_encryption: document.getElementById('sessionEncryption').checked,
+        min_password_length: document.getElementById('minPasswordLength').value,
+        password_expiry: document.getElementById('passwordExpiry').value,
+        password_history: document.getElementById('passwordHistory').value,
+        require_uppercase: document.getElementById('requireUppercase').checked,
+        require_lowercase: document.getElementById('requireLowercase').checked,
+        require_numbers: document.getElementById('requireNumbers').checked,
+        require_special: document.getElementById('requireSpecial').checked,
+        max_login_attempts: document.getElementById('maxLoginAttempts').value,
+        lockout_duration: document.getElementById('lockoutDuration').value,
+        require_2fa: document.getElementById('require2FA').checked,
+        ip_whitelist: document.getElementById('ipWhitelist').value,
+        geo_restrictions: document.getElementById('geoRestrictions').value,
+        time_based_access: document.getElementById('timeBasedAccess').checked,
+        audit_logging: document.getElementById('auditLogging').checked,
+        log_retention: document.getElementById('logRetention').value,
+        log_level: document.getElementById('logLevel').value,
+        real_time_monitoring: document.getElementById('realTimeMonitoring').checked,
+        suspicious_alerts: document.getElementById('suspiciousAlerts').checked,
+        backup_audit_logs: document.getElementById('backupAuditLogs').checked,
+        api_rate_limiting: document.getElementById('apiRateLimiting').checked,
+        rate_limit: document.getElementById('rateLimit').value,
+        csrf_protection: document.getElementById('csrfProtection').checked,
+        sql_injection_protection: document.getElementById('sqlInjectionProtection').checked,
+        xss_protection: document.getElementById('xssProtection').checked,
+        content_security_policy: document.getElementById('contentSecurityPolicy').checked
+      };
+      
+      // In production, this would send to the server
+      console.log('Saving security settings:', settings);
+      alert('Security settings saved successfully!');
+    }
+    
+    // Reset security settings
+    function resetSecuritySettings() {
+      if (confirm('Are you sure you want to reset all security settings to default values? This action cannot be undone.')) {
+        // Reset form values to defaults
+        document.getElementById('sessionTimeout').value = 30;
+        document.getElementById('maxConcurrentSessions').value = 3;
+        document.getElementById('sessionWarning').value = 5;
+        document.getElementById('forceLogoutIP').checked = true;
+        document.getElementById('rememberMeDuration').value = 7;
+        document.getElementById('sessionEncryption').checked = true;
+        document.getElementById('minPasswordLength').value = 8;
+        document.getElementById('passwordExpiry').value = 90;
+        document.getElementById('passwordHistory').value = 5;
+        document.getElementById('requireUppercase').checked = true;
+        document.getElementById('requireLowercase').checked = true;
+        document.getElementById('requireNumbers').checked = true;
+        document.getElementById('requireSpecial').checked = true;
+        document.getElementById('maxLoginAttempts').value = 3;
+        document.getElementById('lockoutDuration').value = 15;
+        document.getElementById('require2FA').checked = false;
+        document.getElementById('ipWhitelist').value = '';
+        document.getElementById('geoRestrictions').value = 'south_africa';
+        document.getElementById('timeBasedAccess').checked = false;
+        document.getElementById('auditLogging').checked = true;
+        document.getElementById('logRetention').value = 90;
+        document.getElementById('logLevel').value = 'info';
+        document.getElementById('realTimeMonitoring').checked = true;
+        document.getElementById('suspiciousAlerts').checked = true;
+        document.getElementById('backupAuditLogs').checked = true;
+        document.getElementById('apiRateLimiting').checked = true;
+        document.getElementById('rateLimit').value = 60;
+        document.getElementById('csrfProtection').checked = true;
+        document.getElementById('sqlInjectionProtection').checked = true;
+        document.getElementById('xssProtection').checked = true;
+        document.getElementById('contentSecurityPolicy').checked = true;
+        
+        alert('Security settings reset to defaults!');
+      }
+    }
+    
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('Security Settings loaded');
+      
+      // Add event listeners for real-time validation
+      document.getElementById('sessionTimeout').addEventListener('change', function() {
+        const value = parseInt(this.value);
+        if (value < 5) {
+          this.value = 5;
+          alert('Session timeout cannot be less than 5 minutes');
+        } else if (value > 480) {
+          this.value = 480;
+          alert('Session timeout cannot be more than 480 minutes (8 hours)');
+        }
+      });
+      
+      document.getElementById('minPasswordLength').addEventListener('change', function() {
+        const value = parseInt(this.value);
+        if (value < 6) {
+          this.value = 6;
+          alert('Minimum password length cannot be less than 6 characters');
+        } else if (value > 20) {
+          this.value = 20;
+          alert('Minimum password length cannot be more than 20 characters');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

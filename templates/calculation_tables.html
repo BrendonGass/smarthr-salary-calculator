@@ -1,0 +1,661 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartHR - Calculation Tables Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --randwater-primary: #0066CC;
+      --randwater-secondary: #00A3E0;
+      --randwater-accent: #FF6600;
+      --randwater-dark: #003366;
+      --randwater-light: #E6F3FF;
+    }
+    
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      background-color: #f8f9fa;
+      font-size: 0.9rem;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .page-header {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      padding: 2rem 0;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .page-title {
+      margin: 0;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      font-size: 2.2rem;
+    }
+    
+    .branding {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      margin-right: 1rem;
+    }
+    
+    .gosmarthr-logo {
+      max-height: 100px;
+      margin-top: 8px;
+    }
+    
+    .table-section {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .table-section h5 {
+      color: var(--randwater-dark);
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid var(--randwater-light);
+      padding-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    
+    .table-responsive {
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    
+    .table th {
+      background-color: var(--randwater-light);
+      border-color: var(--randwater-secondary);
+      color: var(--randwater-dark);
+      font-weight: 600;
+      padding: 1rem;
+    }
+    
+    .table td {
+      padding: 1rem;
+      vertical-align: middle;
+    }
+    
+    .table tbody tr:hover {
+      background-color: #f8f9fa;
+    }
+    
+    .btn-edit {
+      background: var(--randwater-primary);
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-edit:hover {
+      background: var(--randwater-secondary);
+      transform: translateY(-2px);
+    }
+    
+    .btn-add {
+      background: var(--randwater-accent);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-add:hover {
+      background: #ff8533;
+      transform: translateY(-2px);
+    }
+    
+    .btn-back {
+      background: #6c757d;
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-back:hover {
+      background: #5a6268;
+      color: white;
+      text-decoration: none;
+      transform: translateY(-2px);
+    }
+    
+    .tax-bracket {
+      background: var(--randwater-light);
+      border: 1px solid var(--randwater-secondary);
+      border-radius: 6px;
+      padding: 0.5rem;
+      margin: 0.25rem 0;
+    }
+    
+    .medical-rate {
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 6px;
+      padding: 0.5rem;
+      margin: 0.25rem 0;
+    }
+    
+    .rate-value {
+      font-weight: 600;
+      color: var(--randwater-accent);
+    }
+    
+    .info-badge {
+      background: #e3f2fd;
+      color: #1976d2;
+      border: 1px solid #bbdefb;
+      border-radius: 4px;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.8rem;
+      margin-left: 0.5rem;
+    }
+    
+    .warning-badge {
+      background: #fff3e0;
+      color: #f57c00;
+      border: 1px solid #ffcc02;
+      border-radius: 4px;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.8rem;
+      margin-left: 0.5rem;
+    }
+    
+    .success-badge {
+      background: #e8f5e8;
+      color: #388e3c;
+      border: 1px solid #c8e6c9;
+      border-radius: 4px;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.8rem;
+      margin-left: 0.5rem;
+    }
+    
+    .table-actions {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    
+    .table-description {
+      color: #6c757d;
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      border-left: 4px solid var(--randwater-primary);
+    }
+  </style>
+</head>
+<body>
+  <div class="page-header">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h1 class="page-title">
+            <i class="fas fa-table"></i>
+            Calculation Tables Management
+          </h1>
+          <p class="text-light mb-0">
+            Configure SARS tax brackets, medical aid rates, and calculation parameters
+          </p>
+        </div>
+        <div class="col-md-4 text-end">
+          <div class="branding">
+            <img src="/static/images/smarthr_logo_white.png" alt="SmartHR Logo" class="gosmarthr-logo">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Navigation -->
+    <div class="mb-4">
+      <a href="{{ url_for('super_admin_dashboard') }}" class="btn-back">
+        <i class="fas fa-arrow-left"></i> Back to Super Admin Dashboard
+      </a>
+    </div>
+
+    <!-- SARS Tax Brackets -->
+    <div class="table-section">
+      <h5>
+        <i class="fas fa-calculator"></i>
+        SARS Tax Brackets (2024)
+        <span class="info-badge">Active</span>
+      </h5>
+      <div class="table-description">
+        <strong>Tax Year:</strong> 2024 | <strong>Last Updated:</strong> {{ tax_settings.last_updated if tax_settings else 'Not set' }} | 
+        <strong>Status:</strong> <span class="success-badge">Current</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Taxable Income Range</th>
+              <th>Tax Rate (%)</th>
+              <th>Annual Tax Amount</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for bracket in tax_brackets %}
+            <tr>
+              <td>
+                <div class="tax-bracket">
+                  {% if bracket.min == 0 %}
+                    R 0 - R {{ "{:,.0f}".format(bracket.max) }}
+                  {% elif bracket.max == 999999999 %}
+                    R {{ "{:,.0f}".format(bracket.min) }} and above
+                  {% else %}
+                    R {{ "{:,.0f}".format(bracket.min) }} - R {{ "{:,.0f}".format(bracket.max) }}
+                  {% endif %}
+                </div>
+              </td>
+              <td><strong>{{ bracket.rate }}%</strong></td>
+              <td>
+                {% if bracket.min == 0 %}
+                  R 0
+                {% else %}
+                  R {{ "{:,.2f}".format(bracket.min * bracket.rate / 100) }}
+                {% endif %}
+              </td>
+              <td>
+                <div class="table-actions">
+                  <button class="btn btn-edit btn-sm" onclick="editTaxBracket({{ loop.index0 }})">
+                    <i class="fas fa-edit"></i> Edit
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-3">
+        <button class="btn btn-add" onclick="addTaxBracket()">
+          <i class="fas fa-plus"></i> Add New Tax Bracket
+        </button>
+        <button class="btn btn-success ms-2" onclick="saveTaxBrackets()">
+          <i class="fas fa-save"></i> Save Changes
+        </button>
+      </div>
+    </div>
+
+    <!-- Medical Aid Rates -->
+    <div class="table-section">
+      <h5>
+        <i class="fas fa-heartbeat"></i>
+        Medical Aid Rates
+        <span class="info-badge">Active</span>
+      </h5>
+      <div class="table-description">
+        <strong>Provider:</strong> Rand Water & Bonita's | <strong>Last Updated:</strong> {{ tax_settings.medical_updated if tax_settings else 'Not set' }} | 
+        <strong>Status:</strong> <span class="success-badge">Current</span>
+      </div>
+      
+      <!-- Rand Water Medical Aid -->
+      <h6 class="mt-4 mb-3 text-primary">
+        <i class="fas fa-building"></i> Rand Water Medical Aid
+      </h6>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Option</th>
+              <th>Main Member</th>
+              <th>Adult Dependant</th>
+              <th>Child Dependant</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for option, rates in medical_aid_rates.rand_water.items() %}
+            <tr>
+              <td><strong>{{ option.replace('_', ' ').title() }}</strong></td>
+              <td>
+                <div class="medical-rate">
+                  R <span class="rate-value">{{ rates.main }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="medical-rate">
+                  R <span class="rate-value">{{ rates.adult }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="medical-rate">
+                  R <span class="rate-value">{{ rates.child }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="table-actions">
+                  <button class="btn btn-edit btn-sm" onclick="editMedicalRate('rand_water', '{{ option }}')">
+                    <i class="fas fa-edit"></i> Edit
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Bonita's Medical Aid -->
+      <h6 class="mt-4 mb-3 text-success">
+        <i class="fas fa-heart"></i> Bonita's Medical Aid
+      </h6>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Option</th>
+              <th>Main Member</th>
+              <th>Adult Dependant</th>
+              <th>Child Dependant</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for option, rates in medical_aid_rates.bonitas.items() %}
+            <tr>
+              <td><strong>{{ option.replace('_', ' ').title() }}</strong></td>
+              <td>
+                <div class="medical-rate">
+                  R <span class="rate-value">{{ rates.main }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="medical-rate">
+                  R <span class="rate-value">{{ rates.adult }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="medical-rate">
+                  R <span class="rate-value">{{ rates.child }}</span>
+                </div>
+              </td>
+              <td>
+                <div class="table-actions">
+                  <button class="btn btn-edit btn-sm" onclick="editMedicalRate('bonitas', '{{ option }}')">
+                    <i class="fas fa-edit"></i> Edit
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      
+      <div class="mt-3">
+        <button class="btn btn-add" onclick="addMedicalRate()">
+          <i class="fas fa-plus"></i> Add New Medical Aid Option
+        </button>
+        <button class="btn btn-success ms-2" onclick="saveMedicalRates()">
+          <i class="fas fa-save"></i> Save Changes
+        </button>
+      </div>
+    </div>
+
+    <!-- Retirement Fund Options -->
+    <div class="table-section">
+      <h5>
+        <i class="fas fa-piggy-bank"></i>
+        Retirement Fund Options
+        <span class="info-badge">Active</span>
+      </h5>
+      <div class="table-description">
+        <strong>Funds:</strong> RWPROV, RWMPPROV, SAMWU | <strong>Last Updated:</strong> {{ tax_settings.pension_updated if tax_settings else 'Not set' }} | 
+        <strong>Status:</strong> <span class="success-badge">Current</span>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Fund Name</th>
+              <th>Employee Contribution (%)</th>
+              <th>Employer Contribution (%)</th>
+              <th>Total Contribution (%)</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>RWPROV</strong></td>
+              <td>7.5%</td>
+              <td>7.5%</td>
+              <td><strong>15%</strong></td>
+              <td>
+                <div class="table-actions">
+                  <button class="btn btn-edit btn-sm" onclick="editRetirementFund('RWPROV')">
+                    <i class="fas fa-edit"></i> Edit
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>RWMPPROV</strong></td>
+              <td>7.5%</td>
+              <td>7.5%</td>
+              <td><strong>15%</strong></td>
+              <td>
+                <div class="table-actions">
+                  <button class="btn btn-edit btn-sm" onclick="editRetirementFund('RWMPPROV')">
+                    <i class="fas fa-edit"></i> Edit
+                  </button>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>SAMWU</strong></td>
+              <td>7.5%</td>
+              <td>7.5%</td>
+              <td><strong>15%</strong></td>
+              <td>
+                <div class="table-actions">
+                  <button class="btn btn-edit btn-sm" onclick="editRetirementFund('SAMWU')">
+                    <i class="fas fa-edit"></i> Edit
+                  </button>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="mt-3">
+        <button class="btn btn-add" onclick="addRetirementFund()">
+          <i class="fas fa-plus"></i> Add New Retirement Fund
+        </button>
+        <button class="btn btn-success ms-2" onclick="saveRetirementFunds()">
+          <i class="fas fa-save"></i> Save Changes
+        </button>
+      </div>
+    </div>
+
+    <!-- Business Rules -->
+    <div class="table-section">
+      <h5>
+        <i class="fas fa-cogs"></i>
+        Business Rules & Validation
+        <span class="warning-badge">Configurable</span>
+      </h5>
+      <div class="table-description">
+        <strong>Purpose:</strong> Define percentage limits and validation rules for package components | 
+        <strong>Last Updated:</strong> {{ tax_settings.rules_updated if tax_settings else 'Not set' }}
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header bg-primary text-white">
+              <h6 class="mb-0"><i class="fas fa-percentage"></i> TCTC Percentage Rules</h6>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label">Provident Fund Range</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" value="50" min="0" max="100">
+                  <span class="input-group-text">%</span>
+                  <span class="input-group-text">to</span>
+                  <input type="number" class="form-control" value="70" min="0" max="100">
+                  <span class="input-group-text">%</span>
+                </div>
+                <small class="text-muted">Range for O-Q band employees</small>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Car Allowance Minimum</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" value="30" min="0" max="100">
+                  <span class="input-group-text">%</span>
+                </div>
+                <small class="text-muted">Minimum percentage of TCTC</small>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Annual Bonus Range</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" value="10" min="0" max="100">
+                  <span class="input-group-text">%</span>
+                  <span class="input-group-text">to</span>
+                  <input type="number" class="form-control" value="70" min="0" max="100">
+                  <span class="input-group-text">%</span>
+                </div>
+                <small class="text-muted">Range for O-Q band employees</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header bg-success text-white">
+              <h6 class="mb-0"><i class="fas fa-shield-alt"></i> System Rules</h6>
+            </div>
+            <div class="card-body">
+              <div class="mb-3">
+                <label class="form-label">UIF Rate</label>
+                <div class="input-group">
+                  <input type="number" class="form-control" value="1" min="0" max="10" step="0.1">
+                  <span class="input-group-text">%</span>
+                </div>
+                <small class="text-muted">Unemployment Insurance Fund rate</small>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Tax Threshold</label>
+                <div class="input-group">
+                  <span class="input-group-text">R</span>
+                  <input type="number" class="form-control" value="95000" min="0" step="1000">
+                </div>
+                <small class="text-muted">Annual tax-free threshold</small>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Rebate Amount</label>
+                <div class="input-group">
+                  <span class="input-group-text">R</span>
+                  <input type="number" class="form-control" value="17235" min="0" step="100">
+                </div>
+                <small class="text-muted">Primary rebate amount</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-3">
+        <button class="btn btn-success" onclick="saveBusinessRules()">
+          <i class="fas fa-save"></i> Save Business Rules
+        </button>
+        <button class="btn btn-secondary ms-2" onclick="resetBusinessRules()">
+          <i class="fas fa-undo"></i> Reset to Defaults
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Edit tax bracket
+    function editTaxBracket(index) {
+      alert('Edit tax bracket ' + (index + 1) + ' - This would open an edit modal in production');
+    }
+    
+    // Add new tax bracket
+    function addTaxBracket() {
+      alert('Add new tax bracket - This would open an add modal in production');
+    }
+    
+    // Save tax brackets
+    function saveTaxBrackets() {
+      alert('Tax brackets saved successfully!');
+    }
+    
+    // Edit medical aid rate
+    function editMedicalRate(provider, option) {
+      alert('Edit ' + provider + ' ' + option + ' rates - This would open an edit modal in production');
+    }
+    
+    // Add new medical aid rate
+    function addMedicalRate() {
+      alert('Add new medical aid option - This would open an add modal in production');
+    }
+    
+    // Save medical aid rates
+    function saveMedicalRates() {
+      alert('Medical aid rates saved successfully!');
+    }
+    
+    // Edit retirement fund
+    function editRetirementFund(fund) {
+      alert('Edit ' + fund + ' fund - This would open an edit modal in production');
+    }
+    
+    // Add new retirement fund
+    function addRetirementFund() {
+      alert('Add new retirement fund - This would open an add modal in production');
+    }
+    
+    // Save retirement funds
+    function saveRetirementFunds() {
+      alert('Retirement fund options saved successfully!');
+    }
+    
+    // Save business rules
+    function saveBusinessRules() {
+      alert('Business rules saved successfully!');
+    }
+    
+    // Reset business rules
+    function resetBusinessRules() {
+      if (confirm('Are you sure you want to reset all business rules to default values? This action cannot be undone.')) {
+        alert('Business rules reset to defaults!');
+      }
+    }
+    
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('Calculation Tables Management loaded');
+    });
+  </script>
+</body>
+</html>

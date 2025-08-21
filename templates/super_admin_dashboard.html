@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SmartHR - Super Admin Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --randwater-primary: #0066CC;
+      --randwater-secondary: #00A3E0;
+      --randwater-accent: #FF6600;
+      --randwater-dark: #003366;
+      --randwater-light: #E6F3FF;
+    }
+    
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      background-color: #f8f9fa;
+      font-size: 0.9rem;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .dashboard-header {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      padding: 2rem 0;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .dashboard-title {
+      margin: 0;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      font-size: 2.2rem;
+    }
+    
+    .system-health {
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    
+    .health-excellent {
+      background: rgba(40, 167, 69, 0.2);
+      color: #28a745;
+      border: 1px solid rgba(40, 167, 69, 0.3);
+    }
+    
+    .health-good {
+      background: rgba(255, 193, 7, 0.2);
+      color: #ffc107;
+      border: 1px solid rgba(255, 193, 7, 0.3);
+    }
+    
+    .health-warning {
+      background: rgba(220, 53, 69, 0.2);
+      color: #dc3545;
+      border: 1px solid rgba(220, 53, 69, 0.3);
+    }
+    
+    .branding {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      margin-right: 1rem;
+    }
+    
+    .gosmarthr-logo {
+      max-height: 100px;
+      margin-top: 8px;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      border-left: 4px solid var(--randwater-primary);
+      transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .stat-card h3 {
+      color: var(--randwater-accent);
+      font-size: 2.5rem;
+      font-weight: 700;
+      margin: 0;
+    }
+    
+    .stat-card .label {
+      color: var(--randwater-dark);
+      font-size: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+    
+    .stat-card .subtitle {
+      color: #6c757d;
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+    
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    
+    .feature-card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      text-align: center;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+    
+    .feature-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--randwater-primary);
+    }
+    
+    .feature-card .icon {
+      font-size: 3.5rem;
+      color: var(--randwater-accent);
+      margin-bottom: 1rem;
+    }
+    
+    .feature-card h4 {
+      color: var(--randwater-dark);
+      margin-bottom: 1rem;
+      font-weight: 600;
+    }
+    
+    .feature-card p {
+      color: #6c757d;
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    
+    .btn-feature {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem 2rem;
+      font-weight: 600;
+      color: white;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-feature:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(0, 102, 204, 0.3);
+      color: white;
+    }
+    
+    .quick-actions {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .quick-actions h5 {
+      color: var(--randwater-dark);
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid var(--randwater-light);
+      padding-bottom: 0.5rem;
+    }
+    
+    .action-buttons {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    
+    .btn-action {
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-action:hover {
+      transform: translateY(-2px);
+      text-decoration: none;
+    }
+    
+    .btn-primary {
+      background: var(--randwater-primary);
+      color: white;
+      border: none;
+    }
+    
+    .btn-success {
+      background: #28a745;
+      color: white;
+      border: none;
+    }
+    
+    .btn-warning {
+      background: #ffc107;
+      color: #212529;
+      border: none;
+    }
+    
+    .btn-info {
+      background: #17a2b8;
+      color: white;
+      border: none;
+    }
+    
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+      border: none;
+    }
+    
+    .recent-activity {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .recent-activity h5 {
+      color: var(--randwater-dark);
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid var(--randwater-light);
+      padding-bottom: 0.5rem;
+    }
+    
+    .activity-item {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .activity-item:last-child {
+      border-bottom: none;
+    }
+    
+    .activity-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+      color: white;
+    }
+    
+    .activity-icon.login {
+      background: var(--randwater-primary);
+    }
+    
+    .activity-icon.config {
+      background: var(--randwater-accent);
+    }
+    
+    .activity-icon.security {
+      background: #dc3545;
+    }
+    
+    .activity-icon.user {
+      background: #28a745;
+    }
+    
+    .activity-content {
+      flex: 1;
+    }
+    
+    .activity-title {
+      font-weight: 600;
+      color: var(--randwater-dark);
+      margin: 0;
+    }
+    
+    .activity-time {
+      color: #6c757d;
+      font-size: 0.85rem;
+      margin: 0;
+    }
+    
+    .system-status {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .system-status h5 {
+      color: var(--randwater-dark);
+      margin-bottom: 1.5rem;
+      border-bottom: 2px solid var(--randwater-light);
+      padding-bottom: 0.5rem;
+    }
+    
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 0;
+      border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .status-item:last-child {
+      border-bottom: none;
+    }
+    
+    .status-label {
+      font-weight: 600;
+      color: var(--randwater-dark);
+    }
+    
+    .status-value {
+      font-weight: 600;
+    }
+    
+    .status-ok {
+      color: #28a745;
+    }
+    
+    .status-warning {
+      color: #ffc107;
+    }
+    
+    .status-error {
+      color: #dc3545;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard-header">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h1 class="dashboard-title">
+            <i class="fas fa-cogs"></i>
+            System Configuration Dashboard
+          </h1>
+          <p class="text-light mb-0">
+            Complete system administration and configuration management
+          </p>
+          <div class="mt-3">
+            <span class="system-health health-excellent">
+              <i class="fas fa-check-circle"></i> System Health: {{ system_health }}
+            </span>
+            <span class="ms-3 text-light">
+              <i class="fas fa-code-branch"></i> Version {{ stats.system_version }}
+            </span>
+          </div>
+        </div>
+        <div class="col-md-4 text-end">
+          <div class="branding">
+            <img src="/static/images/smarthr_logo_white.png" alt="SmartHR Logo" class="gosmarthr-logo">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Statistics Overview -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>{{ stats.total_randwater_admins }}</h3>
+        <div class="label">Randwater Admins</div>
+        <div class="subtitle">Active system administrators</div>
+      </div>
+      <div class="stat-card">
+        <h3>{{ stats.total_employees }}</h3>
+        <div class="label">Total Employees</div>
+        <div class="subtitle">In the system</div>
+      </div>
+      <div class="stat-card">
+        <h3>{{ stats.total_packages }}</h3>
+        <div class="label">Total Packages</div>
+        <div class="subtitle">Created and managed</div>
+      </div>
+      <div class="stat-card">
+        <h3>{{ stats.system_version }}</h3>
+        <div class="label">System Version</div>
+        <div class="subtitle">Current release</div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+      <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+      <div class="action-buttons">
+        <a href="{{ url_for('calculation_tables') }}" class="btn btn-action btn-primary">
+          <i class="fas fa-table"></i> Manage Calculation Tables
+        </a>
+        <a href="{{ url_for('user_management') }}" class="btn btn-action btn-success">
+          <i class="fas fa-users-cog"></i> User Management
+        </a>
+        <a href="{{ url_for('security_settings') }}" class="btn btn-action btn-warning">
+          <i class="fas fa-shield-alt"></i> Security Settings
+        </a>
+        <a href="{{ url_for('randwater_admin_panel') }}" class="btn btn-action btn-info">
+          <i class="fas fa-arrow-left"></i> Back to Randwater Admin
+        </a>
+        <a href="{{ url_for('super_admin_logout') }}" class="btn btn-action btn-danger">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Features Grid -->
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="icon">
+          <i class="fas fa-table"></i>
+        </div>
+        <h4>Calculation Tables</h4>
+        <p>Manage SARS tax brackets, medical aid rates, retirement fund options, and other calculation parameters that drive the salary computations.</p>
+        <a href="{{ url_for('calculation_tables') }}" class="btn-feature">
+          <i class="fas fa-cog"></i> Configure Tables
+        </a>
+      </div>
+      
+      <div class="feature-card">
+        <div class="icon">
+          <i class="fas fa-users-cog"></i>
+        </div>
+        <h4>User Management</h4>
+        <p>Create, modify, and manage Randwater admin users. Set permissions, monitor access, and control system access levels.</p>
+        <a href="{{ url_for('user_management') }}" class="btn-feature">
+          <i class="fas fa-users"></i> Manage Users
+        </a>
+      </div>
+      
+      <div class="feature-card">
+        <div class="icon">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <h4>Security Settings</h4>
+        <p>Configure system security parameters including session timeouts, password policies, audit logging, and access controls.</p>
+        <a href="{{ url_for('security_settings') }}" class="btn-feature">
+          <i class="fas fa-lock"></i> Security Config
+        </a>
+      </div>
+      
+      <div class="feature-card">
+        <div class="icon">
+          <i class="fas fa-database"></i>
+        </div>
+        <h4>System Backup</h4>
+        <p>Create and manage system backups, export data, and maintain system integrity through regular maintenance procedures.</p>
+        <a href="#" class="btn-feature" onclick="alert('Backup functionality coming soon!')">
+          <i class="fas fa-download"></i> Backup System
+        </a>
+      </div>
+      
+      <div class="feature-card">
+        <div class="icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <h4>System Analytics</h4>
+        <p>View system usage statistics, performance metrics, and user activity reports to optimize system operations.</p>
+        <a href="#" class="btn-feature" onclick="alert('Analytics dashboard coming soon!')">
+          <i class="fas fa-chart-bar"></i> View Analytics
+        </a>
+      </div>
+      
+      <div class="feature-card">
+        <div class="icon">
+          <i class="fas fa-tools"></i>
+        </div>
+        <h4>System Maintenance</h4>
+        <p>Perform system maintenance tasks, clear caches, optimize performance, and troubleshoot system issues.</p>
+        <a href="#" class="btn-feature" onclick="alert('Maintenance tools coming soon!')">
+          <i class="fas fa-wrench"></i> Maintenance
+        </a>
+      </div>
+      
+      <div class="feature-card">
+        <div class="icon">
+          <i class="fas fa-envelope"></i>
+        </div>
+        <h4>Email Management</h4>
+        <p>View email logs, track email operations, download audit reports, and monitor email system performance.</p>
+        <a href="{{ url_for('email_logs') }}" class="btn-feature">
+          <i class="fas fa-list"></i> View Email Logs
+        </a>
+      </div>
+      
+      <div class="feature-card">
+        <div class="icon">
+          <i class="fas fa-server"></i>
+        </div>
+        <h4>SMTP Configuration</h4>
+        <p>Configure email server settings, test SMTP connections, and manage email delivery parameters.</p>
+        <a href="{{ url_for('smtp_config_management') }}" class="btn-feature">
+          <i class="fas fa-cog"></i> Configure SMTP
+        </a>
+      </div>
+    </div>
+
+    <!-- System Status -->
+    <div class="system-status">
+      <h5><i class="fas fa-heartbeat"></i> System Status</h5>
+      <div class="status-item">
+        <span class="status-label">Database Connection</span>
+        <span class="status-value status-ok">Connected</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">File System</span>
+        <span class="status-value status-ok">Healthy</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Memory Usage</span>
+        <span class="status-value status-warning">75%</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Last Backup</span>
+        <span class="status-value status-ok">2 hours ago</span>
+      </div>
+      <div class="status-item">
+        <span class="status-label">Security Status</span>
+        <span class="status-value status-ok">All Clear</span>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="recent-activity">
+      <h5><i class="fas fa-history"></i> Recent Activity</h5>
+      {% if recent_logins %}
+        {% for activity in recent_logins %}
+        <div class="activity-item">
+          <div class="activity-icon {{ activity.type }}">
+            <i class="fas fa-{{ activity.icon }}"></i>
+          </div>
+          <div class="activity-content">
+            <div class="activity-title">{{ activity.title }}</div>
+            <div class="activity-time">{{ activity.time }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+        <div class="activity-item">
+          <div class="activity-icon login">
+            <i class="fas fa-sign-in-alt"></i>
+          </div>
+          <div class="activity-content">
+            <div class="activity-title">Super Admin Login</div>
+            <div class="activity-time">Just now</div>
+          </div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon config">
+            <i class="fas fa-cog"></i>
+          </div>
+          <div class="activity-content">
+            <div class="activity-title">System Configuration Accessed</div>
+            <div class="activity-time">2 hours ago</div>
+          </div>
+        </div>
+        <div class="activity-item">
+          <div class="activity-icon user">
+            <i class="fas fa-user-plus"></i>
+          </div>
+          <div class="activity-content">
+            <div class="activity-title">New Admin User Created</div>
+            <div class="activity-time">1 day ago</div>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+    // Auto-refresh system status every 30 seconds
+    setInterval(function() {
+      // In a real implementation, this would fetch updated status
+      console.log('Refreshing system status...');
+    }, 30000);
+    
+    // Add click handlers for quick actions
+    document.addEventListener('DOMContentLoaded', function() {
+      // Initialize any dashboard functionality
+      console.log('Super Admin Dashboard loaded');
+    });
+  </script>
+</body>
+</html>

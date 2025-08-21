@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rand Water - Package Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --randwater-primary: #0066CC;
+      --randwater-secondary: #00A3E0;
+      --randwater-accent: #FF6600;
+      --randwater-dark: #003366;
+      --randwater-light: #E6F3FF;
+    }
+    
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      background-color: #f8f9fa;
+      font-size: 0.9rem;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .randwater-header {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      padding: 1.5rem 0;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .randwater-header h1 {
+      margin: 0;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      font-size: 1.8rem;
+    }
+    
+    .randwater-header .tagline {
+      font-size: 1rem;
+      opacity: 0.9;
+      margin-top: 0.5rem;
+    }
+    
+    .randwater-logo {
+      max-height: 80px;
+      filter: brightness(0) invert(1);
+    }
+    
+    .gosmarthr-logo {
+      max-height: 80px;
+      margin-top: 8px;
+    }
+    
+    .branding {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      margin-right: 1rem;
+    }
+    
+    .table-container {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .table-header {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      padding: 1rem 1.5rem;
+      margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+      border-radius: 12px 12px 0 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+    
+    .table th {
+      background-color: var(--randwater-light);
+      border-color: var(--randwater-secondary);
+      color: var(--randwater-dark);
+      font-weight: 600;
+    }
+    
+    .status-badge {
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    
+    .status-submitted {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .status-pending {
+      background-color: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+    
+    .tctc-display {
+      font-weight: 700;
+      color: var(--randwater-accent);
+    }
+    
+    .package-details {
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .btn-view {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      border: none;
+      color: white;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.8rem;
+    }
+    
+    .btn-view:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 102, 204, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="randwater-header">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <div class="d-flex align-items-center">
+            <img src="{{ config.company_logo }}" alt="Rand Water Logo" class="randwater-logo me-3">
+            <div>
+              <h1>Package Management</h1>
+              <div class="tagline">View and manage all employee compensation packages</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 text-end">
+          <div class="branding">
+            <img src="/static/images/smarthr_logo_white.png" alt="SmartHR Logo" class="gosmarthr-logo">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Navigation -->
+    <div class="mb-4">
+      <a href="{{ url_for('randwater_admin_panel') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
+
+    <!-- Package Summary -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title text-primary">{{ packages|length }}</h5>
+            <p class="card-text">Total Packages</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title text-success">{{ packages|selectattr('is_submitted', 'equalto', true)|list|length }}</h5>
+            <p class="card-text">Submitted</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title text-warning">{{ packages|selectattr('is_submitted', 'equalto', false)|list|length }}</h5>
+            <p class="card-text">Pending</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title text-info">{{ packages|map(attribute='grade_band')|unique|list|length }}</h5>
+            <p class="card-text">Grade Bands</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Packages Table -->
+    <div class="table-container">
+      <div class="table-header">
+        <i class="fas fa-briefcase"></i> Employee Packages Overview
+      </div>
+      
+      {% if packages %}
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Employee ID</th>
+              <th>Name</th>
+              <th>Grade Band</th>
+              <th>Current TCTC</th>
+              <th>TCTC Limit</th>
+              <th>Package Status</th>
+              <th>Access Status</th>
+              <th>Access Expires</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for package in packages %}
+            <tr>
+              <td><strong>{{ package.employee_id }}</strong></td>
+              <td>{{ package.employee_name or 'N/A' }}</td>
+              <td>
+                <span class="badge bg-secondary">{{ package.grade_band or 'N/A' }}</span>
+              </td>
+              <td>
+                <span class="tctc-display">R {{ "%.2f"|format(package.current_tctc) }}</span>
+              </td>
+              <td>
+                <span class="text-muted">R {{ "%.2f"|format(package.tctc_limit) }}</span>
+              </td>
+              <td>
+                {% if package.is_submitted %}
+                  <span class="status-badge status-submitted">
+                    <i class="fas fa-check-circle"></i> Submitted
+                  </span>
+                {% else %}
+                  <span class="status-badge status-pending">
+                    <i class="fas fa-clock"></i> Pending
+                  </span>
+                {% endif %}
+              </td>
+              <td>
+                {% if package.access_status == 'ACTIVE' %}
+                  <span class="badge bg-success">Active</span>
+                {% else %}
+                  <span class="badge bg-danger">Inactive</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if package.access_expires %}
+                  <small class="text-muted">{{ package.access_expires.split('T')[0] }}</small>
+                {% else %}
+                  <span class="text-muted">N/A</span>
+                {% endif %}
+              </td>
+              <td>
+                <button class="btn btn-view btn-sm" onclick="viewPackageDetails('{{ package.employee_id }}')">
+                  <i class="fas fa-eye"></i> View
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5">
+        <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">No packages found</h5>
+        <p class="text-muted">Employee packages will appear here after SAP data is uploaded.</p>
+        <a href="{{ url_for('upload_sap_data') }}" class="btn btn-primary">
+          <i class="fas fa-upload"></i> Upload SAP Data
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Package Details Modal -->
+  <div class="modal fade" id="packageDetailsModal" tabindex="-1" aria-labelledby="packageDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header" style="background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%); color: white;">
+          <h5 class="modal-title" id="packageDetailsModalLabel">
+            <i class="fas fa-briefcase"></i> Package Details
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="packageDetailsContent">
+            <!-- Content will be loaded here -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function viewPackageDetails(employeeId) {
+      // For now, just show a simple message
+      // You can enhance this to fetch detailed package information
+      const content = document.getElementById('packageDetailsContent');
+      content.innerHTML = `
+        <div class="text-center py-4">
+          <i class="fas fa-briefcase fa-3x text-primary mb-3"></i>
+          <h5>Package Details for ${employeeId}</h5>
+          <p class="text-muted">Detailed package information will be displayed here.</p>
+          <p class="text-muted">This could include:</p>
+          <ul class="text-muted text-start">
+            <li>Individual package components</li>
+            <li>Calculation breakdowns</li>
+            <li>Modification history</li>
+            <li>Submission details</li>
+          </ul>
+        </div>
+      `;
+      
+      const modal = new bootstrap.Modal(document.getElementById('packageDetailsModal'));
+      modal.show();
+    }
+  </script>
+</body>
+</html>
