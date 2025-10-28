@@ -2858,10 +2858,22 @@ def upload_sap_data_post():
                 
                 # Store in persistent storage
                 try:
+                    # Convert DataFrame to dict and handle Timestamp serialization
+                    employee_data_dict = df.to_dict('records')
+                    # Convert any Timestamp objects to strings
+                    for emp in employee_data_dict:
+                        for key, value in emp.items():
+                            if pd.isna(value):
+                                emp[key] = None
+                            elif hasattr(value, 'isoformat'):  # Check if it's a datetime/Timestamp
+                                emp[key] = value.isoformat()
+                            elif isinstance(value, (int, float)) and pd.isna(value):
+                                emp[key] = None
+                    
                     upload_record = package_builder.upload_sap_data(
                         filename=filename,
                         upload_date=datetime.now().isoformat(),
-                        employee_data=df.to_dict('records'),
+                        employee_data=employee_data_dict,
                         financial_year=financial_year,
                         period=period
                     )
@@ -2995,6 +3007,15 @@ def archive_current_data():
                 if not upload.get('status', '').startswith('ARCHIVED'):
                     upload['status'] = f"ARCHIVED_{archive_timestamp}"
                     archived_count += 1
+                    
+                    # Fix Timestamp serialization in employee_data
+                    if 'employee_data' in upload and upload['employee_data']:
+                        for emp in upload['employee_data']:
+                            for key, value in emp.items():
+                                if pd.notna(value) and hasattr(value, 'isoformat'):
+                                    emp[key] = value.isoformat()
+                                elif pd.isna(value):
+                                    emp[key] = None
             
             package_builder.save_data()
             logger.info(f"✓ Archived {archived_count} SAP upload(s)")
@@ -3041,6 +3062,27 @@ def clear_uploaded_data():
         # Clear session data
         session.pop('last_upload', None)
         logger.info("✓ Cleared session data")
+        
+        # Clear employee access for current data
+        employee_access_file = 'employee_access.json'
+        if os.path.exists(employee_access_file):
+            with open(employee_access_file, 'w') as f:
+                json.dump([], f)
+            logger.info("✓ Cleared employee access data")
+        
+        # Clear employee packages for current data
+        employee_packages_file = 'employee_packages.json'
+        if os.path.exists(employee_packages_file):
+            with open(employee_packages_file, 'w') as f:
+                json.dump([], f)
+            logger.info("✓ Cleared employee packages data")
+        
+        # Clear submitted packages
+        submitted_packages_file = 'submitted_packages.json'
+        if os.path.exists(submitted_packages_file):
+            with open(submitted_packages_file, 'w') as f:
+                json.dump([], f)
+            logger.info("✓ Cleared submitted packages")
         
         cleared_count = 0
         # Only clear current (non-archived) data

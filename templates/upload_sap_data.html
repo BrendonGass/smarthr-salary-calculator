@@ -336,8 +336,8 @@
 
     <!-- File Upload Section -->
     <div class="upload-container">
-      <div class="upload-header" style="background: red !important;">
-        <i class="fas fa-file-excel"></i> Upload SAP Excel File - UPDATED VERSION
+      <div class="upload-header">
+        <i class="fas fa-file-excel"></i> Upload SAP Excel File
       </div>
       
       <form method="POST" enctype="multipart/form-data" id="uploadForm">
@@ -596,8 +596,12 @@
       // Create FormData and submit via AJAX
       const formData = new FormData();
       formData.append('sap_file', fileInput.files[0]);
+      formData.append('financial_year', document.getElementById('financialYear').value);
+      formData.append('period', document.getElementById('period').value);
       
       console.log('Sending request to:', '/upload_sap_data');
+      console.log('Financial Year:', document.getElementById('financialYear').value);
+      console.log('Period:', document.getElementById('period').value);
       
       fetch('/upload_sap_data', {
         method: 'POST',
