@@ -24,9 +24,6 @@ app.secret_key = 'randwater-super-secret-key-2024'  # Change this in production
 # Disable template caching in development
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-app.config['TESTING'] = False  # Force reload
-# Clear any jinja2 cache
-app.jinja_env.cache = {}
 
 # ============================================================================
 # PASSWORD POLICY ENFORCEMENT
@@ -4262,7 +4259,7 @@ def employee_payslip(employee_id):
     
     if not is_admin and not is_employee:
         return jsonify({'error': 'Unauthorized'}), 401
-    
+
     def safe_float(value, default=0.0):
         """Safely convert value to float, handling text values like 'Yes', 'No'"""
         if pd.isna(value) or value is None:
