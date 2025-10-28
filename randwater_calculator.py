@@ -24,6 +24,9 @@ app.secret_key = 'randwater-super-secret-key-2024'  # Change this in production
 # Disable template caching in development
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+app.config['TESTING'] = False  # Force reload
+# Clear any jinja2 cache
+app.jinja_env.cache = {}
 
 # ============================================================================
 # PASSWORD POLICY ENFORCEMENT
