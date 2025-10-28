@@ -10,11 +10,20 @@ ENV PYTHONUNBUFFERED=1
 ENV FLASK_APP=randwater_calculator.py
 ENV FLASK_ENV=production
 
-# Install system dependencies
+# Install system dependencies including WeasyPrint requirements
 RUN apt-get update && apt-get install -y \
     gcc \
     g++ \
     libpq-dev \
+    libcairo2 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf-2.0-0 \
+    libffi-dev \
+    shared-mime-info \
+    fonts-dejavu-core \
+    fonts-liberation \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements file
@@ -35,14 +44,35 @@ RUN pip install --upgrade pip && \
 # Copy project files
 COPY . .
 
-# Create necessary directories
-RUN mkdir -p uploads backups drafts __pycache__ static/images
+# Create necessary directories and initialize JSON files
+# Remove any existing directories that should be files
+RUN mkdir -p uploads backups drafts __pycache__ static/images && \
+    rm -rf employee_access.json employee_packages.json randwater_package_audit.json \
+           submitted_packages.json sap_uploads.json system_logs.json system_users.json \
+           password_reset_tokens.json randwater_notifications.json email_logs.json \
+           package_audit.json salary_simulations.json randwater_data.db && \
+    echo '{}' > employee_access.json && \
+    echo '{}' > employee_packages.json && \
+    echo '[]' > randwater_package_audit.json && \
+    echo '[]' > submitted_packages.json && \
+    echo '[]' > sap_uploads.json && \
+    echo '[]' > system_logs.json && \
+    echo '[]' > system_users.json && \
+    echo '{}' > password_reset_tokens.json && \
+    echo '[]' > randwater_notifications.json && \
+    echo '[]' > email_logs.json && \
+    echo '[]' > package_audit.json && \
+    echo '[]' > salary_simulations.json
 
-# Set permissions
-RUN chmod +x run_randwater.py
+# Copy and set up entrypoint script
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh run_randwater.py
 
 # Expose port
-EXPOSE 5001
+EXPOSE 5002
+
+# Use entrypoint for initialization
+ENTRYPOINT ["/docker-entrypoint.sh"]
 
 # Command to run the application with gunicorn for production
 CMD ["gunicorn", "--bind", "0.0.0.0:5001", "--workers", "2", "--timeout", "120", "randwater_calculator:app"]
