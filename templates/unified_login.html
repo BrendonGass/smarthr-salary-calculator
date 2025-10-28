@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rand Water - Login Portal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --randwater-primary: #0066CC;
+      --randwater-secondary: #00A3E0;
+      --randwater-accent: #FF6600;
+      --randwater-dark: #003366;
+      --randwater-light: #E6F3FF;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+    
+    .login-container {
+      width: 40%;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 3rem;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .background-section {
+      width: 60%;
+      background: url('{{ url_for("static", filename="images/login-bg.jpg") }}') center center/cover no-repeat;
+      position: relative;
+    }
+    
+    /* removed blue overlay to use the raw background image exactly as provided */
+    
+    .randwater-logo {
+      max-height: 140px;
+      margin-bottom: 1.5rem;
+    }
+    
+    /* branding removed */
+    
+    .app-info {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .app-info p {
+      font-size: 0.9rem;
+      color: #333;
+      margin: 0.2rem 0;
+      opacity: 0.9;
+    }
+    
+    .form-control {
+      border: 2px solid #e9ecef;
+      border-radius: 8px;
+      padding: 0.75rem;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+      background: rgba(255,255,255,0.95);
+    }
+    
+    .form-control:focus {
+      border-color: var(--randwater-primary);
+      box-shadow: 0 0 0 0.2rem rgba(0, 102, 204, 0.25);
+    }
+    
+    .btn-randwater {
+      background: var(--randwater-primary);
+      border: none;
+      border-radius: 8px;
+      padding: 0.75rem;
+      font-weight: 600;
+      color: white;
+      width: 100%;
+      margin-top: 1rem;
+      font-size: 1rem;
+    }
+    
+    .btn-randwater:hover {
+      background: var(--randwater-dark);
+      color: white;
+    }
+    
+    .error-message {
+      color: #dc3545;
+      background-color: #f8d7da;
+      border: 1px solid #f5c6cb;
+      border-radius: 5px;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+    }
+    
+    .forgot-password {
+      text-align: center;
+      margin-top: 1rem;
+    }
+    
+    .forgot-password a {
+      color: #333;
+      text-decoration: none;
+      font-size: 0.9rem;
+      opacity: 0.9;
+    }
+    
+    .forgot-password a:hover {
+      text-decoration: underline;
+      opacity: 1;
+    }
+    
+    /* privacy notice removed */
+    
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+      
+      .login-container {
+        width: 100%;
+        padding: 2rem;
+        background: rgba(255, 255, 255, 0.95);
+      }
+      
+      .background-section {
+        width: 100%;
+        height: 40vh;
+      }
+      
+      .powered-by,
+      .app-info p,
+      .forgot-password a {
+        color: #333;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-container">
+    <div class="text-center">
+      <img src="{{ url_for('static', filename='images/randwater-logo.png') }}" alt="Rand Water" class="randwater-logo">
+      <div class="app-info">
+        <p>Salary Package Calculator v1.0</p>
+      </div>
+    </div>
+    
+    {% if error %}
+    <div class="error-message">
+      {{ error }}
+    </div>
+    {% endif %}
+    
+    <form method="POST" id="loginForm">
+      <div class="mb-3">
+        <label for="username" class="form-label">Username</label>
+        <input type="text" class="form-control" id="username" name="username" required>
+      </div>
+      
+      <div class="mb-3">
+        <label for="password" class="form-label">Password</label>
+        <input type="password" class="form-control" id="password" name="password" required>
+      </div>
+      
+      <div class="forgot-password">
+        <a href="{{ url_for('forgot_password') }}">Reset my password</a>
+      </div>
+      
+      <button type="submit" class="btn btn-randwater">
+        Login
+      </button>
+    </form>
+
+    <script>
+      console.log('=== LOGIN PAGE DEBUG ===');
+      console.log('Current URL:', window.location.href);
+      console.log('Form action:', document.getElementById('loginForm').action);
+      console.log('Error message:', '{{ error }}');
+      
+      // Add form submission debugging
+      document.getElementById('loginForm').addEventListener('submit', function(e) {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        
+        console.log('=== FORM SUBMISSION DEBUG ===');
+        console.log('Username:', username);
+        console.log('Password length:', password.length);
+        console.log('Password (first 3 chars):', password.substring(0, 3));
+        console.log('Form method:', this.method);
+        console.log('Form action:', this.action || 'current page');
+        console.log('Submitting to:', window.location.href);
+        
+        // Check if fields are actually filled
+        if (!username || !password) {
+          console.error('❌ FORM VALIDATION FAILED: Empty fields detected!');
+          console.error('Username empty:', !username);
+          console.error('Password empty:', !password);
+          e.preventDefault(); // Stop form submission
+          alert('Please fill in both username and password fields!');
+          return false;
+        }
+        
+        console.log('✅ Form validation passed, submitting...');
+        
+        // Show loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        submitBtn.textContent = 'Logging in...';
+        submitBtn.disabled = true;
+        
+        // Re-enable after 5 seconds in case of issues
+        setTimeout(() => {
+          submitBtn.textContent = originalText;
+          submitBtn.disabled = false;
+        }, 5000);
+      });
+      
+      // Debug page load
+      window.addEventListener('load', function() {
+        console.log('Page loaded successfully');
+        console.log('Username field value:', document.getElementById('username').value);
+        console.log('Password field value length:', document.getElementById('password').value.length);
+        
+        // Add real-time field monitoring
+        const usernameField = document.getElementById('username');
+        const passwordField = document.getElementById('password');
+        
+        usernameField.addEventListener('input', function() {
+          console.log('Username field changed to:', this.value);
+        });
+        
+        passwordField.addEventListener('input', function() {
+          console.log('Password field changed, length:', this.value.length);
+        });
+        
+        // Check fields every second to see if they get populated
+        let checkCount = 0;
+        const fieldChecker = setInterval(function() {
+          checkCount++;
+          const username = usernameField.value;
+          const password = passwordField.value;
+          
+          console.log(`Field check #${checkCount}:`);
+          console.log('  Username:', username);
+          console.log('  Password length:', password.length);
+          
+          if (username && password) {
+            console.log('✅ Both fields are now filled!');
+            clearInterval(fieldChecker);
+          }
+          
+          if (checkCount >= 10) {
+            console.log('⏰ Stopping field checks after 10 attempts');
+            clearInterval(fieldChecker);
+          }
+        }, 1000);
+      });
+    </script>
+  </div>
+  
+  <div class="background-section"></div>
+</body>
+</html>

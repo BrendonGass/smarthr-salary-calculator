@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Backup - Rand Water</title>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --randwater-primary: #0066CC;
+            --randwater-secondary: #00A3E0;
+            --randwater-accent: #FF6600;
+            --randwater-dark: #003366;
+            --randwater-light: #E6F3FF;
+        }
+        
+        body {
+            font-family: 'Ubuntu', sans-serif;
+            background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,102,204,0.2);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .content-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .section-title {
+            color: var(--randwater-primary);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .backup-actions {
+            background: var(--randwater-light);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,102,204,0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        
+        .backup-table {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .table th {
+            background: var(--randwater-primary);
+            color: white;
+            font-weight: 600;
+            border: none;
+            padding: 1rem;
+        }
+        
+        .table td {
+            padding: 1rem;
+            vertical-align: middle;
+        }
+        
+        .table tbody tr:hover {
+            background-color: var(--randwater-light);
+        }
+        
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .backup-info {
+            background: #f8f9fa;
+            border-left: 4px solid var(--randwater-primary);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 2rem;
+        }
+        
+        .backup-info h6 {
+            color: var(--randwater-primary);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <img src="{{ config.company_logo }}" alt="Rand Water" style="max-height: 50px;">
+                    <div>
+                        <h2 class="mb-0" style="color: var(--randwater-primary); font-weight: 700;">System Backup</h2>
+                        <small class="text-muted">Create and manage system backups</small>
+                    </div>
+                </div>
+                <a href="{{ url_for('super_admin_dashboard') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="content-card">
+            <div id="alertContainer"></div>
+            
+            <!-- Backup Information -->
+            <div class="backup-info">
+                <h6><i class="fas fa-info-circle me-2"></i>About System Backups</h6>
+                <p class="mb-0">System backups include all employee data, package configurations, SMTP settings, and security policies. Backups are stored securely and can be restored at any time.</p>
+            </div>
+
+            <!-- Backup Actions -->
+            <div class="backup-actions">
+                <h5 class="mb-3"><i class="fas fa-tools me-2"></i>Backup Operations</h5>
+                <button type="button" class="btn btn-primary btn-lg me-3" onclick="createBackup()">
+                    <i class="fas fa-plus-circle me-2"></i>Create New Backup
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="refreshBackupList()">
+                    <i class="fas fa-sync-alt me-2"></i>Refresh List
+                </button>
+            </div>
+
+            <!-- Backup List -->
+            <div class="section-title">
+                <i class="fas fa-list"></i>
+                Available Backups
+            </div>
+
+            {% if backups %}
+            <div class="table-responsive backup-table">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Backup Name</th>
+                            <th>Created Date</th>
+                            <th>File Size</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for backup in backups %}
+                        <tr>
+                            <td>
+                                <strong>{{ backup.filename }}</strong>
+                            </td>
+                            <td>
+                                <i class="fas fa-calendar-alt me-2 text-muted"></i>
+                                {{ backup.created }}
+                            </td>
+                            <td>
+                                <span class="status-badge bg-info text-white">
+                                    {{ backup.size }} KB
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <button type="button" class="btn btn-success btn-sm" 
+                                            onclick="downloadBackup('{{ backup.filename }}')" 
+                                            title="Download Backup">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-warning btn-sm" 
+                                            onclick="restoreBackup('{{ backup.filename }}')" 
+                                            title="Restore from Backup">
+                                        <i class="fas fa-upload"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-danger btn-sm" 
+                                            onclick="deleteBackup('{{ backup.filename }}')" 
+                                            title="Delete Backup">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-folder-open text-muted" style="font-size: 4rem;"></i>
+                <h5 class="text-muted mt-3">No backups available</h5>
+                <p class="text-muted">Create your first system backup to get started</p>
+                <button type="button" class="btn btn-primary" onclick="createBackup()">
+                    <i class="fas fa-plus-circle me-2"></i>Create First Backup
+                </button>
+            </div>
+            {% endif %}
+
+            <!-- Backup Statistics -->
+            <div class="row mt-4">
+                <div class="col-md-4">
+                    <div class="text-center p-3 bg-light rounded">
+                        <h4 class="text-primary mb-1">{{ backups|length }}</h4>
+                        <small class="text-muted">Total Backups</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center p-3 bg-light rounded">
+                        <h4 class="text-success mb-1">{{ backups|length > 0 and backups[0].created or 'Never' }}</h4>
+                        <small class="text-muted">Last Backup</small>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center p-3 bg-light rounded">
+                        <h4 class="text-info mb-1">
+                            {% set total_size = backups|sum(attribute='size') %}
+                            {{ "%.1f"|format(total_size) }} KB
+                        </h4>
+                        <small class="text-muted">Total Storage</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function createBackup() {
+            showAlert('Creating backup...', 'info');
+            
+            fetch('/api/backup/create', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Backup created successfully: ' + data.filename, 'success');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    showAlert('Error creating backup: ' + (data.error || 'Unknown error'), 'danger');
+                }
+            })
+            .catch(error => {
+                showAlert('Error creating backup: ' + error.message, 'danger');
+            });
+        }
+
+        function downloadBackup(filename) {
+            window.open('/api/backup/download/' + filename, '_blank');
+        }
+
+        function restoreBackup(filename) {
+            if (confirm('Are you sure you want to restore from this backup? This will overwrite all current data!')) {
+                showAlert('Restoring from backup...', 'warning');
+                
+                fetch('/api/backup/restore', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ filename: filename })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('System restored successfully from backup!', 'success');
+                        setTimeout(() => {
+                            location.reload();
+                        }, 3000);
+                    } else {
+                        showAlert('Error restoring backup: ' + (data.error || 'Unknown error'), 'danger');
+                    }
+                })
+                .catch(error => {
+                    showAlert('Error restoring backup: ' + error.message, 'danger');
+                });
+            }
+        }
+
+        function deleteBackup(filename) {
+            if (confirm('Are you sure you want to delete this backup? This action cannot be undone!')) {
+                showAlert('Deleting backup...', 'warning');
+                // For now, we'll just show a message since we haven't implemented delete API
+                showAlert('Backup deletion will be implemented in the next update.', 'info');
+            }
+        }
+
+        function refreshBackupList() {
+            location.reload();
+        }
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

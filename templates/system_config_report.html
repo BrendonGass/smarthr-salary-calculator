@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>System Configuration Report - Rand Water</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --randwater-primary: #0066CC;
+      --randwater-secondary: #00A3E0;
+    }
+    
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      padding: 20px 0;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+    
+    .container {
+      max-width: 1200px;
+    }
+    
+    .config-card {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+    
+    .config-section {
+      border-left: 4px solid var(--randwater-primary);
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    
+    .back-btn {
+      color: white;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.2);
+      transition: all 0.3s;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+    
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      color: white;
+    }
+    
+    .config-table {
+      width: 100%;
+      margin-top: 15px;
+    }
+    
+    .config-table th {
+      background: #e9ecef;
+      padding: 10px;
+      font-weight: 600;
+    }
+    
+    .config-table td {
+      padding: 10px;
+      border-bottom: 1px solid #dee2e6;
+    }
+    
+    .config-value {
+      font-family: monospace;
+      color: #0066CC;
+      font-weight: 600;
+    }
+    
+    .warning-badge {
+      background: #fff3cd;
+      color: #856404;
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 0.9rem;
+    }
+    
+    @media print {
+      .no-print {
+        display: none;
+      }
+      body {
+        background: white;
+      }
+      .config-card {
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="header no-print">
+    <div class="container">
+      <a href="{{ url_for('randwater_admin_panel') }}" class="back-btn">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
+      <h2><i class="fas fa-cogs"></i> System Configuration Report</h2>
+      <p class="mb-0">View-only system configuration and settings</p>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Report Header -->
+    <div class="config-card">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h3>System Configuration</h3>
+          <p class="text-muted mb-0">
+            <i class="fas fa-clock"></i> Last Updated: {{ config_data.last_updated }}
+          </p>
+        </div>
+        <div class="no-print">
+          <button class="btn btn-success me-2" onclick="exportConfig()">
+            <i class="fas fa-download"></i> Export Config
+          </button>
+          <button class="btn btn-primary" onclick="window.print()">
+            <i class="fas fa-print"></i> Print Report
+          </button>
+        </div>
+      </div>
+
+      <!-- Tax Settings -->
+      <div class="config-section">
+        <h4><i class="fas fa-calculator"></i> Tax Configuration</h4>
+        <p class="text-muted">Current tax rates, rebates, and thresholds</p>
+        
+        <table class="config-table table table-bordered">
+          <thead>
+            <tr>
+              <th>Setting</th>
+              <th>Value</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if config_data.tax_settings %}
+              {% for key, value in config_data.tax_settings.items() %}
+              <tr>
+                <td><strong>{{ key|replace('_', ' ')|title }}</strong></td>
+                <td class="config-value">
+                  {% if value is number %}
+                    R {{ "%.2f"|format(value) }}
+                  {% else %}
+                    {{ value }}
+                  {% endif %}
+                </td>
+                <td>
+                  {% if 'rebate' in key|lower %}
+                    Tax rebate amount
+                  {% elif 'ceiling' in key|lower %}
+                    Maximum amount
+                  {% elif 'medical' in key|lower %}
+                    Medical aid credit
+                  {% else %}
+                    Configuration value
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="3" class="text-center text-muted">No tax settings configured</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pension Configuration -->
+      <div class="config-section">
+        <h4><i class="fas fa-piggy-bank"></i> Pension Configuration</h4>
+        <p class="text-muted">Pension contribution rates and limits</p>
+        
+        <table class="config-table table table-bordered">
+          <thead>
+            <tr>
+              <th>Grade Band</th>
+              <th>Employee Contribution</th>
+              <th>Employer Contribution</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if config_data.pension_config %}
+              {% for grade, rates in config_data.pension_config.items() %}
+              <tr>
+                <td><span class="badge bg-primary">{{ grade }}</span></td>
+                <td class="config-value">{{ rates.employee_contribution }}%</td>
+                <td class="config-value">{{ rates.employer_contribution }}%</td>
+              </tr>
+              {% endfor %}
+            {% else %}
+              <tr>
+                <td colspan="3" class="text-center text-muted">No pension configuration found</td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Medical Aid Configuration -->
+      <div class="config-section">
+        <h4><i class="fas fa-notes-medical"></i> Medical Aid Configuration</h4>
+        <p class="text-muted">Medical aid schemes and contribution rates</p>
+        
+        {% if config_data.medical_config %}
+          <table class="config-table table table-bordered">
+            <thead>
+              <tr>
+                <th>Provider</th>
+                <th>Option</th>
+                <th>Monthly Cost</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for provider, options in config_data.medical_config.items() %}
+                {% for option, details in options.items() %}
+                <tr>
+                  <td>{{ provider }}</td>
+                  <td>{{ option }}</td>
+                  <td class="config-value">R {{ details.cost if details.cost else 'N/A' }}</td>
+                </tr>
+                {% endfor %}
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p class="text-muted">No medical aid configuration available</p>
+        {% endif %}
+      </div>
+
+      <!-- Randwater Specific Config -->
+      <div class="config-section">
+        <h4><i class="fas fa-building"></i> Rand Water Configuration</h4>
+        <p class="text-muted">Organization-specific settings</p>
+        
+        <table class="config-table table table-bordered">
+          <tbody>
+            <tr>
+              <td><strong>Company Name</strong></td>
+              <td class="config-value">{{ config_data.randwater_config.company_name }}</td>
+            </tr>
+            <tr>
+              <td><strong>System Version</strong></td>
+              <td class="config-value">{{ config_data.randwater_config.version }}</td>
+            </tr>
+            <tr>
+              <td><strong>Grade Bands</strong></td>
+              <td class="config-value">
+                {% for grade in config_data.randwater_config.grade_bands %}
+                  <span class="badge bg-secondary me-1">{{ grade }}</span>
+                {% endfor %}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- System Integrity Note -->
+      <div class="alert alert-info" role="alert">
+        <h5><i class="fas fa-shield-alt"></i> Configuration Integrity</h5>
+        <p class="mb-0">
+          This report shows the current system configuration as stored in the database.
+          All configurations are read-only through this interface. Any changes must be made
+          through the Super Admin panel with proper authorization.
+        </p>
+      </div>
+
+      <!-- Footer -->
+      <div class="mt-4 pt-4 border-top text-center text-muted">
+        <small>
+          <strong>Confidential Information</strong> - This report contains sensitive system configuration data.
+          <br>
+          Generated: {{ config_data.last_updated }} | System: Rand Water Salary Package Calculator v1.0
+        </small>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    function exportConfig() {
+      // Export configuration as JSON
+      const config = {{ config_data|tojson }};
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(config, null, 2));
+      const downloadAnchorNode = document.createElement('a');
+      downloadAnchorNode.setAttribute("href", dataStr);
+      downloadAnchorNode.setAttribute("download", "system_config_" + new Date().getTime() + ".json");
+      document.body.appendChild(downloadAnchorNode);
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+    }
+  </script>
+</body>
+</html>
+

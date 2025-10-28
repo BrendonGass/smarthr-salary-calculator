@@ -1,0 +1,96 @@
+{
+  "pension_rates": {
+    "effective_date": "2025-07-01",
+    "expiry_date": "2026-06-30",
+    "provider": "Rand Water Provident Fund",
+    "options": {
+      "A": {
+        "employee_rate": 8.67,
+        "employer_rate": 17.19,
+        "description": "Option A - Full Benefits"
+      },
+      "B": {
+        "employee_rate": 8.67,
+        "employer_rate": 17.19,
+        "description": "Option B - Standard Benefits"
+      },
+      "C": {
+        "employee_rate": 8.67,
+        "employer_rate": 9.450,
+        "description": "Option C - Reduced Employer Contribution"
+      },
+      "D": {
+        "employee_rate": 8.67,
+        "employer_rate": 17.19,
+        "description": "Option D - Enhanced Benefits"
+      },
+      "E": {
+        "employee_rate": 8.67,
+        "employer_rate": 17.19,
+        "description": "Option E"
+      },
+      "F": {
+        "employee_rate": 8.67,
+        "employer_rate": 17.19,
+        "description": "Option F"
+      },
+      "G": {
+        "employee_rate": 8.67,
+        "employer_rate": 17.19,
+        "description": "Option G"
+      },
+      "SAMWU": {
+        "employee_rate": 8.67,
+        "employer_rate": 17.19,
+        "description": "SAMWU National Provident Fund"
+      }
+    }
+  },
+  "group_life_rates": {
+    "effective_date": "2025-07-01",
+    "expiry_date": "2026-06-30",
+    "provider": "Old Mutual",
+    "scheme_code": "97885/G000738D",
+    "rate_per_thousand": 0.771,
+    "free_cover_limit": 16000000,
+    "cost_split": {
+      "employer_ratio": 0.54,
+      "employee_ratio": 0.46,
+      "description": "Split of total premium cost between ER and EE (based on SAP data analysis)"
+    },
+    "options": {
+      "standard": {
+        "employee_rate": 0.2,
+        "employer_rate": 0.5,
+        "description": "Standard Group Life Cover",
+        "death_benefit_multiple": 4.0,
+        "disability_benefit": "Permanent Income Protection + Lump Sum",
+        "disability_lump_sum_multiple": 4.0,
+        "funeral_benefit": true,
+        "funeral_amount": 45.66
+      },
+      "enhanced": {
+        "employee_rate": 1.0,
+        "employer_rate": 2.0,
+        "description": "Enhanced Group Life Cover",
+        "death_benefit_multiple": 6.0,
+        "disability_benefit": "Permanent Income Protection + Lump Sum",
+        "disability_lump_sum_multiple": 6.0,
+        "funeral_benefit": true,
+        "funeral_amount": 45.66
+      },
+      "none": {
+        "employee_rate": 0,
+        "employer_rate": 0,
+        "description": "No Group Life Cover",
+        "death_benefit_multiple": 0,
+        "disability_benefit": "None",
+        "disability_lump_sum_multiple": 0,
+        "funeral_benefit": false,
+        "funeral_amount": 0
+      }
+    }
+  },
+  "last_updated": "2025-01-15T00:00:00",
+  "updated_by": "system"
+}

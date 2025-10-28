@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Payslip - {{ employee.employee_id }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        :root {
+            --randwater-primary: #1e3c72;
+            --randwater-secondary: #2a5298;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f7fa;
+        }
+        
+        .payslip-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        
+        .payslip-header {
+            text-align: center;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--randwater-primary);
+            margin-bottom: 2rem;
+        }
+        
+        .section-title {
+            color: var(--randwater-primary);
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .net-pay-box {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            margin: 2rem 0;
+        }
+        
+        .net-pay-amount {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        
+        .action-buttons {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid #dee2e6;
+        }
+        
+        @media print {
+            @page {
+                size: A4;
+                margin: 1cm;
+            }
+            
+            body {
+                background: white;
+                margin: 0;
+                padding: 0;
+            }
+            
+            .payslip-container {
+                max-width: 100%;
+                margin: 0;
+                padding: 0.25rem;
+                box-shadow: none;
+                page-break-after: avoid;
+            }
+            
+            .payslip-header {
+                padding-bottom: 0.3rem;
+                margin-bottom: 0.3rem;
+            }
+            
+            .payslip-header h4 {
+                font-size: 1.1rem;
+                margin-bottom: 0.25rem;
+            }
+            
+            .payslip-header p {
+                font-size: 0.8rem;
+                margin-bottom: 0;
+            }
+            
+            .section-title {
+                font-size: 0.8rem;
+                margin-bottom: 0.2rem;
+                margin-top: 0.3rem;
+            }
+            
+            .table {
+                font-size: 0.7rem;
+                margin-bottom: 0.3rem;
+            }
+            
+            .table td, .table th {
+                padding: 0.1rem 0.2rem;
+                line-height: 1.2;
+            }
+            
+            .row {
+                margin-bottom: 0.3rem !important;
+            }
+            
+            .mb-4 {
+                margin-bottom: 0.3rem !important;
+            }
+            
+            .col-md-6 {
+                padding-left: 0.25rem;
+                padding-right: 0.25rem;
+            }
+            
+            .net-pay-box {
+                padding: 0.5rem;
+                margin: 0.5rem 0;
+            }
+            
+            .net-pay-box div:first-child {
+                font-size: 0.75rem;
+                margin-bottom: 0.1rem;
+            }
+            
+            .net-pay-amount {
+                font-size: 1.2rem !important;
+                margin: 0.1rem 0;
+            }
+            
+            .net-pay-box small {
+                font-size: 0.6rem;
+                display: block;
+                margin-top: 0.1rem;
+            }
+            
+            hr {
+                margin: 0.3rem 0;
+            }
+            
+            i.fas {
+                font-size: 0.7rem;
+            }
+            
+            .action-buttons {
+                display: none;
+            }
+            
+            .badge {
+                font-size: 0.7rem;
+                padding: 0.15rem 0.4rem;
+            }
+            
+            /* Preserve colors in print */
+            .net-pay-box {
+                background: #28a745 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .table-success {
+                background-color: #d4edda !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            .table-danger {
+                background-color: #f8d7da !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            
+            /* Add footer */
+            .payslip-container::after {
+                content: "Rand Water Salary Package Calculator v1.0";
+                display: block;
+                text-align: center;
+                font-size: 0.7rem;
+                color: #6c757d;
+                padding-top: 0.5rem;
+                margin-top: 0.5rem;
+                border-top: 1px solid #dee2e6;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="payslip-container">
+        <div class="payslip-header">
+            <h4 class="text-primary"><i class="fas fa-file-invoice"></i> Employee Payslip</h4>
+            <p class="text-muted">Rand Water - October 2025</p>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <h6 class="section-title"><i class="fas fa-user"></i> Employee Information</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>Employee ID:</strong></td><td>{{ employee.employee_id }}</td></tr>
+                    <tr><td><strong>Name:</strong></td><td>{{ employee.first_name }} {{ employee.surname }}</td></tr>
+                    <tr><td><strong>Grade Band:</strong></td><td><span class="badge bg-primary">{{ employee.grade_band }}</span></td></tr>
+                    <tr><td><strong>Department:</strong></td><td>{{ employee.department }}</td></tr>
+                    <tr><td><strong>Job Title:</strong></td><td>{{ employee.job_title }}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6 class="section-title"><i class="fas fa-calendar"></i> Pay Period</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>Month:</strong></td><td>October 2025</td></tr>
+                    <tr><td><strong>Pay Date:</strong></td><td>2025/10/26</td></tr>
+                    <tr><td><strong>CTC:</strong></td><td><strong>R {{ "%.2f"|format(payslip.tctc or employee.ctc or 0) }}</strong></td></tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="section-title text-success"><i class="fas fa-plus-circle"></i> Earnings</h6>
+                <table class="table table-sm">
+                    {% if payslip.cash_allowance and payslip.cash_allowance > 0 %}
+                    <tr>
+                        <td>Cash Component:</td>
+                        <td class="text-end">R {{ "%.2f"|format(payslip.cash_allowance) }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if payslip.car_allowance and payslip.car_allowance > 0 %}
+                    <tr>
+                        <td>Car Allowance:</td>
+                        <td class="text-end">R {{ "%.2f"|format(payslip.car_allowance) }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if payslip.housing_allowance and payslip.housing_allowance > 0 %}
+                    <tr>
+                        <td>Housing Allowance:</td>
+                        <td class="text-end">R {{ "%.2f"|format(payslip.housing_allowance) }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if payslip.cellphone_allowance and payslip.cellphone_allowance > 0 %}
+                    <tr>
+                        <td>Cellphone Allowance:</td>
+                        <td class="text-end">R {{ "%.2f"|format(payslip.cellphone_allowance) }}</td>
+                    </tr>
+                    {% endif %}
+                    {% if payslip.data_service_allowance and payslip.data_service_allowance > 0 %}
+                    <tr>
+                        <td>Data Service Allowance:</td>
+                        <td class="text-end">R {{ "%.2f"|format(payslip.data_service_allowance) }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr class="table-success">
+                        <td><strong>Total Earnings:</strong></td>
+                        <td class="text-end"><strong>R {{ "%.2f"|format(payslip.total_earnings or 0) }}</strong></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6 class="section-title text-danger"><i class="fas fa-minus-circle"></i> Deductions</h6>
+                <table class="table table-sm">
+                    <tr><td>Pension - employee:</td><td class="text-end">R {{ "%.2f"|format(payslip.pension_employee or 0) }}</td></tr>
+                    <tr><td>Medical aid - employee:</td><td class="text-end">R {{ "%.2f"|format(payslip.medical_employee or 0) }}</td></tr>
+                    <tr><td>Group Life - employee:</td><td class="text-end">R {{ "%.2f"|format(payslip.group_life_employee or 0) }}</td></tr>
+                    <tr><td>UIF employee contribution:</td><td class="text-end">R {{ "%.2f"|format(payslip.uif_employee or 0) }}</td></tr>
+                    <tr><td>Tax:</td><td class="text-end">R {{ "%.2f"|format(payslip.total_tax or payslip.tax or 0) }}</td></tr>
+                    <tr class="table-danger">
+                        <td><strong>Total Deductions:</strong></td>
+                        <td class="text-end"><strong>R {{ "%.2f"|format(payslip.total_deductions or 0) }}</strong></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="net-pay-box">
+            <div>Net pay:</div>
+            <div class="net-pay-amount">R {{ "%.2f"|format(payslip.net_pay or 0) }}</div>
+            <small>Based on actual SAP data with complete tax calculation (UIF, Travel Allowance Rules, Pension Caps, Medical Credits, Age Rebates)</small>
+        </div>
+        
+        <hr>
+        <div class="row">
+            <div class="col-md-6">
+                <h6 class="section-title text-warning"><i class="fas fa-building"></i> Employer's Contributions</h6>
+                <table class="table table-sm">
+                    <tr><td>Pension - employer:</td><td class="text-end">R {{ "%.2f"|format(payslip.pension_employer or 0) }}</td></tr>
+                    <tr><td>Medical aid - employer:</td><td class="text-end">R {{ "%.2f"|format(payslip.medical_employer or 0) }}</td></tr>
+                    <tr><td>UIF employer contribution:</td><td class="text-end">R {{ "%.2f"|format(payslip.uif_employer or 0) }}</td></tr>
+                    <tr><td>Development Levy:</td><td class="text-end">R {{ "%.2f"|format(payslip.development_levy or 0) }}</td></tr>
+                    <tr><td>Group life - employer:</td><td class="text-end">R {{ "%.2f"|format(payslip.group_life_employer or 0) }}</td></tr>
+                </table>
+            </div>
+            <div class="col-md-6">
+                <h6 class="section-title text-info"><i class="fas fa-info-circle"></i> Package Breakdown</h6>
+                <table class="table table-sm">
+                    <tr><td><strong>CTC (Monthly):</strong></td><td class="text-end"><strong>R {{ "%.2f"|format(payslip.tctc or employee.ctc or 0) }}</strong></td></tr>
+                    <tr><td>Pensionable Salary (TPE):</td><td class="text-end">R {{ "%.2f"|format(payslip.tpe or 0) }}</td></tr>
+                    <tr><td>Pension Option:</td><td class="text-end">{{ payslip.pension_option or 'N/A' }}</td></tr>
+                    <tr><td>Medical Aid:</td><td class="text-end">{{ payslip.medical_provider or 'N/A' }} {{ payslip.medical_option or '' }}</td></tr>
+                    <tr><td>Medical Dependents:</td><td class="text-end">{{ payslip.medical_dependents or '0' }}</td></tr>
+                </table>
+            </div>
+        </div>
+        
+        <div class="action-buttons">
+            <button class="btn btn-secondary me-2" onclick="window.history.back()">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
+            <button class="btn btn-primary" onclick="window.print()">
+                <i class="fas fa-print"></i> Print Payslip
+            </button>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

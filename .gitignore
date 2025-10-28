@@ -1,0 +1,112 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.cursor/
+
+# OS
+.DS_Store
+Thumbs.db
+*.bak
+
+# Git
+.git/
+.gitattributes
+
+# Database
+*.db
+randwater_*.db
+*.sqlite
+*.sqlite3
+
+# Backups and logs
+backups/
+logs/
+*.log
+*.log.*
+
+# Temporary files
+*.tmp
+*.temp
+drafts/*.json
+
+# Node modules (if any)
+node_modules/
+
+# Excel files (uploads - don't commit user data)
+uploads/*.xlsx
+uploads/*.xls
+uploads/*.csv
+
+# JSON data files (contain user data)
+employee_access.json
+employee_packages.json
+submitted_packages.json
+sap_uploads.json
+system_logs.json
+system_users.json
+password_reset_tokens.json
+randwater_notifications.json
+email_logs.json
+package_audit.json
+randwater_package_audit.json
+salary_simulations.json
+
+# Configuration files with sensitive data
+config.py
+*.env
+.env.*
+
+# Windows specific
+Scripts/
+*.bat
+*.ps1
+*.exe
+
+# Large backup files
+*.zip
+*.tar.gz
+
+# IDE and editor files
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+
+# Python bytecode
+*.pyc
+*.pyo
+*.pyd
+
+

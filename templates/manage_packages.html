@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Rand Water - Package Management</title>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Rand Water - Package Management v3.0 - Tax Fix</title>
+  <!-- Version 3.0 - Fixed tax calculation with pension deductions, rebates, and medical credits -->
   <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
@@ -218,7 +222,6 @@
               <th>Name</th>
               <th>Grade Band</th>
               <th>Current TCTC</th>
-              <th>TCTC Limit</th>
               <th>Package Status</th>
               <th>Access Status</th>
               <th>Access Expires</th>
@@ -235,9 +238,6 @@
               </td>
               <td>
                 <span class="tctc-display">R {{ "%.2f"|format(package.current_tctc) }}</span>
-              </td>
-              <td>
-                <span class="text-muted">R {{ "%.2f"|format(package.tctc_limit) }}</span>
               </td>
               <td>
                 {% if package.is_submitted %}
@@ -268,6 +268,15 @@
                 <button class="btn btn-view btn-sm" onclick="viewPackageDetails('{{ package.employee_id }}')">
                   <i class="fas fa-eye"></i> View
                 </button>
+                {% if package.package_submitted %}
+                <button class="btn btn-outline-secondary btn-sm ms-1" disabled title="Package already submitted">
+                  <i class="fas fa-lock"></i> Submitted
+                </button>
+                {% else %}
+                <button class="btn btn-outline-primary btn-sm ms-1" onclick="window.location.href='/admin/package_edit_fullpage/{{ package.employee_id }}'">
+                  <i class="fas fa-edit"></i> Edit
+                </button>
+                {% endif %}
               </td>
             </tr>
             {% endfor %}
@@ -284,6 +293,297 @@
         </a>
       </div>
       {% endif %}
+    </div>
+  </div>
+
+  <!-- Package Edit Modal -->
+  <div class="modal fade" id="packageEditModal" tabindex="-1" aria-labelledby="packageEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header" style="background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%); color: white;">
+          <h5 class="modal-title" id="packageEditModalLabel">
+            <i class="fas fa-edit"></i> Edit Package - <span id="editEmployeeId"></span>
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <!-- Package Components -->
+            <div class="col-md-8">
+              <h6><i class="fas fa-money-bill-wave"></i> Package Components</h6>
+              <form id="packageEditForm">
+                <!-- Employee Classification -->
+                <div class="row mb-3">
+                  <div class="col-md-6">
+                    <label class="form-label">Employee Subgroup</label>
+                    <select class="form-control" id="edit_employee_subgroup">
+                      <option value="other">Other</option>
+                      <option value="support_staff">Support Staff</option>
+                    </select>
+                  </div>
+                  <div class="col-md-6">
+                    <label class="form-label">Band Range</label>
+                    <select class="form-control" id="edit_band_range">
+                      <option value="o_to_q">O to Q Band</option>
+                      <option value="non_o_to_q">Non-O to Q Band</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Main Package Components -->
+                <div class="row">
+                  <div class="col-md-6">
+                    <!-- TPE with percentage/value toggle -->
+                    <div class="mb-3">
+                      <label class="form-label">Total Pensionable Emolument (TPE)</label>
+                      <div class="input-group">
+                        <input type="number" class="form-control" id="edit_tpe" step="0.01">
+                        <button class="btn btn-outline-secondary" type="button" id="tpe_toggle" onclick="toggleTPEMode()">
+                          <span id="tpe_mode_text">Value</span>
+                        </button>
+                      </div>
+                      <small class="text-muted">Currently: <span id="tpe_percentage">0.0</span>% of CTC</small>
+                      <div id="tpe_warning" class="text-warning small mt-1" style="display: none;"></div>
+                    </div>
+                    
+                    <!-- Car Allowance -->
+                    <div class="mb-3">
+                      <label class="form-label">Car Allowance</label>
+                      <input type="number" class="form-control" id="edit_car_allowance" step="0.01">
+                      <small class="text-muted">Tax calculated on 80% of amount • Currently: <span id="car_percentage">0.0</span>% of CTC</small>
+                      <div id="car_warning" class="text-warning small mt-1" style="display: none;"></div>
+                    </div>
+                    
+                    <!-- Cash/Basic Salary (Calculated) -->
+                    <div class="mb-3">
+                      <label class="form-label">Cash Component (Basic Salary)</label>
+                      <input type="number" class="form-control" id="edit_cash" step="0.01" readonly>
+                      <small class="text-muted">Calculated: CTC minus all deductions and allowances</small>
+                    </div>
+                  </div>
+                  
+                  <div class="col-md-6">
+                    <!-- Step 1: Annual Bonus Amount -->
+                    <div class="mb-3">
+                      <label class="form-label">Step 1: Bonus Amount</label>
+                      <input type="number" class="form-control" id="edit_bonus" step="0.01" placeholder="Enter annual bonus amount">
+                      <small class="text-muted"><span id="bonus_percentage">0.0</span>% of CTC</small>
+                      <div id="bonus_warning" class="text-warning small mt-1" style="display: none;"></div>
+                    </div>
+                    
+                    <!-- Step 2: Payment Method -->
+                    <div class="mb-3">
+                      <label class="form-label">Step 2: Payment Method</label>
+                      <select class="form-select" id="edit_bonus_type">
+                        <option value="monthly">Monthly (this amount provisioned each month)</option>
+                        <option value="annual">Annual (lump sum at year end)</option>
+                      </select>
+                      <small class="text-muted" id="bonus_calculation_text">Monthly provision: R0.00</small>
+                    </div>
+                    
+                    <!-- CTC (Non-editable) -->
+                    <div class="mb-3">
+                      <label class="form-label">Cost to Company (CTC) - Fixed Limit</label>
+                      <input type="number" class="form-control" id="edit_ctc" step="0.01" readonly>
+                      <small class="text-muted">This is the employee's CTC limit and cannot be changed</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Pension Options -->
+                <div class="row">
+                  <div class="col-12">
+                    <h6><i class="fas fa-university"></i> Pension & Retirement</h6>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Pension Fund</label>
+                      <select class="form-control" id="edit_pension_fund">
+                        <option value="RWPROV">RWPROV</option>
+                        <option value="RWMPPROV">RWMPPROV</option>
+                        <option value="SAMWU">SAMWU</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-12">
+                    <div class="mb-3">
+                      <label class="form-label">Pension Option</label>
+                      <select class="form-control" id="edit_pension_option">
+                        <option value="A">Option A</option>
+                        <option value="B">Option B</option>
+                        <option value="C">Option C</option>
+                        <option value="D">Option D</option>
+                        <option value="E">Option E</option>
+                        <option value="F">Option F</option>
+                        <option value="G">Option G</option>
+                        <option value="none">None</option>
+                        <option value="SAMWU">SAMWU</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Medical Aid (SAP Data) -->
+                <div class="row">
+                  <div class="col-12">
+                    <h6><i class="fas fa-heartbeat"></i> Medical Aid (SAP Data)</h6>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">Medical Aid Provider</label>
+                      <input type="text" class="form-control" id="edit_medical_provider" readonly>
+                      <small class="text-muted">From SAP data</small>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">Medical Option</label>
+                      <input type="text" class="form-control" id="edit_medical_option_display" readonly>
+                      <small class="text-muted">From SAP data</small>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">Medical ER Contribution</label>
+                      <input type="number" class="form-control" id="edit_medical_er" step="0.01" readonly>
+                      <small class="text-muted">From SAP data</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Group Life -->
+                <div class="row">
+                  <div class="col-12">
+                    <h6><i class="fas fa-shield-alt"></i> Group Life Insurance</h6>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Group Life Option</label>
+                      <select class="form-control" id="edit_group_life_option">
+                        <option value="standard">Standard</option>
+                        <option value="enhanced">Enhanced</option>
+                        <option value="none">None</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Group Life ER Contribution</label>
+                      <input type="number" class="form-control" id="edit_group_life_er" step="0.01" readonly>
+                      <small class="text-muted">Calculated based on option selected</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Fixed Allowances (SAP Data) -->
+                <div class="row">
+                  <div class="col-12">
+                    <h6><i class="fas fa-lock"></i> Fixed Allowances (SAP Data)</h6>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">Cellphone Allowance</label>
+                      <input type="number" class="form-control" id="edit_cellphone" step="0.01" readonly>
+                      <small class="text-muted">From SAP - Cannot be modified</small>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">Data Service Allowance</label>
+                      <input type="number" class="form-control" id="edit_data_service" step="0.01" readonly>
+                      <small class="text-muted">From SAP - Cannot be modified</small>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">Housing Allowance</label>
+                      <input type="number" class="form-control" id="edit_housing" step="0.01" readonly>
+                      <small class="text-muted">From SAP - Cannot be modified</small>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">Bonus Provision (Monthly)</label>
+                      <input type="number" class="form-control" id="edit_bonus_provision" step="0.01" readonly>
+                      <small class="text-muted">Calculated automatically</small>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Employee Deductions Section -->
+                <div class="row">
+                  <div class="col-12">
+                    <h6><i class="fas fa-minus-circle"></i> Employee Deductions (Calculated)</h6>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="mb-3">
+                      <label class="form-label">Pension EE</label>
+                      <input type="number" class="form-control" id="edit_pension_ee" step="0.01" readonly>
+                      <small class="text-muted">Employee contribution</small>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="mb-3">
+                      <label class="form-label">Medical EE</label>
+                      <input type="number" class="form-control" id="edit_medical_ee_deduction" step="0.01" readonly>
+                      <small class="text-muted">Employee contribution</small>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="mb-3">
+                      <label class="form-label">Group Life EE</label>
+                      <input type="number" class="form-control" id="edit_group_life_ee_deduction" step="0.01" readonly>
+                      <small class="text-muted">Employee contribution</small>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="mb-3">
+                      <label class="form-label">UIF Contribution</label>
+                      <input type="number" class="form-control" id="edit_uif_deduction" step="0.01" readonly>
+                      <small class="text-muted">1% of income, max R177.12</small>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="mb-3">
+                      <label class="form-label">
+                        Income Tax (PAYE)
+                        <i class="fas fa-question-circle text-primary ms-1" 
+                           style="cursor: pointer;" 
+                           onclick="generateTaxReport()" 
+                           title="View detailed tax calculation report"></i>
+                      </label>
+                      <input type="number" class="form-control" id="edit_tax_deduction" step="0.01" readonly>
+                      <small class="text-muted">SARS tax tables</small>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="row">
+                  <div class="col-12">
+                    <div class="alert alert-info">
+                      <strong>Current TCTC:</strong> R <span id="calculated_tctc">0.00</span> | 
+                      <strong>TCTC Limit:</strong> R <span id="tctc_limit">0.00</span>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <!-- Audit Trail -->
+            <div class="col-md-4">
+              <h6><i class="fas fa-history"></i> Audit Trail</h6>
+              <div id="auditTrail" style="max-height: 300px; overflow-y: auto;">
+                <div class="text-muted">Loading audit history...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="savePackageChanges()">
+            <i class="fas fa-save"></i> Save Changes
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -310,28 +610,1100 @@
   </div>
 
   <script>
+    let currentEmployeeId = null;
+    let originalPackageData = null;
+
     function viewPackageDetails(employeeId) {
-      // For now, just show a simple message
-      // You can enhance this to fetch detailed package information
+      console.log('=== VIEW PACKAGE DETAILS DEBUG START ===');
+      console.log('viewPackageDetails called with:', employeeId);
+      
+      try {
+        const content = document.getElementById('packageDetailsContent');
+        if (!content) {
+          console.error('packageDetailsContent element not found');
+          alert('Error: Package details container not found');
+          return;
+        }
+        
+        content.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin"></i> Loading package details...</div>';
+        
+        const modalElement = document.getElementById('packageDetailsModal');
+        if (!modalElement) {
+          console.error('packageDetailsModal element not found');
+          alert('Error: Modal element not found');
+          return;
+        }
+        
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        
+        console.log('Fetching package data for:', employeeId);
+        
+        // Fetch package data
+        fetch(`/api/admin/package/${employeeId}`)
+          .then(response => {
+            console.log('Fetch response status:', response.status);
+            console.log('Fetch response headers:', response.headers);
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('=== FRONTEND DEBUG ===');
+            console.log('Raw response data:', data);
+            console.log('Package object keys:', Object.keys(data.package || {}));
+            console.log('SAP data object:', data.package?.sap_data);
+            console.log('SAP data keys:', Object.keys(data.package?.sap_data || {}));
+            console.log('Package components:', data.package?.package_components);
+            console.log('=== END FRONTEND DEBUG ===');
+            
+            if (data.success) {
+              displayPackageDetails(data.package);
+            } else {
+              content.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+            }
+          })
+          .catch(error => {
+            console.error('Fetch error:', error);
+            content.innerHTML = `<div class="alert alert-danger">Error loading package details: ${error.message}</div>`;
+          });
+      } catch (error) {
+        console.error('Function error:', error);
+        alert('Error in viewPackageDetails: ' + error.message);
+      }
+      console.log('=== VIEW PACKAGE DETAILS DEBUG END ===');
+    }
+
+    function displayPackageDetails(packageData) {
+      console.log('=== DISPLAY PACKAGE DETAILS DEBUG START ===');
+      console.log('Package data received:', packageData);
+      
       const content = document.getElementById('packageDetailsContent');
+      const sap = packageData.sap_data || {};
+      const components = packageData.package_components || {};
+      
+      console.log('SAP data:', sap);
+      console.log('Components:', components);
+      console.log('Basic salary:', sap.basic_salary);
+      console.log('Housing allowance:', sap.housing_allowance);
+      console.log('Car allowance:', sap.car_allowance);
+      console.log('Pension fund:', sap.pension_fund);
+      console.log('Medical aid:', sap.medical_aid);
+      console.log('CTC:', sap.ctc);
+      console.log('=== DISPLAY PACKAGE DETAILS DEBUG END ===');
+      
       content.innerHTML = `
-        <div class="text-center py-4">
-          <i class="fas fa-briefcase fa-3x text-primary mb-3"></i>
-          <h5>Package Details for ${employeeId}</h5>
-          <p class="text-muted">Detailed package information will be displayed here.</p>
-          <p class="text-muted">This could include:</p>
-          <ul class="text-muted text-start">
-            <li>Individual package components</li>
-            <li>Calculation breakdowns</li>
-            <li>Modification history</li>
-            <li>Submission details</li>
-          </ul>
+        <div class="row">
+          <div class="col-md-6">
+            <h6><i class="fas fa-user"></i> Employee Information</h6>
+            <table class="table table-sm">
+              <tr><td><strong>Employee ID:</strong></td><td>${packageData.employee_id}</td></tr>
+              <tr><td><strong>Name:</strong></td><td>${packageData.employee_name || 'N/A'}</td></tr>
+              <tr><td><strong>Grade Band:</strong></td><td>${packageData.grade_band || 'N/A'}</td></tr>
+              <tr><td><strong>Department:</strong></td><td>${packageData.department || 'N/A'}</td></tr>
+              <tr><td><strong>Position:</strong></td><td>${packageData.job_title || 'N/A'}</td></tr>
+            </table>
+            
+            <h6><i class="fas fa-money-bill-wave"></i> Package Components</h6>
+            <table class="table table-sm">
+              <tr><td><strong>TPE:</strong></td><td>R ${(sap.basic_salary || 0).toFixed(2)}</td></tr>
+              <tr><td><strong>Car Allowance:</strong></td><td>R ${(sap.car_allowance || 0).toFixed(2)}</td></tr>
+              <tr><td><strong>Annual Bonus:</strong></td><td>R ${(components.bonus || 0).toFixed(2)}</td></tr>
+            </table>
+          </div>
+          
+          <div class="col-md-6">
+            <h6><i class="fas fa-database"></i> SAP Data (Fixed)</h6>
+            <table class="table table-sm">
+              <tr><td><strong>Housing:</strong></td><td>R ${(sap.housing_allowance || 0).toFixed(2)}</td></tr>
+              <tr><td><strong>Cellphone:</strong></td><td>R ${(sap.cellphone_allowance || 0).toFixed(2)}</td></tr>
+              <tr><td><strong>Data Service:</strong></td><td>R ${(sap.data_service_allowance || 0).toFixed(2)}</td></tr>
+              <tr><td><strong>Medical Aid:</strong></td><td>R ${(sap.medical_aid || 0).toFixed(2)}</td></tr>
+              <tr><td><strong>Pension Fund:</strong></td><td>R ${(sap.pension_fund || 0).toFixed(2)}</td></tr>
+              <tr><td><strong>Medical Option:</strong></td><td>N/A</td></tr>
+            </table>
+            
+            <h6><i class="fas fa-calculator"></i> TCTC Information</h6>
+            <table class="table table-sm">
+              <tr><td><strong>Current TCTC:</strong></td><td class="text-primary"><strong>R ${(sap.ctc || 0).toFixed(2)}</strong></td></tr>
+              <tr><td><strong>TCTC Limit:</strong></td><td>R ${(sap.ctc || 0).toFixed(2)}</td></tr>
+              <tr><td><strong>Utilization:</strong></td><td>100%</td></tr>
+            </table>
+            
+            <div class="mt-3">
+              <button class="btn btn-success btn-sm me-2" onclick="viewEmployeePayslipFromModal('${packageData.employee_id}')">
+                <i class="fas fa-file-invoice"></i> View Payslip
+              </button>
+              ${packageData.package_submitted ? `
+                <button class="btn btn-secondary btn-sm" disabled title="Package already submitted">
+                  <i class="fas fa-lock"></i> Submitted
+                </button>
+              ` : `
+                <button class="btn btn-primary btn-sm" onclick="openEditFromView('${packageData.employee_id}')">
+                  <i class="fas fa-edit"></i> Edit Package
+                </button>
+              `}
+            </div>
+          </div>
         </div>
       `;
+    }
+
+    function viewEmployeePayslipFromModal(employeeId) {
+      console.log('=== VIEW PAYSLIP FROM MODAL DEBUG START ===');
+      console.log('viewEmployeePayslipFromModal called with ID:', employeeId);
       
-      const modal = new bootstrap.Modal(document.getElementById('packageDetailsModal'));
+      // Close the current package details modal
+      const packageModal = bootstrap.Modal.getInstance(document.getElementById('packageDetailsModal'));
+      if (packageModal) {
+        console.log('Closing package details modal...');
+        packageModal.hide();
+      }
+      
+      // Wait for modal to close, then show payslip
+      setTimeout(() => {
+        console.log('Opening payslip modal...');
+        viewEmployeePayslip(employeeId);
+      }, 300);
+      
+      console.log('=== VIEW PAYSLIP FROM MODAL DEBUG END ===');
+    }
+
+    function openEditFromView(employeeId) {
+      console.log('=== EDIT BUTTON DEBUG START ===');
+      console.log('openEditFromView called with employeeId:', employeeId);
+      console.log('Current URL:', window.location.href);
+      
+      // Check if Bootstrap is available
+      if (typeof bootstrap === 'undefined') {
+        console.error('Bootstrap is not loaded!');
+        return;
+      }
+      
+      // Close the view modal first
+      const modalElement = document.getElementById('packageDetailsModal');
+      console.log('Modal element found:', modalElement);
+      
+      if (modalElement) {
+        const viewModal = bootstrap.Modal.getInstance(modalElement);
+        console.log('Modal instance:', viewModal);
+        
+        if (viewModal) {
+          console.log('Closing view modal...');
+          viewModal.hide();
+        } else {
+          console.log('No modal instance found, trying to create one');
+          const newModal = new bootstrap.Modal(modalElement);
+          newModal.hide();
+        }
+      }
+      
+      // Wait for modal to close, then redirect to edit page
+      setTimeout(() => {
+        const editUrl = `/admin/package_edit_fullpage/${employeeId}`;
+        console.log('About to redirect to:', editUrl);
+        console.log('Current location before redirect:', window.location.href);
+        
+        // Direct redirect to edit page
+        console.log('Proceeding with direct redirect to edit page');
+        try {
+          window.location.href = editUrl;
+          console.log('Redirect command executed');
+        } catch (error) {
+          console.error('Redirect failed:', error);
+        }
+      }, 300);
+      
+      console.log('=== EDIT BUTTON DEBUG END ===');
+    }
+
+    function editPackage(employeeId) {
+      console.log('editPackage called with:', employeeId);
+      
+      try {
+        currentEmployeeId = employeeId;
+        
+        // Check if edit modal exists
+        const editModal = document.getElementById('packageEditModal');
+        if (!editModal) {
+          console.error('packageEditModal element not found');
+          alert('Error: Edit modal not found. The edit functionality may not be properly loaded.');
+          return;
+        }
+        
+        // Check if editEmployeeId element exists
+        const editEmployeeIdElement = document.getElementById('editEmployeeId');
+        if (!editEmployeeIdElement) {
+          console.error('editEmployeeId element not found');
+          alert('Error: Edit modal elements not found.');
+          return;
+        }
+        
+        editEmployeeIdElement.textContent = employeeId;
+        
+        console.log('Fetching package data for editing:', employeeId);
+        
+        // Fetch package data
+        fetch(`/api/admin/package/${employeeId}`)
+          .then(response => {
+            console.log('Edit fetch response status:', response.status);
+            if (!response.ok) {
+              throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('Edit package data received:', data);
+            if (data.success) {
+              originalPackageData = data.package;
+              populateEditForm(data.package);
+              loadAuditTrail(employeeId);
+              
+              console.log('Opening edit modal');
+              const modal = new bootstrap.Modal(editModal);
+              modal.show();
+            } else {
+              alert('Error loading package data: ' + data.error);
+            }
+          })
+          .catch(error => {
+            console.error('Edit fetch error:', error);
+            alert('Error loading package data: ' + error.message);
+          });
+      } catch (error) {
+        console.error('Edit function error:', error);
+        alert('Error in editPackage: ' + error.message);
+      }
+    }
+
+    let tpeMode = 'value'; // 'value' or 'percentage'
+
+    function populateEditForm(packageData) {
+      const sap = packageData.sap_data || {};
+      const components = packageData.package_components || {};
+      
+      // Employee classification
+      document.getElementById('edit_employee_subgroup').value = components.employee_subgroup || 'other';
+      document.getElementById('edit_band_range').value = components.band_range || 'o_to_q';
+      
+      // CTC (fixed)
+      document.getElementById('edit_ctc').value = packageData.tctc_limit || packageData.current_tctc || 0;
+      
+       // Main editable fields
+       document.getElementById('edit_tpe').value = sap.TPE || 0;
+       document.getElementById('edit_car_allowance').value = components.car_allowance || 0;
+       
+       // Bonus: stored value is the monthly provision (from SAP BONUSPROVISION)
+       // Step 1 shows the ANNUAL amount (monthly provision × 12)
+       const monthlyProvision = components.bonus || 0;
+       const annualBonus = monthlyProvision * 12;
+       console.log('=== BONUS CALCULATION DEBUG ===');
+       console.log('Monthly Provision from DB:', monthlyProvision);
+       console.log('Annual Bonus (×12):', annualBonus);
+       console.log('Setting edit_bonus field to:', annualBonus.toFixed(2));
+       document.getElementById('edit_bonus').value = annualBonus.toFixed(2);
+       
+       // Step 2: Payment method (how employee receives the bonus)
+       // Default to 'monthly' but can be changed by admin
+       document.getElementById('edit_bonus_type').value = components.bonus_type || 'monthly';
+       console.log('=== END BONUS DEBUG ===');
+      
+      // Pension options
+      document.getElementById('edit_pension_fund').value = sap.PENSION_FUND || 'RWPROV';
+      document.getElementById('edit_pension_option').value = sap.PENSIONOPTION || 'B';
+      
+      // Medical aid (SAP data - readonly)
+      document.getElementById('edit_medical_provider').value = sap.MEDICAL || 'N/A';
+      document.getElementById('edit_medical_option_display').value = sap.MEDICALOPTION || 'N/A';
+      document.getElementById('edit_medical_er').value = sap.MEDICALEECONTRIBUTION || 0;
+      
+      // Group life
+      document.getElementById('edit_group_life_option').value = components.group_life_option || 'standard';
+      
+      // Fixed allowances (readonly)
+      document.getElementById('edit_cellphone').value = sap.CELLPHONEALLOWANCE || 0;
+      document.getElementById('edit_data_service').value = sap.DATASERVICEALLOWANCE || 0;
+      document.getElementById('edit_housing').value = sap.HOUSING || 0;
+      
+      document.getElementById('tctc_limit').textContent = (packageData.tctc_limit || 0).toFixed(2);
+      
+      // Add event listeners for real-time calculation
+      ['edit_tpe', 'edit_car_allowance', 'edit_bonus', 'edit_bonus_type', 'edit_band_range', 'edit_pension_option', 'edit_group_life_option'].forEach(fieldId => {
+        const element = document.getElementById(fieldId);
+        if (element) {
+          element.addEventListener('input', () => {
+            calculateAllValues();
+            validateBusinessRules();
+          });
+          element.addEventListener('change', () => {
+            calculateAllValues();
+            validateBusinessRules();
+          });
+        }
+      });
+      
+      calculateAllValues();
+      validateBusinessRules();
+    }
+
+    function toggleTPEMode() {
+      const tpeInput = document.getElementById('edit_tpe');
+      const modeText = document.getElementById('tpe_mode_text');
+      const ctc = parseFloat(document.getElementById('edit_ctc').value) || 0;
+      
+      if (tpeMode === 'value') {
+        // Switch to percentage mode
+        tpeMode = 'percentage';
+        const currentValue = parseFloat(tpeInput.value) || 0;
+        const percentage = ctc > 0 ? (currentValue / ctc * 100) : 0;
+        tpeInput.value = percentage.toFixed(1);
+        tpeInput.step = '0.1';
+        tpeInput.max = '100';
+        modeText.textContent = '%';
+      } else {
+        // Switch to value mode
+        tpeMode = 'value';
+        const currentPercentage = parseFloat(tpeInput.value) || 0;
+        const value = ctc * (currentPercentage / 100);
+        tpeInput.value = value.toFixed(2);
+        tpeInput.step = '0.01';
+        tpeInput.removeAttribute('max');
+        modeText.textContent = 'Value';
+      }
+      
+      calculateAllValues();
+    }
+
+    function calculateAllValues() {
+      const ctc = parseFloat(document.getElementById('edit_ctc').value) || 0;
+      
+      // Get TPE value (handle percentage mode)
+      let tpe = parseFloat(document.getElementById('edit_tpe').value) || 0;
+      if (tpeMode === 'percentage') {
+        tpe = ctc * (tpe / 100);
+      }
+      
+      const carAllowance = parseFloat(document.getElementById('edit_car_allowance').value) || 0;
+      
+      // Step 1: Annual Bonus (what user enters)
+      const annualBonus = parseFloat(document.getElementById('edit_bonus').value) || 0;
+      
+      // Step 2: Payment Method (how they receive it)
+      const paymentMethod = document.getElementById('edit_bonus_type').value;
+      
+      // Calculate monthly provision based on payment method
+      // This is what gets deducted from the package each month
+      const bonusProvisionMonthly = annualBonus / 12;
+      
+      // Fixed allowances from SAP
+      const cellphone = parseFloat(document.getElementById('edit_cellphone').value) || 0;
+      const dataService = parseFloat(document.getElementById('edit_data_service').value) || 0;
+      const housing = parseFloat(document.getElementById('edit_housing').value) || 0;
+      const medicalER = parseFloat(document.getElementById('edit_medical_er').value) || 0;
+      
+      // Calculate pension contributions
+      const pensionER = calculatePensionER(tpe);
+      const pensionEE = calculatePensionEE(tpe);
+      document.getElementById('edit_pension_er').value = pensionER.toFixed(2);
+      document.getElementById('edit_pension_ee').value = pensionEE.toFixed(2);
+      
+      // Calculate group life
+      const groupLifeER = calculateGroupLifeER(tpe);
+      const groupLifeEE = calculateGroupLifeEE(tpe);
+      document.getElementById('edit_group_life_er').value = groupLifeER.toFixed(2);
+      document.getElementById('edit_group_life_ee_deduction').value = groupLifeEE.toFixed(2);
+      
+      // Display the monthly provision in the Bonus Provision field
+      document.getElementById('edit_bonus_provision').value = bonusProvisionMonthly.toFixed(2);
+      
+      // Calculate cash component (what's left after all deductions)
+      const totalDeductions = carAllowance + bonusProvisionMonthly + pensionER + medicalER + groupLifeER + cellphone + dataService + housing;
+      const cash = ctc - totalDeductions;
+      document.getElementById('edit_cash').value = cash.toFixed(2);
+      
+      // Calculate UIF (1% of income, max R177.12)
+      const uif = Math.min((tpe + carAllowance) * 0.01, 177.12);
+      document.getElementById('edit_uif_deduction').value = uif.toFixed(2);
+      
+      // Calculate tax using correct Rand Water calculation
+      // Taxable Income = Cash + Car (80%) + Housing + Cellphone + Data Service
+      const taxableIncome = cash + (carAllowance * 0.8) + housing + cellphone + dataService;
+      const tax = calculateTax(taxableIncome, pensionEE, pensionER, annualBonus);
+      document.getElementById('edit_tax_deduction').value = tax.toFixed(2);
+      
+      // Calculate medical EE deduction (placeholder - needs medical aid rules)
+      const medicalEE = medicalER * 0.5; // Simplified - needs proper calculation
+      document.getElementById('edit_medical_ee_deduction').value = medicalEE.toFixed(2);
+      
+      // Update percentage displays (use annual bonus for percentage calculation)
+      updatePercentageDisplays(ctc, tpe, carAllowance, annualBonus);
+      
+      // Calculate TCTC (including employer contributions)
+      // Use monthly provision for TCTC calculation
+      const totalTCTC = tpe + carAllowance + bonusProvisionMonthly + pensionER + groupLifeER + cellphone + dataService + housing + medicalER;
+      
+      // Update TCTC display
+      document.getElementById('calculated_tctc').textContent = totalTCTC.toFixed(2);
+      
+      // Color coding based on limit
+      const limit = parseFloat(document.getElementById('tctc_limit').textContent) || 0;
+      const tctcElement = document.getElementById('calculated_tctc');
+      if (totalTCTC > limit) {
+        tctcElement.parentElement.className = 'alert alert-danger';
+      } else if (totalTCTC > limit * 0.95) {
+        tctcElement.parentElement.className = 'alert alert-warning';
+      } else {
+        tctcElement.parentElement.className = 'alert alert-info';
+      }
+      
+      // Update bonus calculation text based on payment method
+      let bonusText = `Monthly provision: R${bonusProvisionMonthly.toFixed(2)} (Annual: R${annualBonus.toFixed(2)})`;
+      document.getElementById('bonus_calculation_text').textContent = bonusText;
+    }
+
+    function updatePercentageDisplays(ctc, tpe, carAllowance, annualBonus) {
+      if (ctc > 0) {
+        document.getElementById('tpe_percentage').textContent = ((tpe / ctc) * 100).toFixed(1);
+        document.getElementById('car_percentage').textContent = ((carAllowance / ctc) * 100).toFixed(1);
+        // Bonus percentage: annual bonus as % of annual CTC
+        const annualCTC = ctc * 12;
+        document.getElementById('bonus_percentage').textContent = ((annualBonus / annualCTC) * 100).toFixed(1);
+      }
+    }
+
+    function calculatePensionER(tpe) {
+      // Rand Water Provident Fund Rates (effective 1 July 2025 - 30 June 2026)
+      const option = document.getElementById('edit_pension_option').value;
+      switch(option) {
+        case 'A': return tpe * 0.1719;  // 17.19%
+        case 'B': return tpe * 0.1719;  // 17.19%
+        case 'C': return tpe * 0.09450; // 9.450%
+        case 'D': return tpe * 0.1719;  // 17.19%
+        case 'E': return tpe * 0.1719;  // 17.19%
+        case 'F': return tpe * 0.1719;  // 17.19%
+        case 'G': return tpe * 0.1719;  // 17.19%
+        case 'SAMWU': return tpe * 0.1719;  // 17.19%
+        default: return tpe * 0.1719;  // Default to Option B
+      }
+    }
+
+    function calculatePensionEE(tpe) {
+      // Rand Water Provident Fund - Employee contribution is consistent at 8.67%
+      const option = document.getElementById('edit_pension_option').value;
+      if (option === 'none') return 0;
+      return tpe * 0.0867;  // 8.67% for all options
+    }
+
+    function calculateGroupLifeER(tpe) {
+      // Rand Water Group Life Scheme 97885
+      const option = document.getElementById('edit_group_life_option').value;
+      switch(option) {
+        case 'standard': return tpe * 0.005;  // 0.5%
+        case 'enhanced': return tpe * 0.02;   // 2.0%
+        default: return 0;
+      }
+    }
+
+    function calculateGroupLifeEE(tpe) {
+      // Rand Water Group Life Scheme 97885
+      const option = document.getElementById('edit_group_life_option').value;
+      switch(option) {
+        case 'standard': return tpe * 0.002;  // 0.2%
+        case 'enhanced': return tpe * 0.01;   // 1.0%
+        default: return 0;
+      }
+    }
+
+    function calculateTax(monthlyTaxableIncome, pensionEE, pensionER, annualBonus) {
+      console.log('=== TAX CALCULATION DEBUG ===');
+      
+      // 1. Calculate annual taxable income
+      const annualTaxableIncome = monthlyTaxableIncome * 12;
+      console.log('Taxable Income Monthly:', monthlyTaxableIncome.toFixed(2));
+      console.log('Taxable Income Annual:', annualTaxableIncome.toFixed(2));
+      
+      // 2. Deduct pension contributions (EE + ER)
+      const totalPensionAnnual = (pensionEE + pensionER) * 12;
+      const netTaxableIncome = annualTaxableIncome - totalPensionAnnual;
+      console.log('Pension EE Monthly:', pensionEE.toFixed(2));
+      console.log('Pension ER Monthly:', pensionER.toFixed(2));
+      console.log('Total Pension Annual (EE + ER):', totalPensionAnnual.toFixed(2));
+      console.log('Net Taxable Income:', netTaxableIncome.toFixed(2));
+      
+      // 3. Apply SARS Tax Brackets 2024/2025
+      let grossTax = 0;
+      
+      if (netTaxableIncome <= 237100) {
+        grossTax = netTaxableIncome * 0.18;
+      } else if (netTaxableIncome <= 370500) {
+        grossTax = 42678 + (netTaxableIncome - 237100) * 0.26;
+      } else if (netTaxableIncome <= 512800) {
+        grossTax = 77362 + (netTaxableIncome - 370500) * 0.31;
+      } else if (netTaxableIncome <= 673000) {
+        grossTax = 121475 + (netTaxableIncome - 512800) * 0.36;
+      } else if (netTaxableIncome <= 857900) {
+        grossTax = 179147 + (netTaxableIncome - 673000) * 0.39;
+      } else if (netTaxableIncome <= 1817000) {
+        grossTax = 251258 + (netTaxableIncome - 857900) * 0.41;
+      } else {
+        grossTax = 644489 + (netTaxableIncome - 1817000) * 0.45;
+      }
+      
+      console.log('Gross Tax:', grossTax.toFixed(2));
+      
+      // 4. Apply rebates (age-based)
+      const primaryRebate = 17235;
+      let totalRebate = primaryRebate;
+      console.log('Primary Rebate:', primaryRebate.toFixed(2));
+      
+      // 5. Apply Medical Tax Credit (MTC)
+      // First 2 people: R364/month each, Additional: R246/month each
+      const medicalDependents = 4; // Default to 4 (main + 3 children)
+      let medicalCreditAnnual = 0;
+      
+      if (medicalDependents > 0) {
+        const firstTwo = Math.min(medicalDependents, 2);
+        const additional = Math.max(0, medicalDependents - 2);
+        const medicalCreditMonthly = (firstTwo * 364) + (additional * 246);
+        medicalCreditAnnual = medicalCreditMonthly * 12;
+        console.log('Medical Dependents:', medicalDependents);
+        console.log('Medical Credit Monthly:', medicalCreditMonthly.toFixed(2));
+        console.log('Medical Credit Annual:', medicalCreditAnnual.toFixed(2));
+      }
+      
+      // 6. Calculate annual tax
+      let annualTax = grossTax - totalRebate - medicalCreditAnnual;
+      annualTax = Math.max(0, annualTax);
+      console.log('Annual Tax:', annualTax.toFixed(2));
+      
+      // 7. Calculate monthly tax
+      const monthlyTax = annualTax / 12;
+      console.log('Monthly Tax:', monthlyTax.toFixed(2));
+      
+      // 8. Calculate bonus tax (18% on annual bonus)
+      const bonusTax = (annualBonus * 0.18) / 12;
+      console.log('Bonus Annual:', annualBonus.toFixed(2));
+      console.log('Bonus Tax Monthly:', bonusTax.toFixed(2));
+      
+      // 9. Return total monthly tax (salary tax + bonus tax provision)
+      const totalTax = monthlyTax + bonusTax;
+      console.log('Total Tax (Monthly + Bonus):', totalTax.toFixed(2));
+      console.log('=== END TAX CALCULATION DEBUG ===');
+      
+      return totalTax;
+    }
+
+    function generateTaxReport() {
+      // Gather all the data needed for the tax report
+      const employeeId = document.getElementById('edit_employee_id').value;
+      const employeeName = document.getElementById('edit_employee_name') ? 
+        document.getElementById('edit_employee_name').value : '';
+      
+      const ctc = parseFloat(document.getElementById('edit_ctc').value) || 0;
+      let tpe = parseFloat(document.getElementById('edit_tpe').value) || 0;
+      if (tpeMode === 'percentage') {
+        tpe = ctc * (tpe / 100);
+      }
+      
+      const carAllowance = parseFloat(document.getElementById('edit_car_allowance').value) || 0;
+      const cellphone = parseFloat(document.getElementById('edit_cellphone').value) || 0;
+      const dataService = parseFloat(document.getElementById('edit_data_service').value) || 0;
+      const housing = parseFloat(document.getElementById('edit_housing').value) || 0;
+      const annualBonus = parseFloat(document.getElementById('edit_bonus').value) || 0;
+      
+      const pensionER = calculatePensionER(tpe);
+      const pensionEE = calculatePensionEE(tpe);
+      
+      const totalDeductions = carAllowance + (annualBonus / 12) + pensionER + 
+        parseFloat(document.getElementById('edit_medical_er').value || 0) + 
+        calculateGroupLifeER(tpe) + cellphone + dataService + housing;
+      const cash = ctc - totalDeductions;
+      
+      const taxableIncome = cash + (carAllowance * 0.8) + housing + cellphone + dataService;
+      const tax = parseFloat(document.getElementById('edit_tax_deduction').value) || 0;
+      
+      // Prepare data for the report
+      const reportData = {
+        employee_id: employeeId,
+        employee_name: employeeName,
+        ctc: ctc,
+        tpe: tpe,
+        cash_component: cash,
+        car_allowance: carAllowance,
+        cellphone_allowance: cellphone,
+        data_service_allowance: dataService,
+        housing_allowance: housing,
+        pension_ee: pensionEE,
+        pension_er: pensionER,
+        annual_bonus: annualBonus,
+        taxable_income_monthly: taxableIncome,
+        monthly_tax: tax,
+        medical_dependents: 4  // Default - could be made dynamic
+      };
+      
+      // Send request to backend to generate PDF
+      fetch('/admin/randwater/generate-tax-report', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(reportData)
+      })
+      .then(response => response.blob())
+      .then(blob => {
+        // Create a download link for the PDF
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Tax_Calculation_Report_${employeeId}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      })
+      .catch(error => {
+        console.error('Error generating tax report:', error);
+        alert('Error generating tax report. Please try again.');
+      });
+    }
+
+    function updateMedicalOptions() {
+      const medicalAid = document.getElementById('edit_medical_aid').value;
+      const optionsRow = document.getElementById('medical_options_row');
+      const optionSelect = document.getElementById('edit_medical_option');
+      
+      if (medicalAid === 'none') {
+        optionsRow.style.display = 'none';
+        return;
+      }
+      
+      optionsRow.style.display = 'block';
+      optionSelect.innerHTML = '';
+      
+      if (medicalAid === 'rand_water') {
+        optionSelect.innerHTML = `
+          <option value="option_a">Option A</option>
+          <option value="option_b">Option B</option>
+        `;
+      } else if (medicalAid === 'bonitas') {
+        optionSelect.innerHTML = `
+          <option value="standard">Standard</option>
+        `;
+      }
+    }
+
+    function validateBusinessRules() {
+      const bandRange = document.getElementById('edit_band_range').value;
+      const tpe = parseFloat(document.getElementById('edit_tpe').value) || 0;
+      const carAllowance = parseFloat(document.getElementById('edit_car_allowance').value) || 0;
+      const bonus = parseFloat(document.getElementById('edit_bonus').value) || 0;
+      const currentTCTC = parseFloat(document.getElementById('calculated_tctc').textContent) || 0;
+      
+      // Only apply validations for O to Q band employees
+      if (bandRange === 'o_to_q') {
+        // TPE validation (50-70% of CTC)
+        const tpeWarning = document.getElementById('tpe_warning');
+        if (tpeWarning) {
+          const tpePercent = currentTCTC > 0 ? (tpe / currentTCTC) * 100 : 0;
+          if (tpePercent < 50) {
+            tpeWarning.textContent = `Warning: TPE is ${tpePercent.toFixed(1)}% of CTC (should be 50-70%)`;
+            tpeWarning.style.display = 'block';
+          } else if (tpePercent > 70) {
+            tpeWarning.textContent = `Warning: TPE is ${tpePercent.toFixed(1)}% of CTC (should be 50-70%)`;
+            tpeWarning.style.display = 'block';
+          } else {
+            tpeWarning.style.display = 'none';
+          }
+        }
+        
+        // Car Allowance validation (30%+ of CTC)
+        const carWarning = document.getElementById('car_warning');
+        if (carWarning) {
+          const carPercent = currentTCTC > 0 ? (carAllowance / currentTCTC) * 100 : 0;
+          if (carPercent < 30) {
+            carWarning.textContent = `Warning: Car Allowance is ${carPercent.toFixed(1)}% of CTC (should be 30%+)`;
+            carWarning.style.display = 'block';
+          } else {
+            carWarning.style.display = 'none';
+          }
+        }
+        
+        // Bonus validation (10-70% of Annual CTC)
+        // Compare annual bonus against annual CTC
+        const bonusWarning = document.getElementById('bonus_warning');
+        if (bonusWarning) {
+          const annualCTC = currentTCTC * 12; // Annual CTC
+          const bonusPercent = annualCTC > 0 ? (bonus / annualCTC) * 100 : 0;
+          if (bonusPercent < 10) {
+            bonusWarning.textContent = `Warning: Annual bonus is ${bonusPercent.toFixed(1)}% of CTC (should be 10-70%)`;
+            bonusWarning.style.display = 'block';
+          } else if (bonusPercent > 70) {
+            bonusWarning.textContent = `Warning: Annual bonus is ${bonusPercent.toFixed(1)}% of CTC (should be 10-70%)`;
+            bonusWarning.style.display = 'block';
+          } else {
+            bonusWarning.style.display = 'none';
+          }
+        }
+      } else {
+        // Hide warnings for non-O to Q band
+        const warnings = ['tpe_warning', 'car_warning', 'bonus_warning'];
+        warnings.forEach(warningId => {
+          const warning = document.getElementById(warningId);
+          if (warning) warning.style.display = 'none';
+        });
+      }
+    }
+
+    function calculateTCTC() {
+      const tpe = parseFloat(document.getElementById('edit_tpe').value) || 0;
+      const carAllowance = parseFloat(document.getElementById('edit_car_allowance').value) || 0;
+      const bonus = parseFloat(document.getElementById('edit_bonus').value) || 0;
+      const bonusType = document.getElementById('edit_bonus_type').value;
+      
+      // Add fixed components from SAP data if available
+      let fixedComponents = 0;
+      if (originalPackageData && originalPackageData.sap_data) {
+        fixedComponents += parseFloat(originalPackageData.sap_data.CELLPHONEALLOWANCE || 0);
+        fixedComponents += parseFloat(originalPackageData.sap_data.DATASERVICEALLOWANCE || 0);
+        fixedComponents += parseFloat(originalPackageData.sap_data.HOUSING || 0);
+        fixedComponents += parseFloat(originalPackageData.sap_data.MEDICALEECONTRIBUTION || 0);
+      }
+      
+      // Calculate bonus contribution (monthly vs annual)
+      const bonusContribution = bonusType === 'monthly' ? bonus : bonus / 12;
+      
+      // Calculate employer pension contribution
+      const pensionER = calculatePensionER(tpe);
+      
+      // Calculate employer group life contribution
+      const groupLifeER = calculateGroupLifeER(tpe);
+      
+      // TCTC includes employer costs
+      const totalTCTC = tpe + carAllowance + bonusContribution + fixedComponents + pensionER + groupLifeER;
+      document.getElementById('calculated_tctc').textContent = totalTCTC.toFixed(2);
+      
+      // Update pension and group life displays
+      const pensionEE = calculatePensionEE(tpe);
+      const groupLifeEE = calculateGroupLifeEE(tpe);
+      
+      // Update UI elements if they exist
+      const pensionERDisplay = document.getElementById('pension_er_display');
+      const pensionEEDisplay = document.getElementById('pension_ee_display');
+      const groupLifeERDisplay = document.getElementById('group_life_er_display');
+      const groupLifeEEDisplay = document.getElementById('group_life_ee_display');
+      
+      if (pensionERDisplay) pensionERDisplay.textContent = pensionER.toFixed(2);
+      if (pensionEEDisplay) pensionEEDisplay.textContent = pensionEE.toFixed(2);
+      if (groupLifeERDisplay) groupLifeERDisplay.textContent = groupLifeER.toFixed(2);
+      if (groupLifeEEDisplay) groupLifeEEDisplay.textContent = groupLifeEE.toFixed(2);
+      
+      // Color coding based on limit
+      const limit = parseFloat(document.getElementById('tctc_limit').textContent) || 0;
+      const tctcElement = document.getElementById('calculated_tctc');
+      if (totalTCTC > limit) {
+        tctcElement.parentElement.className = 'alert alert-danger';
+      } else if (totalTCTC > limit * 0.95) {
+        tctcElement.parentElement.className = 'alert alert-warning';
+      } else {
+        tctcElement.parentElement.className = 'alert alert-info';
+      }
+    }
+
+    function loadAuditTrail(employeeId) {
+      fetch(`/api/admin/package/${employeeId}/audit`)
+        .then(response => response.json())
+        .then(data => {
+          const auditDiv = document.getElementById('auditTrail');
+          if (data.success && data.audit_trail.length > 0) {
+            auditDiv.innerHTML = data.audit_trail.map(entry => `
+              <div class="audit-entry mb-2 p-2 bg-light rounded">
+                <small class="text-muted">${new Date(entry.timestamp).toLocaleString()}</small><br>
+                <strong>${entry.admin_user}</strong>: ${entry.action}<br>
+                ${entry.changes ? '<small>' + entry.changes + '</small>' : ''}
+              </div>
+            `).join('');
+          } else {
+            auditDiv.innerHTML = '<div class="text-muted">No audit history available</div>';
+          }
+        })
+        .catch(error => {
+          console.error('Error loading audit trail:', error);
+          document.getElementById('auditTrail').innerHTML = '<div class="text-danger">Error loading audit trail</div>';
+        });
+    }
+
+    function savePackageChanges() {
+      // Bonus field always contains annual amount
+      // Convert to monthly provision for backend since we always use 'monthly' type
+      const annualBonus = parseFloat(document.getElementById('edit_bonus').value) || 0;
+      const monthlyProvision = annualBonus / 12;
+      
+      const newData = {
+        employee_subgroup: document.getElementById('edit_employee_subgroup').value,
+        band_range: document.getElementById('edit_band_range').value,
+        tpe: parseFloat(document.getElementById('edit_tpe').value) || 0,
+        car_allowance: parseFloat(document.getElementById('edit_car_allowance').value) || 0,
+        bonus: monthlyProvision, // Send monthly provision to backend
+        bonus_type: 'monthly', // Always monthly since we divided by 12
+        medical_aid: document.getElementById('edit_medical_aid').value,
+        medical_option: document.getElementById('edit_medical_option').value || null
+      };
+      
+      // Create change summary
+      const changes = [];
+      const oldComponents = originalPackageData.package_components || {};
+      Object.keys(newData).forEach(key => {
+        const oldValue = oldComponents[key] || 0;
+        const newValue = newData[key];
+        if (oldValue !== newValue) {
+          if (typeof newValue === 'number') {
+            changes.push(`${key}: R${oldValue.toFixed(2)} → R${newValue.toFixed(2)}`);
+          } else {
+            changes.push(`${key}: ${oldValue} → ${newValue}`);
+          }
+        }
+      });
+      
+      if (changes.length === 0) {
+        alert('No changes detected');
+        return;
+      }
+      
+      if (!confirm(`Save the following changes?\n\n${changes.join('\n')}`)) {
+        return;
+      }
+      
+      // Save changes
+      fetch(`/api/admin/package/${currentEmployeeId}/update`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          package_components: newData,
+          change_summary: changes.join('; ')
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Package updated successfully');
+          
+          // Close modal and refresh page
+          const modal = bootstrap.Modal.getInstance(document.getElementById('packageEditModal'));
+          modal.hide();
+          location.reload();
+        } else {
+          alert('Error updating package: ' + data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating package');
+      });
+    }
+
+    // Payslip functions for Package Management
+    function viewEmployeePayslip(employeeId) {
+      console.log('=== VIEW PAYSLIP DEBUG START ===');
+      console.log('viewEmployeePayslip called with ID:', employeeId);
+      
+      // Get the modal element
+      const modalElement = document.getElementById('payslipModal');
+      console.log('Modal element found:', modalElement);
+      
+      // Destroy any existing modal instance first
+      const existingModal = bootstrap.Modal.getInstance(modalElement);
+      console.log('Existing modal instance:', existingModal);
+      if (existingModal) {
+        console.log('Disposing existing modal...');
+        existingModal.dispose();
+      }
+      
+      // Create new modal instance with proper configuration
+      const modal = new bootstrap.Modal(modalElement, {
+        backdrop: 'static',
+        keyboard: false,
+        focus: true
+      });
+      console.log('New modal instance created:', modal);
+      
+      // Show loading state
+      const content = document.getElementById('payslipContent');
+      console.log('Content element found:', content);
+      content.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Loading payslip...</p></div>';
+      
+      // Show the modal
+      console.log('Showing modal...');
       modal.show();
+      
+      // Store modal instance globally to prevent garbage collection
+      window.currentPayslipModal = modal;
+      
+      // Fetch employee payslip data
+      const payslipUrl = `/admin/randwater/employee-payslip/${employeeId}`;
+      console.log('Fetching payslip from URL:', payslipUrl);
+      
+      fetch(payslipUrl)
+        .then(response => {
+          console.log('Payslip fetch response status:', response.status);
+          console.log('Payslip fetch response headers:', response.headers);
+          return response.json();
+        })
+        .then(data => {
+          console.log('Payslip data received:', data);
+          console.log('Payslip data keys:', Object.keys(data || {}));
+          if (data.success) {
+            console.log('Calling displayEmployeePayslip with:', data.employee, data.payslip);
+            displayEmployeePayslip(data.employee, data.payslip);
+          } else {
+            console.error('Payslip fetch failed:', data.error);
+            content.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+          }
+        })
+        .catch(error => {
+          console.error('Payslip fetch error:', error);
+          content.innerHTML = '<div class="alert alert-danger">Error loading payslip</div>';
+        });
+      
+      console.log('=== VIEW PAYSLIP DEBUG END ===');
+    }
+
+    function displayEmployeePayslip(employee, payslip) {
+      console.log('=== PAYSLIP DISPLAY DEBUG START ===');
+      console.log('Employee data:', employee);
+      console.log('Payslip data:', payslip);
+      console.log('Payslip keys:', Object.keys(payslip || {}));
+      console.log('Employee CTC:', employee.ctc);
+      console.log('Payslip TCTC:', payslip.tctc);
+      console.log('Payslip pensionable_salary:', payslip.pensionable_salary);
+      console.log('Payslip housing_allowance:', payslip.housing_allowance);
+      console.log('Payslip pension_employee:', payslip.pension_employee);
+      console.log('Payslip medical_employee:', payslip.medical_employee);
+      console.log('Payslip tax:', payslip.tax);
+      console.log('Payslip net_pay:', payslip.net_pay);
+      console.log('=== PAYSLIP DISPLAY DEBUG END ===');
+      
+      const content = document.getElementById('payslipContent');
+      
+      // Rand Water Payslip Format - Based on your detailed example
+      content.innerHTML = `
+        <div class="payslip-container">
+          <div class="payslip-header text-center mb-4">
+            <h4 class="text-primary"><i class="fas fa-file-invoice"></i> Employee Payslip</h4>
+            <p class="text-muted">Rand Water - ${new Date().toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' })}</p>
+          </div>
+          
+          <div class="row mb-4">
+            <div class="col-md-6">
+              <h6 class="text-primary"><i class="fas fa-user"></i> Employee Information</h6>
+              <table class="table table-sm">
+                <tr><td><strong>Employee ID:</strong></td><td>${employee.employee_id}</td></tr>
+                <tr><td><strong>Name:</strong></td><td>${employee.first_name} ${employee.surname}</td></tr>
+                <tr><td><strong>Grade Band:</strong></td><td><span class="badge bg-primary">${employee.grade_band}</span></td></tr>
+                <tr><td><strong>Department:</strong></td><td>${employee.department}</td></tr>
+                <tr><td><strong>Job Title:</strong></td><td>${employee.job_title}</td></tr>
+              </table>
+            </div>
+            <div class="col-md-6">
+              <h6 class="text-primary"><i class="fas fa-calendar"></i> Pay Period</h6>
+              <table class="table table-sm">
+                <tr><td><strong>Month:</strong></td><td>${new Date().toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' })}</td></tr>
+                <tr><td><strong>Pay Date:</strong></td><td>${new Date().toLocaleDateString('en-ZA')}</td></tr>
+                <tr><td><strong>CTC:</strong></td><td><strong>R ${(employee.ctc || 0).toLocaleString()}</strong></td></tr>
+              </table>
+            </div>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-6">
+              <h6 class="text-success"><i class="fas fa-plus-circle"></i> Earnings</h6>
+              <table class="table table-sm">
+                <tr><td><strong>Pensionable Salary:</strong></td><td class="text-end">R ${(payslip.pensionable_salary || payslip.tpe || 0).toLocaleString()}</td></tr>
+                <tr class="table-success"><td><strong>Total Earnings:</strong></td><td class="text-end"><strong>R ${(payslip.pensionable_salary || payslip.tpe || 0).toLocaleString()}</strong></td></tr>
+              </table>
+            </div>
+            <div class="col-md-6">
+              <h6 class="text-danger"><i class="fas fa-minus-circle"></i> Deductions</h6>
+              <table class="table table-sm">
+                <tr><td>Pension - employee:</td><td class="text-end">R ${(payslip.pension_employee || 0).toLocaleString()}</td></tr>
+                <tr><td>Medical aid - employee:</td><td class="text-end">R ${(payslip.medical_employee || 0).toLocaleString()}</td></tr>
+                <tr><td>Group Life - employee:</td><td class="text-end">R ${(payslip.group_life_employee || 0).toLocaleString()}</td></tr>
+                <tr><td>UIF employee contribution:</td><td class="text-end">R ${(payslip.uif_employee || 0).toLocaleString()}</td></tr>
+                <tr><td>Tax:</td><td class="text-end">R ${(payslip.total_tax || payslip.tax || 0).toLocaleString()}</td></tr>
+                <tr class="table-danger"><td><strong>Total Deductions:</strong></td><td class="text-end"><strong>R ${(payslip.total_deductions || 0).toLocaleString()}</strong></td></tr>
+              </table>
+            </div>
+          </div>
+          
+          <hr>
+          <div class="row">
+            <div class="col-12 text-center">
+              <h5 class="text-primary">Net pay: <span class="badge bg-success fs-4">R ${(payslip.net_pay || 0).toLocaleString()}</span></h5>
+              <small class="text-muted">Based on actual SAP data with complete tax calculation (UIF, Travel Allowance Rules, Pension Caps, Medical Credits, Age Rebates)</small>
+            </div>
+          </div>
+          
+          <hr>
+          <div class="row">
+            <div class="col-md-6">
+              <h6 class="text-warning"><i class="fas fa-building"></i> Employer's Contributions</h6>
+              <table class="table table-sm">
+                <tr><td>Pension - employer:</td><td class="text-end">R ${(payslip.pension_employer || 0).toLocaleString()}</td></tr>
+                <tr><td>Medical aid - employer:</td><td class="text-end">R ${(payslip.medical_employer || 0).toLocaleString()}</td></tr>
+                <tr><td>UIF employer contribution:</td><td class="text-end">R ${(payslip.uif_employer || 0).toLocaleString()}</td></tr>
+                <tr><td>Development Levy:</td><td class="text-end">R ${(payslip.development_levy || 0).toLocaleString()}</td></tr>
+                <tr><td>Group life - employer:</td><td class="text-end">R ${(payslip.group_life_employer || 0).toLocaleString()}</td></tr>
+              </table>
+            </div>
+            <div class="col-md-6">
+              <h6 class="text-info"><i class="fas fa-info-circle"></i> Package Breakdown</h6>
+              <table class="table table-sm">
+                <tr><td><strong>TCTC (Monthly):</strong></td><td class="text-end">R ${(payslip.tctc || 0).toLocaleString()}</td></tr>
+                <tr><td>Pensionable Salary (TPE):</td><td class="text-end">R ${(payslip.tpe || 0).toLocaleString()}</td></tr>
+                <tr><td>Pension Option:</td><td class="text-end">${payslip.pension_option || 'N/A'}</td></tr>
+                <tr><td>Medical Aid:</td><td class="text-end">${payslip.medical_provider || 'N/A'} ${payslip.medical_option || ''}</td></tr>
+                <tr><td>Medical Dependents:</td><td class="text-end">${payslip.medical_dependents || 0}</td></tr>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function closePayslipModal() {
+      if (window.currentPayslipModal) {
+        window.currentPayslipModal.hide();
+        window.currentPayslipModal = null;
+      }
     }
   </script>
+
+  <!-- Payslip Modal -->
+  <div class="modal fade" id="payslipModal" tabindex="-1" aria-labelledby="payslipModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="payslipModalLabel">
+            <i class="fas fa-file-invoice"></i> Employee Payslip
+          </h5>
+          <button type="button" class="btn-close" onclick="closePayslipModal()" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="payslipContent">
+            <!-- Payslip content will be loaded here -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closePayslipModal()">Close</button>
+          <button type="button" class="btn btn-primary" onclick="window.print()">
+            <i class="fas fa-print"></i> Print Payslip
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </body>
 </html>

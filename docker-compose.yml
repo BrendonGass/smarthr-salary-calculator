@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5001:5001"
+    volumes:
+      # Persist data files (only what's needed)
+      - ./uploads:/app/uploads
+      - ./backups:/app/backups
+      - ./drafts:/app/drafts
+      # Mount JSON data files (only if they exist)
+      - ./employee_access.json:/app/employee_access.json
+      - ./employee_packages.json:/app/employee_packages.json
+      - ./randwater_package_audit.json:/app/randwater_package_audit.json
+      - ./submitted_packages.json:/app/submitted_packages.json
+      - ./sap_uploads.json:/app/sap_uploads.json
+      - ./system_logs.json:/app/system_logs.json
+      - ./system_users.json:/app/system_users.json
+      - ./password_reset_tokens.json:/app/password_reset_tokens.json
+      - ./randwater_notifications.json:/app/randwater_notifications.json
+      - ./pension_config.json:/app/pension_config.json
+      - ./email_logs.json:/app/email_logs.json
+      - ./package_audit.json:/app/package_audit.json
+      - ./salary_simulations.json:/app/salary_simulations.json
+      - ./randwater_data.db:/app/randwater_data.db
+    environment:
+      - FLASK_APP=randwater_calculator.py
+      - FLASK_ENV=production
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - randwater-network
+
+networks:
+  randwater-network:
+    driver: bridge
+
+

@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Package Details - {{ employee.employee_id }} | {{ config.COMPANY_NAME }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .audit-entry {
+            border-left: 4px solid #007bff;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            background-color: #f8f9fa;
+        }
+        .notification {
+            border-left: 4px solid #28a745;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background-color: #f8fff9;
+        }
+        .payslip-section {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            background-color: #fff;
+        }
+        .edit-mode {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+        }
+        .calculation-breakdown {
+            background-color: #f8f9fa;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            font-family: 'Courier New', monospace;
+        }
+        .editable-field {
+            background-color: #fff;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            padding: 0.375rem 0.75rem;
+            transition: all 0.15s ease-in-out;
+        }
+        .editable-field:focus {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+        }
+        .readonly-field {
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+            border-radius: 0.25rem;
+            padding: 0.375rem 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="/admin/randwater/dashboard">
+                <img src="{{ url_for('static', filename='images/randwater-logo.png') }}" alt="Rand Water" height="40" class="me-2">
+                <span class="fw-bold">{{ config.COMPANY_NAME }}</span>
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a href="/manage_packages" class="btn btn-outline-light btn-sm me-2">
+                    <i class="fas fa-arrow-left"></i> Back to Packages
+                </a>
+                <a href="/admin/randwater/dashboard" class="btn btn-outline-light btn-sm">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <div class="row">
+            <!-- Main Package Content -->
+            <div class="col-lg-8">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2><i class="fas fa-briefcase text-primary"></i> Package Details</h2>
+                        <p class="text-muted">{{ employee.first_name }} {{ employee.surname }} ({{ employee.employee_id }})</p>
+                    </div>
+                    <div>
+                        <button id="editBtn" class="btn btn-warning me-2" onclick="toggleEditMode()">
+                            <i class="fas fa-edit"></i> Edit Package
+                        </button>
+                        <button id="saveBtn" class="btn btn-success me-2 d-none" onclick="saveChanges()">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                        <button id="cancelBtn" class="btn btn-secondary d-none" onclick="cancelEdit()">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Employee Information -->
+                <div class="payslip-section">
+                    <h4><i class="fas fa-user text-primary"></i> Employee Information</h4>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr><td><strong>Employee ID:</strong></td><td>{{ employee.employee_id }}</td></tr>
+                                <tr><td><strong>Full Name:</strong></td><td>{{ employee.first_name }} {{ employee.surname }}</td></tr>
+                                <tr><td><strong>Grade Band:</strong></td><td><span class="badge bg-secondary">{{ employee.grade_band }}</span></td></tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr><td><strong>Department:</strong></td><td>{{ employee.department }}</td></tr>
+                                <tr><td><strong>Job Title:</strong></td><td>{{ employee.job_title }}</td></tr>
+                                <tr><td><strong>Access Status:</strong></td><td>
+                                    {% if employee.is_expired %}
+                                        <span class="badge bg-danger">Expired</span>
+                                    {% else %}
+                                        <span class="badge bg-success">Active</span>
+                                    {% endif %}
+                                </td></tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Package Structure (Based on Example) -->
+                    <div class="row">
+                    <!-- Left Column: Package Components -->
+                        <div class="col-md-6">
+                        <div class="card h-100" id="packageSection">
+                            <div class="card-header bg-primary text-white">
+                                <h5 class="mb-0"><i class="fas fa-calculator"></i> Package Structure</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Employee Classification -->
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label fw-bold">Employee Subgroup</label>
+                                        <select class="editable-field form-select" id="employeeSubgroup" disabled>
+                                            <option value="other" selected>Other</option>
+                                            <option value="support_staff">Support Staff</option>
+                                        </select>
+                        </div>
+                        <div class="col-md-6">
+                                        <label class="form-label fw-bold">Band Range</label>
+                                        <select class="editable-field form-select" id="bandRange" disabled>
+                                            <option value="o_to_q" selected>O to Q Band</option>
+                                            <option value="non_o_to_q">Non-O to Q Band</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <!-- Debug Info (remove in production) -->
+                                <div class="mb-3" style="background-color: #f0f0f0; padding: 10px; border-radius: 5px;">
+                                    <strong>Debug Info:</strong><br>
+                                    Employee Object Keys: {{ employee.keys() | list }}<br>
+                                    SAP Data Available: {{ 'Yes' if employee.sap_data else 'No' }}<br>
+                                    Package Available: {{ 'Yes' if employee.package else 'No' }}<br>
+                                    {% if employee.package %}
+                                    Package TCTC Limit: {{ employee.package.tctc_limit }}<br>
+                                    Package SAP Data: {{ 'Yes' if employee.package.sap_data else 'No' }}<br>
+                                    {% endif %}
+                                    {% if employee.sap_data %}
+                                    TPE Value: {{ employee.sap_data.TPE }}<br>
+                                    CAR Value: {{ employee.sap_data.CAR }}<br>
+                                    CELLPHONE: {{ employee.sap_data.CELLPHONEALLOWANCE }}<br>
+                                    {% endif %}
+                                    {% if employee.package and employee.package.sap_data %}
+                                    Package SAP TPE: {{ employee.package.sap_data.TPE }}<br>
+                                    {% endif %}
+                                </div>
+
+                                <!-- CTC and Basic Components -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">TCTC Limit</label>
+                                    <input type="text" class="form-control text-end fw-bold" 
+                                           value="R {{ '%.2f'|format(employee.package.tctc_limit if employee.package else 0) }}" readonly>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">TPE (Total Pensionable Emolument)</label>
+                                    <input type="text" class="form-control text-end" id="basicSalaryDisplay" 
+                                           value="R {{ '%.2f'|format(employee.sap_data.TPE if employee.sap_data and employee.sap_data.TPE else 0) }}" readonly>
+                                    <input type="hidden" id="basicSalary" value="{{ employee.sap_data.TPE if employee.sap_data and employee.sap_data.TPE else 0 }}">
+                                </div>
+
+                                <!-- Editable Allowances -->
+                                <div class="mb-3">
+                                    <label class="form-label">Car Allowance <i class="fas fa-edit text-warning"></i></label>
+                                    <input type="number" step="0.01" class="editable-field form-control text-end" id="carAllowance" 
+                                           value="{{ employee.sap_data.CAR if employee.sap_data and employee.sap_data.CAR else 0 }}" disabled>
+                                </div>
+
+                                <!-- Fixed Allowances -->
+                                <div class="mb-3">
+                                    <label class="form-label">Cellphone Allowance <i class="fas fa-lock text-muted"></i></label>
+                                    <input type="text" class="form-control text-end" id="cellphoneAllowance" 
+                                           value="R {{ '%.2f'|format(employee.sap_data.CELLPHONEALLOWANCE if employee.sap_data and employee.sap_data.CELLPHONEALLOWANCE else 0) }}" readonly>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Data Service Allowance <i class="fas fa-lock text-muted"></i></label>
+                                    <input type="text" class="form-control text-end" id="dataServiceAllowance" 
+                                           value="R {{ '%.2f'|format(employee.sap_data.DATASERVICEALLOWANCE if employee.sap_data and employee.sap_data.DATASERVICEALLOWANCE else 0) }}" readonly>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Housing Allowance <i class="fas fa-lock text-muted"></i></label>
+                                    <input type="text" class="form-control text-end" id="housingAllowance" 
+                                           value="R {{ '%.2f'|format(employee.sap_data.HOUSING if employee.sap_data and employee.sap_data.HOUSING else 0) }}" readonly>
+                                </div>
+
+                                <!-- Retirement Fund -->
+                                <div class="mb-3">
+                                    <label class="form-label">Retirement Fund Name <i class="fas fa-edit text-warning"></i></label>
+                                    <select class="editable-field form-select" id="retirementFundName" disabled>
+                                        <option value="RWPROV">RWPROV</option>
+                                        <option value="RWMPPROV">RWMPPROV</option>
+                                        <option value="SAMWU">SAMWU</option>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Retirement Fund Option <i class="fas fa-edit text-warning"></i></label>
+                                    <select class="editable-field form-select" id="retirementFundOption" disabled>
+                                        <option value="option_a">Option A</option>
+                                        <option value="option_b">Option B</option>
+                                        <option value="option_c">Option C</option>
+                                        <option value="option_d">Option D</option>
+                                        <option value="option_e">Option E</option>
+                                        <option value="option_f">Option F</option>
+                                        <option value="option_g">Option G</option>
+                                    </select>
+                                </div>
+
+                                <!-- Annual Bonus -->
+                                <div class="mb-3">
+                                    <label class="form-label">Annual Bonus (13th Cheque) <i class="fas fa-edit text-warning"></i></label>
+                                    <select class="editable-field form-select mb-2" id="bonusFrequency" disabled>
+                                        <option value="monthly">Monthly</option>
+                                        <option value="annual" selected>Annual</option>
+                                    </select>
+                                    <input type="number" step="0.01" class="editable-field form-control text-end" id="annualBonus" 
+                                           value="{{ (employee.bonus or 0) * 12 }}" disabled>
+                                    <input type="hidden" id="monthlyBonus" value="{{ (employee.bonus or 0) }}">
+                                </div>
+
+                                <!-- Medical Aid (Non-editable) -->
+                                <div class="mb-3">
+                                    <label class="form-label">Medical Aid <i class="fas fa-lock text-muted"></i></label>
+                                    <input type="text" class="form-control text-end" 
+                                           value="RandWater" readonly>
+                                </div>
+
+                            <div class="mb-3">
+                                    <label class="form-label">Medical Aid Option <i class="fas fa-lock text-muted"></i></label>
+                                    <input type="text" class="form-control text-end" 
+                                           value="Option A" readonly>
+                                </div>
+                        </div>
+                    </div>
+                </div>
+
+                    <!-- Right Column: Employee Details & Calculations -->
+                    <div class="col-md-6">
+                        <!-- Employee Details -->
+                        <div class="card mb-3">
+                            <div class="card-header bg-info text-white">
+                                <h6 class="mb-0"><i class="fas fa-user"></i> Employee Details</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm table-borderless">
+                                    <tr><td><strong>Employee Code:</strong></td><td>{{ employee.employee_id }}</td></tr>
+                                    <tr><td><strong>Names:</strong></td><td>{{ employee.first_name }} {{ employee.surname }}</td></tr>
+                                    <tr><td><strong>Title:</strong></td><td>{{ employee.job_title or 'N/A' }}</td></tr>
+                                    <tr><td><strong>Grade:</strong></td><td>{{ employee.grade_band or 'N/A' }}</td></tr>
+                                    <tr><td><strong>Gender:</strong></td><td>{{ employee.gender or 'N/A' }}</td></tr>
+                                    <tr><td><strong>Date Engaged:</strong></td><td>{{ employee.date_engaged or 'N/A' }}</td></tr>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Calculated Deductions -->
+                        <div class="card" id="deductionsSection">
+                            <div class="card-header bg-warning text-dark">
+                                <h6 class="mb-0"><i class="fas fa-calculator"></i> Calculated Deductions</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Pension:</label>
+                                        <input type="text" class="form-control text-end" id="pensionDisplay" 
+                                               value="R 0.00" readonly>
+                                        <input type="hidden" id="pensionFund" value="0">
+                        </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">PAYE Tax:</label>
+                                        <input type="text" class="form-control text-end" id="payeTaxDisplay" 
+                                               value="R 0.00" readonly>
+                                        <input type="hidden" id="payeTax" value="0">
+                        </div>
+                    </div>
+                                <div class="row mt-2">
+                                    <div class="col-md-6">
+                                        <label class="form-label">UIF:</label>
+                                        <input type="text" class="form-control text-end" id="uifDisplay" 
+                                               value="R 0.00" readonly>
+                                        <input type="hidden" id="uifContrib" value="0">
+                        </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Medical Aid:</label>
+                                        <input type="text" class="form-control text-end" id="medicalAidDisplay" 
+                                               value="R {{ '%.2f'|format(employee.sap_data.MEDICALEECONTRIBUTION if employee.sap_data and employee.sap_data.MEDICALEECONTRIBUTION else 0) }}" readonly>
+                                        <input type="hidden" id="medicalAid" value="{{ employee.sap_data.MEDICALEECONTRIBUTION if employee.sap_data and employee.sap_data.MEDICALEECONTRIBUTION else 0 }}">
+                        </div>
+                    </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <label class="form-label fw-bold">Total Deductions:</label>
+                                        <input type="text" class="form-control text-end fw-bold text-danger" id="totalDeductionsDisplay" 
+                                               value="R 0.00" readonly>
+                                        <input type="hidden" id="totalDeductions" value="0">
+                </div>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Admin Note: Notifications are for employee view only -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="fas fa-info-circle text-info"></i> Employee Notifications</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="alert alert-info mb-0">
+                            <i class="fas fa-bell"></i>
+                            <strong>Admin Info:</strong> Package change notifications are sent directly to the employee and will be visible when they log in to their account.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Audit Trail -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-history text-info"></i> Audit Trail</h5>
+                    </div>
+                    <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                        {% if audit_trail %}
+                            {% for entry in audit_trail %}
+                            <div class="audit-entry">
+                                <div class="d-flex justify-content-between">
+                                    <strong>{{ entry.action.replace('_', ' ').title() }}</strong>
+                                    <small class="text-muted">{{ entry.timestamp[:19].replace('T', ' ') }}</small>
+                                </div>
+                                <p class="mb-1">Changes made by: <strong>{{ entry.admin_user }}</strong></p>
+                                {% if entry.changes %}
+                                <details>
+                                    <summary class="text-primary" style="cursor: pointer;">View Changes</summary>
+                                    <pre class="mt-2 small">{{ entry.changes|tojson(indent=2) }}</pre>
+                                </details>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted">No audit history available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let editMode = false;
+        let originalValues = {};
+        
+        function toggleEditMode() {
+            editMode = !editMode;
+            
+            const editBtn = document.getElementById('editBtn');
+            const saveBtn = document.getElementById('saveBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const packageSection = document.getElementById('packageSection');
+            const deductionsSection = document.getElementById('deductionsSection');
+            
+            if (editMode) {
+                // Store original values
+                storeOriginalValues();
+                
+                // Enter edit mode
+                editBtn.classList.add('d-none');
+                saveBtn.classList.remove('d-none');
+                cancelBtn.classList.remove('d-none');
+                
+                packageSection.classList.add('edit-mode');
+                deductionsSection.classList.add('edit-mode');
+                
+                // Enable only editable fields per business rules (NOT basic salary - it's calculated)
+                const editableFields = ['carAllowance', 'annualBonus', 'employeeSubgroup', 'bandRange', 
+                                      'retirementFundName', 'retirementFundOption'];
+                
+                editableFields.forEach(fieldId => {
+                    const field = document.getElementById(fieldId);
+                    if (field) {
+                        field.disabled = false;
+                        field.classList.add('edit-mode');
+                    }
+                });
+                
+                // Add calculation listeners for real-time updates
+                addCalculationListeners();
+                
+                // Initial calculation
+                calculateBasicSalary();
+                validateWarnings();
+                
+            } else {
+                // Exit edit mode
+                cancelEdit();
+            }
+        }
+        
+        // Initial deductions calculation on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            calculateDeductions();
+        });
+        
+        function storeOriginalValues() {
+            const fields = ['basicSalary', 'carAllowance', 'annualBonus', 'employeeSubgroup', 'bandRange'];
+            fields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    originalValues[fieldId] = field.value;
+                }
+            });
+        }
+        
+        function cancelEdit() {
+            editMode = false;
+            
+            const editBtn = document.getElementById('editBtn');
+            const saveBtn = document.getElementById('saveBtn');
+            const cancelBtn = document.getElementById('cancelBtn');
+            const packageSection = document.getElementById('packageSection');
+            const deductionsSection = document.getElementById('deductionsSection');
+            
+            editBtn.classList.remove('d-none');
+            saveBtn.classList.add('d-none');
+            cancelBtn.classList.add('d-none');
+            
+            packageSection.classList.remove('edit-mode');
+            deductionsSection.classList.remove('edit-mode');
+            
+            // Make fields readonly again
+            const editableFields = document.querySelectorAll('.editable-field');
+            editableFields.forEach(field => {
+                field.classList.remove('editable-field');
+                field.classList.add('readonly-field');
+                field.setAttribute('readonly', 'readonly');
+            });
+            
+            // Reset values to original
+            location.reload();
+        }
+        
+        function addCalculationListeners() {
+            const fields = ['carAllowance', 'annualBonus', 'retirementFundName', 'retirementFundOption'];
+            
+            fields.forEach(fieldId => {
+                const field = document.getElementById(fieldId);
+                if (field) {
+                    field.addEventListener('input', function() {
+                        calculateBasicSalary();
+                        validateWarnings();
+                    });
+                    // Also listen for change events on select fields
+                    field.addEventListener('change', function() {
+                        calculateBasicSalary();
+                        validateWarnings();
+                    });
+                }
+            });
+        }
+        
+        function calculateBasicSalary() {
+            const ctc = {{ employee.ctc }};
+            
+            // Get fixed components (cannot be changed)
+            const housingAllowance = parseFloat(document.getElementById('housingAllowance').value) || 0;
+            const transportAllowance = parseFloat(document.getElementById('transportAllowance').value) || 0;
+            const cellphoneAllowance = parseFloat(document.getElementById('cellphoneAllowance').value) || 0;
+            const dataServiceAllowance = parseFloat(document.getElementById('dataServiceAllowance').value) || 0;
+            
+            // Get variable components (user can change)
+            const carAllowance = parseFloat(document.getElementById('carAllowance').value) || 0;
+            const annualBonus = parseFloat(document.getElementById('annualBonus').value) || 0;
+            const monthlyBonus = annualBonus / 12;
+            
+            // Calculate fixed allocations
+            const fixedComponents = housingAllowance + transportAllowance + cellphoneAllowance + 
+                                  dataServiceAllowance + carAllowance + monthlyBonus;
+            
+            // Calculate remaining budget for basic salary
+            const calculatedBasicSalary = ctc - fixedComponents;
+            
+            // Update calculated fields
+            document.getElementById('basicSalary').value = Math.max(0, calculatedBasicSalary).toFixed(2);
+            document.getElementById('basicSalaryDisplay').value = 'R ' + Math.max(0, calculatedBasicSalary).toFixed(2);
+            document.getElementById('monthlyBonus').value = monthlyBonus.toFixed(2);
+            
+            // Validate budget
+            if (calculatedBasicSalary < 0) {
+                document.getElementById('basicSalaryDisplay').className = 'form-control text-end text-danger fw-bold';
+            } else {
+                document.getElementById('basicSalaryDisplay').className = 'form-control text-end';
+            }
+            
+            // Calculate and update deductions in real-time
+            calculateDeductions();
+        }
+        
+        function validateWarnings() {
+            const ctc = {{ employee.ctc }};
+            const basicSalary = parseFloat(document.getElementById('basicSalary').value) || 0;
+            const carAllowance = parseFloat(document.getElementById('carAllowance').value) || 0;
+            const annualBonus = parseFloat(document.getElementById('annualBonus').value) || 0;
+            
+            // Clear existing warnings
+            document.querySelectorAll('.validation-warning').forEach(w => w.remove());
+            
+            // Calculate percentages
+            const basicPercentage = (basicSalary / ctc) * 100;
+            const carPercentage = (carAllowance / ctc) * 100;
+            const bonusPercentage = (annualBonus / ctc) * 100;
+            
+            // Basic salary warnings
+            let basicWarning = '';
+            if (basicPercentage < 50) {
+                basicWarning = `Basic salary is ${basicPercentage.toFixed(1)}% of CTC (below typical 50%)`;
+            } else if (basicPercentage > 70) {
+                basicWarning = `Basic salary is ${basicPercentage.toFixed(1)}% of CTC (above typical 70%)`;
+            }
+            
+            if (basicWarning) {
+                addWarning('basicSalary', basicWarning, 'text-info');
+            }
+            
+            // Car allowance warnings
+            if (carAllowance > 0 && carPercentage < 30) {
+                addWarning('carAllowance', `Car allowance is ${carPercentage.toFixed(1)}% of CTC (below 30% minimum for O to Q band)`, 'text-warning');
+            }
+            
+            // Bonus warnings
+            if (bonusPercentage < 10) {
+                addWarning('annualBonus', `Bonus is ${bonusPercentage.toFixed(1)}% of CTC (below 10% minimum)`, 'text-warning');
+            } else if (bonusPercentage > 70) {
+                addWarning('annualBonus', `Bonus is ${bonusPercentage.toFixed(1)}% of CTC (above 70% maximum)`, 'text-danger');
+            }
+        }
+        
+        function addWarning(fieldId, message, className) {
+            const field = document.getElementById(fieldId);
+            const warningElement = document.createElement('small');
+            warningElement.className = `validation-warning ${className} d-block`;
+            warningElement.textContent = message;
+            field.parentNode.appendChild(warningElement);
+        }
+        
+        function calculateDeductions() {
+            // Get current package values
+            const basicSalary = parseFloat(document.getElementById('basicSalary').value) || 0;
+            const carAllowance = parseFloat(document.getElementById('carAllowance').value) || 0;
+            const monthlyBonus = parseFloat(document.getElementById('monthlyBonus').value) || 0;
+            const housingAllowance = parseFloat(document.getElementById('housingAllowance').value) || 0;
+            const transportAllowance = parseFloat(document.getElementById('transportAllowance').value) || 0;
+            const cellphoneAllowance = parseFloat(document.getElementById('cellphoneAllowance').value) || 0;
+            const dataServiceAllowance = parseFloat(document.getElementById('dataServiceAllowance').value) || 0;
+            const medicalAid = parseFloat(document.getElementById('medicalAid').value) || 0;
+            
+            // Simple client-side calculations (will be replaced by server calculations on save)
+            
+            // Pension: Based on selected retirement fund option
+            const pensionFund = calculatePensionContribution(basicSalary);
+            
+            // UIF: 1% of gross income, capped at R177.12
+            const grossIncome = basicSalary + carAllowance + monthlyBonus + housingAllowance + 
+                              transportAllowance + cellphoneAllowance + dataServiceAllowance;
+            const uifContrib = Math.min(grossIncome * 0.01, 177.12);
+            
+            // Simplified tax calculation (18% on taxable income after pension)
+            const taxableIncome = basicSalary + carAllowance;
+            const taxableAfterPension = Math.max(0, taxableIncome - pensionFund);
+            const payeTax = Math.max(0, (taxableAfterPension * 12 - 17235) * 0.18 / 12); // Simplified with rebate
+            
+            // Total deductions
+            const totalDeductions = payeTax + uifContrib + pensionFund + medicalAid;
+            
+            // Update deduction fields (both hidden values and display fields)
+            document.getElementById('payeTax').value = payeTax.toFixed(2);
+            document.getElementById('payeTaxDisplay').value = 'R ' + payeTax.toFixed(2);
+            
+            document.getElementById('uifContrib').value = uifContrib.toFixed(2);
+            document.getElementById('uifDisplay').value = 'R ' + uifContrib.toFixed(2);
+            
+            document.getElementById('pensionFund').value = pensionFund.toFixed(2);
+            document.getElementById('pensionDisplay').value = 'R ' + pensionFund.toFixed(2);
+            
+            document.getElementById('totalDeductions').value = totalDeductions.toFixed(2);
+            document.getElementById('totalDeductionsDisplay').value = 'R ' + totalDeductions.toFixed(2);
+        }
+        
+        function calculatePensionContribution(basicSalary) {
+            // Get selected retirement fund and option
+            const fundName = document.getElementById('retirementFundName').value;
+            const fundOption = document.getElementById('retirementFundOption').value;
+            
+            // Pension rates based on fund and option
+            const pensionRates = {
+                'RWPROV': {
+                    'option_a': 0.075,  // 7.5%
+                    'option_b': 0.10,   // 10%
+                    'option_d': 0.125,  // 12.5%
+                    'option_e': 0.15,   // 15%
+                    'option_f': 0.175,  // 17.5%
+                    'option_g': 0.20,   // 20%
+                },
+                'RWMPPROV': {
+                    'option_a': 0.06,   // 6%
+                    'option_b': 0.08,   // 8%
+                    'option_c': 0.10,   // 10%
+                },
+                'SAMWU': {
+                    'samwu': 0.075,     // 7.5%
+                }
+            };
+            
+            // Get the rate for the selected fund and option
+            const rate = pensionRates[fundName]?.[fundOption] || 0.075; // Default to 7.5%
+            
+            return basicSalary * rate;
+        }
+        
+        function saveChanges() {
+            // Get calculated basic salary (read-only field)
+            const basicSalary = parseFloat(document.getElementById('basicSalary').value) || 0;
+            const carAllowance = parseFloat(document.getElementById('carAllowance').value) || 0;
+            const annualBonus = parseFloat(document.getElementById('annualBonus').value) || 0;
+            
+            // Check if basic salary went negative (budget exceeded)
+            if (basicSalary <= 0) {
+                alert('Cannot save: Car allowance and bonus exceed the available CTC budget. Please reduce these amounts.');
+                return;
+            }
+            
+            const changes = {
+                basic_salary: basicSalary,
+                car_allowance: carAllowance,
+                bonus: annualBonus,  // Store as annual amount - backend will convert to monthly
+                employee_subgroup: document.getElementById('employeeSubgroup').value,
+                band_range: document.getElementById('bandRange').value,
+                retirement_fund_name: document.getElementById('retirementFundName').value,
+                retirement_fund_option: document.getElementById('retirementFundOption').value
+                // Medical aid is NOT editable - no need to send it
+            };
+            
+            fetch(`/package_edit/{{ employee.employee_id }}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(changes)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update UI with new values instead of full reload
+                    if (data.updated_data) {
+                        updatePackageDisplay(data.updated_data);
+                    }
+                    showSuccessMessage('Package updated successfully! Tax, UIF and pension have been recalculated.');
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to save changes.');
+            });
+        }
+        
+        function updatePackageDisplay(updatedData) {
+            // Update salary components
+            if (updatedData.basic_salary) {
+                document.getElementById('basicSalary').value = 'R ' + parseFloat(updatedData.basic_salary).toFixed(2);
+            }
+            if (updatedData.pension_fund) {
+                document.getElementById('pensionFund').value = 'R ' + parseFloat(updatedData.pension_fund).toFixed(2);
+            }
+            
+            // Update deductions
+            if (updatedData.paye_tax) {
+                document.getElementById('payeTax').value = parseFloat(updatedData.paye_tax).toFixed(2);
+            }
+            if (updatedData.uif_contribution) {
+                document.getElementById('uifContribution').value = parseFloat(updatedData.uif_contribution).toFixed(2);
+            }
+            if (updatedData.total_deductions) {
+                document.getElementById('totalDeductions').value = parseFloat(updatedData.total_deductions).toFixed(2);
+            }
+            
+            // Update any display values in the salary components section
+            const basicSalaryDisplay = document.querySelector('[data-field="basic_salary"] .amount-display');
+            if (basicSalaryDisplay && updatedData.basic_salary) {
+                basicSalaryDisplay.textContent = 'R ' + parseFloat(updatedData.basic_salary).toFixed(2);
+            }
+            
+            const pensionDisplay = document.querySelector('[data-field="pension_fund"] .amount-display');
+            if (pensionDisplay && updatedData.pension_fund) {
+                pensionDisplay.textContent = 'R ' + parseFloat(updatedData.pension_fund).toFixed(2);
+            }
+        }
+        
+        function showSuccessMessage(message) {
+            // Create a success message div
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'alert alert-success alert-dismissible fade show position-fixed';
+            messageDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; max-width: 400px;';
+            messageDiv.innerHTML = `
+                <i class="fas fa-check-circle"></i> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(messageDiv);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (messageDiv.parentNode) {
+                    messageDiv.parentNode.removeChild(messageDiv);
+                }
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

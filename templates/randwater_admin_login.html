@@ -15,22 +15,56 @@
       --randwater-light: #E6F3FF;
     }
     
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
     body {
       font-family: 'Ubuntu', sans-serif;
-      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
       min-height: 100vh;
       display: flex;
-      align-items: center;
-      justify-content: center;
+      overflow: hidden;
     }
     
     .login-container {
+      width: 40%;
       background: white;
-      border-radius: 15px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      padding: 2rem;
-      width: 100%;
-      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 3rem;
+      position: relative;
+      z-index: 2;
+    }
+    
+    .login-container::after {
+      content: '';
+      position: absolute;
+      right: -50px;
+      top: 0;
+      bottom: 0;
+      width: 100px;
+      background: white;
+      border-radius: 0 0 0 100%;
+      z-index: 1;
+    }
+    
+    .background-section {
+      width: 60%;
+      background: url('{{ url_for("static", filename="images/login-bg.jpg") }}') center center/cover no-repeat;
+      position: relative;
+    }
+    
+    .background-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(0, 102, 204, 0.3) 0%, rgba(0, 163, 224, 0.3) 100%);
     }
     
     .randwater-logo {
@@ -63,6 +97,18 @@
       font-weight: 700;
       text-align: center;
       margin-bottom: 1.5rem;
+      font-size: 1.8rem;
+    }
+    
+    .app-info {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .app-info p {
+      font-size: 0.9rem;
+      color: #666;
+      margin: 0.2rem 0;
     }
     
     .form-control {
@@ -70,6 +116,7 @@
       border-radius: 8px;
       padding: 0.75rem;
       font-size: 1rem;
+      margin-bottom: 1rem;
     }
     
     .form-control:focus {
@@ -78,7 +125,7 @@
     }
     
     .btn-randwater {
-      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      background: var(--randwater-primary);
       border: none;
       border-radius: 8px;
       padding: 0.75rem;
@@ -86,10 +133,11 @@
       color: white;
       width: 100%;
       margin-top: 1rem;
+      font-size: 1rem;
     }
     
     .btn-randwater:hover {
-      background: linear-gradient(135deg, var(--randwater-dark) 0%, var(--randwater-primary) 100%);
+      background: var(--randwater-dark);
       color: white;
     }
     
@@ -101,14 +149,61 @@
       padding: 0.75rem;
       margin-bottom: 1rem;
     }
+    
+    .forgot-password {
+      text-align: center;
+      margin-top: 1rem;
+    }
+    
+    .forgot-password a {
+      color: var(--randwater-primary);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    
+    .forgot-password a:hover {
+      text-decoration: underline;
+    }
+    
+    .privacy-notice {
+      position: absolute;
+      bottom: 20px;
+      right: 20px;
+      color: white;
+      font-size: 0.8rem;
+      opacity: 0.8;
+    }
+    
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+      }
+      
+      .login-container {
+        width: 100%;
+        padding: 2rem;
+      }
+      
+      .background-section {
+        width: 100%;
+        height: 40vh;
+      }
+      
+      .login-container::after {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="login-container">
     <div class="text-center">
-      <img src="{{ config.company_logo }}" alt="Rand Water" class="randwater-logo">
-      <h2 class="login-title">Rand Water Admin</h2>
-      <p class="text-muted">Salary Package Calculator Administration</p>
+      <img src="{{ url_for('static', filename='images/randwater-logo.png') }}" alt="Rand Water" class="randwater-logo">
+      <h2 class="login-title">RAND WATER</h2>
+      <div class="app-info">
+        <p>Application v2025.9.18.2</p>
+        <p>Database Migration 332</p>
+      </div>
       <div class="branding">
         <span class="powered-by">Powered by</span>
         <img src="{{ url_for('static', filename='images/gosmarthr-logo.png') }}" alt="SmartHR" class="smarthr-logo">
@@ -132,15 +227,19 @@
         <input type="password" class="form-control" id="password" name="password" required>
       </div>
       
+      <div class="forgot-password">
+        <a href="#" onclick="alert('Password reset functionality coming soon')">Reset my password</a>
+      </div>
+      
       <button type="submit" class="btn btn-randwater">
-        🔐 Login
+        Login
       </button>
     </form>
-    
-    <div class="text-center mt-3">
-      <small class="text-muted">
-        Rand Water Salary Package Calculator v1.0
-      </small>
+  </div>
+  
+  <div class="background-section">
+    <div class="privacy-notice">
+      * by logging into the system, you agree that you have read and understand our Privacy Policy
     </div>
   </div>
 </body>

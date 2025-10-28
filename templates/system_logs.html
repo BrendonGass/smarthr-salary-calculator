@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>System Logs - Rand Water Admin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --randwater-primary: #0066CC;
+      --randwater-secondary: #00A3E0;
+    }
+    
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .container {
+      padding: 20px;
+    }
+    
+    .header {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    
+    .log-card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      border-left: 4px solid var(--randwater-primary);
+    }
+    
+    .log-card.upload {
+      border-left-color: #28a745;
+    }
+    
+    .log-card.clear {
+      border-left-color: #dc3545;
+    }
+    
+    .log-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    
+    .log-action {
+      font-weight: bold;
+      font-size: 1.1em;
+    }
+    
+    .log-timestamp {
+      color: #666;
+      font-size: 0.9em;
+    }
+    
+    .log-details {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+    
+    .detail-item {
+      margin-bottom: 5px;
+    }
+    
+    .badge-custom {
+      padding: 5px 10px;
+      border-radius: 5px;
+      font-size: 0.9em;
+    }
+    
+    .excluded-list {
+      max-height: 200px;
+      overflow-y: auto;
+      background: white;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="d-flex justify-content-between align-items-center">
+        <div>
+          <h2><i class="fas fa-file-alt"></i> System Logs</h2>
+          <p class="text-muted mb-0">View all system activities and operations</p>
+        </div>
+        <div>
+          <a href="{{ url_for('randwater_admin_panel') }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+
+    {% if logs %}
+      {% for log in logs %}
+        <div class="log-card {{ 'upload' if log.action == 'UPLOAD' else 'clear' if log.action == 'CLEAR_DATA' else '' }}">
+          <div class="log-header">
+            <div>
+              <span class="log-action">
+                {% if log.action == 'UPLOAD' %}
+                  <i class="fas fa-upload text-success"></i> SAP Data Upload
+                {% elif log.action == 'CLEAR_DATA' %}
+                  <i class="fas fa-trash text-danger"></i> Data Cleared
+                {% else %}
+                  <i class="fas fa-info-circle"></i> {{ log.action }}
+                {% endif %}
+              </span>
+            </div>
+            <div>
+              <span class="badge bg-primary">{{ log.user }}</span>
+            </div>
+          </div>
+          
+          <div class="log-timestamp">
+            <i class="fas fa-clock"></i> {{ log.timestamp }}
+          </div>
+          
+          <div class="log-details">
+            {% if log.action == 'UPLOAD' %}
+              <div class="detail-item">
+                <strong><i class="fas fa-file"></i> File:</strong> {{ log.details.filename }}
+              </div>
+              <div class="detail-item">
+                <strong><i class="fas fa-users"></i> Total Employees:</strong>
+                <span class="badge badge-custom bg-info">{{ log.details.total_employees }}</span>
+              </div>
+              <div class="detail-item">
+                <strong><i class="fas fa-check-circle text-success"></i> Active (O-Q Bands):</strong>
+                <span class="badge badge-custom bg-success">{{ log.details.active_employees }}</span>
+              </div>
+              <div class="detail-item">
+                <strong><i class="fas fa-times-circle text-danger"></i> Excluded:</strong>
+                <span class="badge badge-custom bg-danger">{{ log.details.excluded_employees }}</span>
+              </div>
+              
+              {% if log.details.excluded_list and log.details.excluded_list|length > 0 %}
+                <div class="detail-item mt-2">
+                  <strong>Excluded Employees:</strong>
+                  <div class="excluded-list">
+                    {% for emp in log.details.excluded_list %}
+                      <div><i class="fas fa-user-slash text-danger"></i> {{ emp }}</div>
+                    {% endfor %}
+                  </div>
+                </div>
+              {% endif %}
+              
+              {% if log.details.band_distribution %}
+                <div class="detail-item mt-2">
+                  <strong>Band Distribution:</strong>
+                  {% for band, count in log.details.band_distribution.items() %}
+                    <span class="badge badge-custom bg-secondary me-1">{{ band }}: {{ count }}</span>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            {% elif log.action == 'CLEAR_DATA' %}
+              <div class="detail-item">
+                <strong><i class="fas fa-database"></i> Uploads Cleared:</strong> {{ log.details.uploads_cleared }}
+              </div>
+              <div class="detail-item">
+                <strong><i class="fas fa-file"></i> Files Deleted:</strong> {{ log.details.files_deleted }}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="log-card">
+        <div class="text-center text-muted">
+          <i class="fas fa-inbox fa-3x mb-3"></i>
+          <h4>No logs available</h4>
+          <p>System logs will appear here when you upload data or perform operations.</p>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+

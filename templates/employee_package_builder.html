@@ -23,6 +23,7 @@
       font-size: 0.9rem;
       margin: 0;
       padding: 0;
+      line-height: 1.6;
     }
     
     .randwater-header {
@@ -82,11 +83,16 @@
     
     .tile-section {
       border: 1px solid #dee2e6;
-      border-radius: 8px;
+      border-radius: 12px;
       background-color: white;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: box-shadow 0.2s ease;
+    }
+    
+    .tile-section:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.12);
     }
     
     .section-header {
@@ -121,6 +127,62 @@
       color: #6c757d;
       cursor: not-allowed;
     }
+
+    .table-container {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .table-header {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      padding: 1rem 1.5rem;
+      margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+      border-radius: 12px 12px 0 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+
+    .status-badge {
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .status-submitted {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+
+    .status-pending {
+      background-color: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+
+    .btn-view {
+      background-color: var(--randwater-primary);
+      color: white;
+      border: none;
+    }
+
+    .btn-view:hover {
+      background-color: var(--randwater-secondary);
+      color: white;
+    }
+
+    .tctc-display {
+      font-weight: 600;
+      color: var(--randwater-primary);
+    }
     
     .editable-field {
       background-color: #fff;
@@ -130,21 +192,26 @@
     .running-total {
       background: linear-gradient(135deg, var(--randwater-accent) 0%, #ff8533 100%);
       color: white;
-      padding: 1rem;
-      border-radius: 8px;
+      padding: 1.5rem 2rem;
+      border-radius: 12px;
       text-align: center;
-      margin-bottom: 1rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 16px rgba(255, 102, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.2);
     }
     
     .running-total h3 {
       margin: 0;
-      font-size: 1.5rem;
+      font-size: 2rem;
       font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
     
     .running-total .subtitle {
-      opacity: 0.9;
-      font-size: 0.9rem;
+      opacity: 0.95;
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
     }
     
     .form-control:focus {
@@ -169,23 +236,29 @@
     }
     
     .warning-badge {
-      background: #fff3cd;
-      color: #856404;
-      padding: 0.5rem;
-      border-radius: 5px;
-      font-size: 0.85rem;
-      margin-top: 0.5rem;
-      border-left: 4px solid #ffc107;
+      background: #fefce8;
+      color: #8b5a2b;
+      padding: 0.375rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      margin-top: 0.375rem;
+      border: 1px solid #fde047;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
     }
     
     .info-badge {
-      background: #d1ecf1;
-      color: #0c5460;
-      padding: 0.5rem;
-      border-radius: 5px;
-      font-size: 0.85rem;
-      margin-top: 0.5rem;
-      border-left: 4px solid #17a2b8;
+      background: #f0f9ff;
+      color: #0369a1;
+      padding: 0.375rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      margin-top: 0.375rem;
+      border: 1px solid #bae6fd;
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
     }
     
     .notifications {
@@ -266,12 +339,12 @@
 
     <!-- Running Total -->
     <div class="running-total">
-      <h3 id="current-tctc-display">R {{ "%.2f"|format(package.package_components.basic_salary + package.package_components.provident_fund + package.package_components.car_allowance + package.package_components.cellphone_allowance + package.package_components.data_service_allowance + package.package_components.housing_allowance + package.package_components.medical_aid + package.package_components.bonus) }}</h3>
+      <h3 id="current-tctc-display">R {{ "%.2f"|format((package.sap_data.TPE or 0) + (package.sap_data.pension or 0) + (package.sap_data.CAR or 0) + (package.sap_data.CELLPHONEALLOWANCE or 0) + (package.sap_data.DATASERVICEALLOWANCE or 0) + (package.sap_data.HOUSING or 0) + (package.sap_data.MEDICALEECONTRIBUTION or 0) + (package.sap_data.BONUSPROVISION or 0)) }}</h3>
       <div class="subtitle">Current Total Cost to Company</div>
       <div class="mt-2">
         <small>
-          Limit: R {{ "%.2f"|format(package.tctc_limit) }} | 
-          Remaining: R {{ "%.2f"|format(package.tctc_limit - (package.package_components.basic_salary + package.package_components.provident_fund + package.package_components.car_allowance + package.package_components.cellphone_allowance + package.package_components.data_service_allowance + package.package_components.housing_allowance + package.package_components.medical_aid + package.package_components.bonus)) }}
+          TCTC Limit: R <span id="tctc-limit-display">{{ "%.2f"|format(package.tctc_limit) }}</span> | 
+          Remaining: R <span id="remaining-budget-display">{{ "%.2f"|format(package.tctc_limit - ((package.sap_data.TPE or 0) + (package.sap_data.pension or 0) + (package.sap_data.CAR or 0) + (package.sap_data.CELLPHONEALLOWANCE or 0) + (package.sap_data.DATASERVICEALLOWANCE or 0) + (package.sap_data.HOUSING or 0) + (package.sap_data.MEDICALEECONTRIBUTION or 0) + (package.sap_data.BONUSPROVISION or 0))) }}</span>
         </small>
       </div>
     </div>
@@ -282,50 +355,46 @@
         <i class="fas fa-database"></i> SAP Package Data (Read-only)
       </div>
       
-      <div class="row">
-        <div class="col-md-6">
+      <div class="row g-3">
+        <div class="col-md-4">
           <div class="mb-3">
-            <label class="form-label">Basic Salary</label>
+            <label class="form-label fw-medium">Total Pensionable Emolument (TPE)</label>
             <input type="text" class="form-control locked-field" 
-                   value="R {{ "%.2f"|format(package.package_components.basic_salary) }}" readonly>
+                   value="R {{ "%.2f"|format(package.sap_data.TPE if package.sap_data.TPE else 0) }}" readonly>
           </div>
           
           <div class="mb-3">
-            <label class="form-label">Cellphone Allowance</label>
+            <label class="form-label fw-medium">Cellphone Allowance</label>
             <input type="text" class="form-control locked-field" 
-                   value="R {{ "%.2f"|format(package.package_components.cellphone_allowance) }}" readonly>
-          </div>
-          
-          <div class="mb-3">
-            <label class="form-label">Data Service Allowance</label>
-            <input type="text" class="form-control locked-field" 
-                   value="R {{ "%.2f"|format(package.package_components.data_service_allowance) }}" readonly>
-          </div>
-          
-          <div class="mb-3">
-            <label class="form-label">Housing Allowance</label>
-            <input type="text" class="form-control locked-field" 
-                   value="R {{ "%.2f"|format(package.package_components.housing_allowance) }}" readonly>
+                   value="R {{ "%.2f"|format(package.sap_data.CELLPHONEALLOWANCE if package.sap_data.CELLPHONEALLOWANCE else 0) }}" readonly>
           </div>
         </div>
         
-        <div class="col-md-6">
+        <div class="col-md-4">
           <div class="mb-3">
-            <label class="form-label">Medical Aid</label>
+            <label class="form-label fw-medium">Data Service Allowance</label>
             <input type="text" class="form-control locked-field" 
-                   value="R {{ "%.2f"|format(package.package_components.medical_aid) }}" readonly>
+                   value="R {{ "%.2f"|format(package.sap_data.DATASERVICEALLOWANCE if package.sap_data.DATASERVICEALLOWANCE else 0) }}" readonly>
           </div>
           
           <div class="mb-3">
-            <label class="form-label">Medical Aid Option</label>
+            <label class="form-label fw-medium">Housing Allowance</label>
             <input type="text" class="form-control locked-field" 
-                   value="{{ package.package_components.medical_aid_option }}" readonly>
+                   value="R {{ "%.2f"|format(package.sap_data.HOUSING if package.sap_data.HOUSING else 0) }}" readonly>
+          </div>
+        </div>
+        
+        <div class="col-md-4">
+          <div class="mb-3">
+            <label class="form-label fw-medium">Medical Aid Contribution</label>
+            <input type="text" class="form-control locked-field" 
+                   value="R {{ "%.2f"|format(package.sap_data.MEDICALEECONTRIBUTION if package.sap_data.MEDICALEECONTRIBUTION else 0) }}" readonly>
           </div>
           
           <div class="mb-3">
-            <label class="form-label">Other Allowances</label>
+            <label class="form-label fw-medium">Medical Aid Option</label>
             <input type="text" class="form-control locked-field" 
-                   value="R 0.00" readonly>
+                   value="{{ package.sap_data.MEDICALOPTION if package.sap_data.MEDICALOPTION else 'N/A' }}" readonly>
           </div>
         </div>
       </div>
@@ -338,51 +407,51 @@
       </div>
       
       <form id="packageForm">
-        <div class="row">
+        <div class="row g-4">
           <div class="col-md-6">
-            <div class="mb-3">
-              <label class="form-label">Provident Fund</label>
-              <input type="number" class="form-control editable-field" id="provident_fund" 
-                     value="{{ package.package_components.provident_fund }}" 
-                     step="0.01" min="0" max="{{ package.tctc_limit }}" onchange="updatePackage()">
-              <div class="warning-badge">
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Basic Salary</label>
+              <input type="number" class="form-control editable-field" id="basic_salary" 
+                     value="{{ package.sap_data.TPE if package.sap_data.TPE else package.package_components.basic_salary }}" 
+                     step="0.01" min="0" max="{{ package.tctc_limit }}">
+              <div class="info-badge">
                 <i class="fas fa-info-circle"></i> 
-                Should be 50-70% of TCTC
+                Starts with TPE value, adjustable within TCTC limit
               </div>
             </div>
             
-            <div class="mb-3">
-              <label class="form-label">Car Allowance</label>
-              <input type="number" class="form-control editable-field" id="car_allowance" 
-                     value="{{ package.package_components.car_allowance }}" 
-                     step="0.01" min="0" max="{{ package.tctc_limit }}" onchange="updatePackage()">
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Provident Fund</label>
+              <input type="number" class="form-control editable-field" id="provident_fund" 
+                     value="{{ package.sap_data.pension if package.sap_data.pension else package.package_components.provident_fund }}" 
+                     step="0.01" min="0" max="{{ package.tctc_limit }}">
               <div class="warning-badge">
                 <i class="fas fa-info-circle"></i> 
-                Should be at least 30% of TCTC
+                Employee contribution: {{ "%.1f"|format((package.sap_data.PENSIONEECONTRIBUTION * 100) if package.sap_data.PENSIONEECONTRIBUTION else 5) }}%
               </div>
             </div>
           </div>
           
           <div class="col-md-6">
-            <div class="mb-3">
-              <label class="form-label">Annual Bonus (13th Cheque)</label>
-              <input type="number" class="form-control editable-field" id="bonus" 
-                     value="{{ package.package_components.bonus }}" 
-                     step="0.01" min="0" max="{{ package.tctc_limit }}" onchange="updatePackage()">
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Car Allowance</label>
+              <input type="number" class="form-control editable-field" id="car_allowance" 
+                     value="{{ package.sap_data.CAR if package.sap_data.CAR else package.package_components.car_allowance }}" 
+                     step="0.01" min="0" max="{{ package.tctc_limit }}">
               <div class="warning-badge">
                 <i class="fas fa-info-circle"></i> 
-                Should be 10-70% of TCTC
+                Optional vehicle allowance for employee
               </div>
             </div>
             
-            <div class="mb-3">
-              <label class="form-label">Basic Salary</label>
-              <input type="number" class="form-control editable-field" id="basic_salary" 
-                     value="{{ package.package_components.basic_salary }}" 
-                     step="0.01" min="0" max="{{ package.tctc_limit }}" onchange="updatePackage()">
+            <div class="mb-4">
+              <label class="form-label fw-semibold">Annual Bonus Provision</label>
+              <input type="number" class="form-control editable-field" id="bonus" 
+                     value="{{ package.sap_data.BONUSPROVISION if package.sap_data.BONUSPROVISION else package.package_components.bonus }}" 
+                     step="0.01" min="0" max="{{ package.tctc_limit }}">
               <div class="warning-badge">
                 <i class="fas fa-info-circle"></i> 
-                Adjustable within TCTC limit
+                Annual bonus provision from SAP data
               </div>
             </div>
           </div>
@@ -423,10 +492,10 @@
           <div class="mb-3">
             <label class="form-label">Medical Aid Contribution</label>
             <input type="text" class="form-control locked-field" id="medical_aid_contribution" 
-                   value="R {{ "%.2f"|format(package.package_components.medical_aid) }}" readonly>
+                   value="R {{ "%.2f"|format(package.sap_data.MEDICALEECONTRIBUTION if package.sap_data.MEDICALEECONTRIBUTION else 0) }}" readonly>
             <div class="info-badge">
               <i class="fas fa-info-circle"></i> 
-              Fixed from SAP data
+              Employee medical aid contribution from SAP
             </div>
           </div>
           
@@ -449,27 +518,29 @@
         <i class="fas fa-calculator"></i> Net Pay Calculation
       </div>
       
-      <div class="row">
-        <div class="col-md-6">
-          <button type="button" class="btn btn-primary" onclick="calculateNetPay()">
+      <div class="row align-items-center">
+        <div class="col-md-4">
+          <button type="button" class="btn btn-primary w-100" onclick="calculateNetPay()">
             <i class="fas fa-calculator"></i> Calculate Net Pay
           </button>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-8">
           <div id="netPayResult"></div>
         </div>
       </div>
     </div>
 
     <!-- Action Buttons -->
-    <div class="tile-section text-center">
-      <button type="button" class="btn btn-success btn-lg" onclick="submitPackage()">
-        <i class="fas fa-check-circle"></i> Submit Package
-      </button>
-      <p class="text-muted mt-2">
-        <i class="fas fa-info-circle"></i> 
-        Once submitted, your access will be revoked and changes cannot be made.
-      </p>
+    <div class="tile-section">
+      <div class="d-flex justify-content-center align-items-center flex-column">
+        <button type="button" class="btn btn-success btn-lg px-5 py-3" onclick="submitPackage()">
+          <i class="fas fa-check-circle me-2"></i> Submit Package
+        </button>
+        <p class="text-muted mt-3 mb-0 text-center">
+          <i class="fas fa-info-circle me-1"></i> 
+          Once submitted, your access will be revoked and changes cannot be made.
+        </p>
+      </div>
     </div>
   </div>
 
@@ -482,13 +553,13 @@
       const bonus = parseFloat(document.getElementById('bonus').value) || 0;
       
       // Fixed components from SAP (read-only)
-      const cellphoneAllowance = {{ package.package_components.cellphone_allowance }};
-      const dataServiceAllowance = {{ package.package_components.data_service_allowance }};
-      const housingAllowance = {{ package.package_components.housing_allowance }};
-      const medicalAid = {{ package.package_components.medical_aid }};
+      const cellphoneAllowance = {{ package.sap_data.CELLPHONEALLOWANCE | default(0) }};
+      const dataServiceAllowance = {{ package.sap_data.DATASERVICEALLOWANCE | default(0) }};
+      const housingAllowance = {{ package.sap_data.HOUSING | default(0) }};
+      const medicalAidContribution = {{ package.sap_data.MEDICALEECONTRIBUTION | default(0) }};
       
       return basicSalary + providentFund + carAllowance + bonus + 
-             cellphoneAllowance + dataServiceAllowance + housingAllowance + medicalAid;
+             cellphoneAllowance + dataServiceAllowance + housingAllowance + medicalAidContribution;
     }
     
     // Calculate and display deductions
@@ -515,15 +586,15 @@
       }
       
       // Medical aid is fixed from SAP data
-      const medicalAid = {{ package.package_components.medical_aid }};
+      const medicalAidDeduction = {{ package.sap_data.MEDICALEECONTRIBUTION | default(0) }};
       
       // Total deductions
-      const totalDeductions = monthlyTax + uif + medicalAid;
+      const totalDeductions = monthlyTax + uif + medicalAidDeduction;
       
       // Update display
       document.getElementById('monthly_tax').value = 'R ' + monthlyTax.toFixed(2);
       document.getElementById('uif_contribution').value = 'R ' + uif.toFixed(2);
-      document.getElementById('medical_aid_contribution').value = 'R ' + medicalAid.toFixed(2);
+      document.getElementById('medical_aid_contribution').value = 'R ' + medicalAidDeduction.toFixed(2);
       document.getElementById('total_deductions').value = 'R ' + totalDeductions.toFixed(2);
       
       // Update running total
@@ -533,13 +604,27 @@
     // Update running total display
     function updateRunningTotal() {
       const currentTCTC = calculateCurrentTCTC();
-      const tctcLimit = {{ package.tctc_limit }};
+      const tctcLimit = {{ package.tctc_limit | default(0) }};
       const remaining = tctcLimit - currentTCTC;
       
-      // Update the running total display (you'll need to add an ID to this element)
+      // Update the running total display
       const runningTotalElement = document.getElementById('current-tctc-display');
       if (runningTotalElement) {
         runningTotalElement.textContent = 'R ' + currentTCTC.toFixed(2);
+      }
+      
+      // Update remaining budget display
+      const remainingElement = document.getElementById('remaining-budget-display');
+      if (remainingElement) {
+        remainingElement.textContent = remaining.toFixed(2);
+        // Color code the remaining amount
+        if (remaining < 0) {
+          remainingElement.style.color = '#dc3545'; // Red for over budget
+        } else if (remaining < tctcLimit * 0.1) {
+          remainingElement.style.color = '#ffc107'; // Yellow for close to limit
+        } else {
+          remainingElement.style.color = '#28a745'; // Green for good budget
+        }
       }
       
       // Show warning if exceeding limit
@@ -550,18 +635,41 @@
       }
     }
     
-    // Show warning message
-    function showWarning(message) {
+    // Show warning message with different types
+    function showWarning(message, type = 'warning') {
       let warningDiv = document.getElementById('tctc-warning');
+      let alertClass = 'alert-warning';
+      let icon = 'fas fa-exclamation-triangle';
+      
+      // Set appropriate styling based on type
+      if (type === 'error') {
+        alertClass = 'alert-danger';
+        icon = 'fas fa-times-circle';
+      } else if (type === 'info') {
+        alertClass = 'alert-info';
+        icon = 'fas fa-info-circle';
+      } else if (type === 'success') {
+        alertClass = 'alert-success';
+        icon = 'fas fa-check-circle';
+      }
+      
       if (!warningDiv) {
         warningDiv = document.createElement('div');
         warningDiv.id = 'tctc-warning';
-        warningDiv.className = 'alert alert-warning mt-3';
-        warningDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + message;
+        warningDiv.className = `alert ${alertClass} mt-3`;
+        warningDiv.innerHTML = `<i class="${icon}"></i> ${message}`;
         document.getElementById('packageForm').appendChild(warningDiv);
       } else {
-        warningDiv.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + message;
+        warningDiv.className = `alert ${alertClass} mt-3`;
+        warningDiv.innerHTML = `<i class="${icon}"></i> ${message}`;
         warningDiv.style.display = 'block';
+      }
+      
+      // Auto-hide success/info messages after 5 seconds
+      if (type === 'success' || type === 'info') {
+        setTimeout(() => {
+          hideWarning();
+        }, 5000);
       }
     }
     
@@ -573,18 +681,58 @@
       }
     }
     
-    // Update package function
+    // Update package function with budget validation
     function updatePackage() {
       calculateDeductions();
       
-      // Validate individual field limits
-      const basicSalary = parseFloat(document.getElementById('basic_salary').value) || 0;
-      const tctcLimit = {{ package.tctc_limit }};
+      // Get current values
+      const updates = {
+        basic_salary: parseFloat(document.getElementById('basic_salary').value) || 0,
+        provident_fund: parseFloat(document.getElementById('provident_fund').value) || 0,
+        car_allowance: parseFloat(document.getElementById('car_allowance').value) || 0,
+        bonus: parseFloat(document.getElementById('bonus').value) || 0
+      };
       
-      if (basicSalary > tctcLimit) {
-        document.getElementById('basic_salary').value = tctcLimit;
-        showWarning('Basic salary cannot exceed TCTC limit');
-      }
+      // Send update to backend with budget validation
+      fetch('/api/employee/package/update', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updates)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          // Update UI with validated values if auto-adjustments were made
+          if (data.auto_adjustments) {
+            if (data.auto_adjustments.basic_salary !== undefined) {
+              document.getElementById('basic_salary').value = data.auto_adjustments.basic_salary.toFixed(2);
+            }
+            if (data.auto_adjustments.bonus !== undefined) {
+              document.getElementById('bonus').value = (data.auto_adjustments.bonus * 12).toFixed(2); // Convert monthly back to annual
+            }
+          }
+          
+          // Show warnings if any
+          if (data.warnings && data.warnings.length > 0) {
+            showWarning(data.warnings.join('<br>'));
+          }
+          
+          // Show success message
+          if (data.auto_adjustments) {
+            showWarning(data.message + '<br>' + data.warnings.join('<br>'), 'info');
+          }
+        } else {
+          showWarning(data.error, 'error');
+          // Revert changes if validation failed
+          // You might want to store previous values to revert to
+        }
+      })
+      .catch(error => {
+        console.error('Error updating package:', error);
+        showWarning('Failed to update package. Please try again.', 'error');
+      });
     }
     
     // Calculate net pay
@@ -607,7 +755,7 @@
     // Submit package
     function submitPackage() {
       const currentTCTC = calculateCurrentTCTC();
-      const tctcLimit = {{ package.tctc_limit }};
+      const tctcLimit = {{ package.tctc_limit | default(0) }};
       
       if (currentTCTC > tctcLimit) {
         alert('Cannot submit package: TCTC limit exceeded!');
@@ -623,7 +771,243 @@
     // Initialize calculations on page load
     document.addEventListener('DOMContentLoaded', function() {
       calculateDeductions();
+      
+      // Add event listeners to all editable fields
+      const editableFields = ['basic_salary', 'provident_fund', 'car_allowance', 'bonus'];
+      editableFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+          // Trigger calculations on input change
+          field.addEventListener('input', function() {
+            calculateDeductions();
+          });
+          
+          // Also trigger on blur for better UX
+          field.addEventListener('blur', function() {
+            updatePackage();
+          });
+        }
+      });
     });
+  </script>
+
+  <!-- Package Management Section -->
+  <div class="container mt-5">
+    <div class="table-container">
+      <div class="table-header">
+        <i class="fas fa-briefcase"></i> My Package Management Overview
+      </div>
+      
+      <!-- Package Summary -->
+      <div class="row mb-4">
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <h5 class="card-title text-primary">1</h5>
+              <p class="card-text">My Package</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <h5 class="card-title text-success">{{ "1" if package.status == 'SUBMITTED' else "0" }}</h5>
+              <p class="card-text">Submitted</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <h5 class="card-title text-warning">{{ "0" if package.status == 'SUBMITTED' else "1" }}</h5>
+              <p class="card-text">Pending</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card text-center">
+            <div class="card-body">
+              <h5 class="card-title text-info">{{ package.employee_info.grade_band if package.employee_info else 'N/A' }}</h5>
+              <p class="card-text">Grade Band</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Package Details Table -->
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Employee ID</th>
+              <th>Name</th>
+              <th>Grade Band</th>
+              <th>Current TCTC</th>
+              <th>TCTC Limit</th>
+              <th>Basic Salary (TPE)</th>
+              <th>Car Allowance</th>
+              <th>Housing Allowance</th>
+              <th>Package Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>{{ package.employee_id }}</strong></td>
+              <td>{{ package.sap_data.FIRSTNAME if package.sap_data.FIRSTNAME else 'N/A' }} {{ package.sap_data.SURNAME if package.sap_data.SURNAME else '' }}</td>
+              <td>
+                <span class="badge bg-secondary">{{ package.sap_data.BAND if package.sap_data.BAND else package.employee_info.grade_band if package.employee_info else 'N/A' }}</span>
+              </td>
+              <td>
+                <span class="tctc-display">R {{ "{:,.2f}".format(package.current_tctc) }}</span>
+              </td>
+              <td>
+                <span class="text-muted">R {{ "{:,.2f}".format(package.tctc_limit) }}</span>
+              </td>
+              <td>
+                <span class="text-primary">R {{ "{:,.2f}".format(package.sap_data.TPE if package.sap_data.TPE else 0) }}</span>
+              </td>
+              <td>
+                <span class="text-success">R {{ "{:,.2f}".format(package.sap_data.CAR if package.sap_data.CAR else 0) }}</span>
+              </td>
+              <td>
+                <span class="text-info">R {{ "{:,.2f}".format(package.sap_data.HOUSING if package.sap_data.HOUSING else 0) }}</span>
+              </td>
+              <td>
+                {% if package.status == 'SUBMITTED' %}
+                  <span class="status-badge status-submitted">
+                    <i class="fas fa-check-circle"></i> Submitted
+                  </span>
+                {% else %}
+                  <span class="status-badge status-pending">
+                    <i class="fas fa-clock"></i> Draft
+                  </span>
+                {% endif %}
+              </td>
+              <td>
+                <button class="btn btn-view btn-sm" onclick="viewPackageBreakdown()">
+                  <i class="fas fa-eye"></i> View
+                </button>
+                <button class="btn btn-outline-primary btn-sm ms-1" onclick="calculateNetPay()">
+                  <i class="fas fa-calculator"></i> Calculate
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Detailed Package Components -->
+      <div class="row mt-4">
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header bg-primary text-white">
+              <h6 class="mb-0"><i class="fas fa-money-bill-wave"></i> Earnings Components</h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-6">
+                  <small class="text-muted">Basic Salary (TPE)</small>
+                  <div class="h6 text-primary">R {{ "{:,.2f}".format(package.sap_data.TPE if package.sap_data.TPE else 0) }}</div>
+                </div>
+                <div class="col-6">
+                  <small class="text-muted">Car Allowance</small>
+                  <div class="h6 text-success">R {{ "{:,.2f}".format(package.sap_data.CAR if package.sap_data.CAR else 0) }}</div>
+                </div>
+                <div class="col-6">
+                  <small class="text-muted">Cash Component</small>
+                  <div class="h6 text-info">R {{ "{:,.2f}".format(package.sap_data.CASH if package.sap_data.CASH else 0) }}</div>
+                </div>
+                <div class="col-6">
+                  <small class="text-muted">Housing Allowance</small>
+                  <div class="h6 text-warning">R {{ "{:,.2f}".format(package.sap_data.HOUSING if package.sap_data.HOUSING else 0) }}</div>
+                </div>
+                <div class="col-6">
+                  <small class="text-muted">Cellphone Allowance</small>
+                  <div class="h6">R {{ "{:,.2f}".format(package.sap_data.CELLPHONEALLOWANCE if package.sap_data.CELLPHONEALLOWANCE else 0) }}</div>
+                </div>
+                <div class="col-6">
+                  <small class="text-muted">Data Service Allowance</small>
+                  <div class="h6">R {{ "{:,.2f}".format(package.sap_data.DATASERVICEALLOWANCE if package.sap_data.DATASERVICEALLOWANCE else 0) }}</div>
+                </div>
+                <div class="col-6">
+                  <small class="text-muted">Critical Skills</small>
+                  <div class="h6">R {{ "{:,.2f}".format(package.sap_data.CRITICALSKILLS if package.sap_data.CRITICALSKILLS else 0) }}</div>
+                </div>
+                <div class="col-6">
+                  <small class="text-muted">Annual Bonus</small>
+                  <div class="h6">R {{ "{:,.2f}".format(package.package_components.bonus if package.package_components.bonus else 0) }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-md-6">
+          <div class="card">
+            <div class="card-header bg-danger text-white">
+              <h6 class="mb-0"><i class="fas fa-minus-circle"></i> Deductions</h6>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-6">
+                  <small class="text-muted">Pension Employee</small>
+                  <div class="h6 text-danger">R {{ "{:,.2f}".format(package.sap_data.PENSIONEECONTRIBUTION if package.sap_data.PENSIONEECONTRIBUTION else 0) }}</div>
+                </div>
+                <div class="col-6">
+                  <small class="text-muted">Medical Aid Employee</small>
+                  <div class="h6 text-danger">R {{ "{:,.2f}".format(package.sap_data.MEDICALEECONTRIBUTION if package.sap_data.MEDICALEECONTRIBUTION else 0) }}</div>
+                </div>
+                <div class="col-6">
+                  <small class="text-muted">Group Life Employee</small>
+                  <div class="h6 text-danger">R {{ "{:,.2f}".format(package.sap_data.GROUPLIFEEECONTRIBUTION if package.sap_data.GROUPLIFEEECONTRIBUTION else 0) }}</div>
+                </div>
+                <div class="col-6">
+                  <small class="text-muted">UIF Employee</small>
+                  <div class="h6 text-danger">R {{ "{:,.2f}".format(package.sap_data.UIF if package.sap_data.UIF else 0) }}</div>
+                </div>
+                <div class="col-12">
+                  <small class="text-muted">Medical Aid Option</small>
+                  <div class="h6">{{ package.sap_data.MEDICALOPTION if package.sap_data.MEDICALOPTION else 'N/A' }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="row mt-4">
+        <div class="col-md-4">
+          <div class="d-grid">
+            <button class="btn btn-primary" onclick="calculateNetPay()">
+              <i class="fas fa-calculator"></i> Calculate Net Pay
+            </button>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="d-grid">
+            <button class="btn btn-success" onclick="submitPackage()">
+              <i class="fas fa-paper-plane"></i> Submit Package
+            </button>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="d-grid">
+            <button class="btn btn-outline-secondary" onclick="window.print()">
+              <i class="fas fa-print"></i> Print Summary
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function viewPackageBreakdown() {
+      // Scroll to the detailed breakdown section
+      document.querySelector('.table-container').scrollIntoView({ behavior: 'smooth' });
+    }
   </script>
 </body>
 </html>

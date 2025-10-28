@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tax Reports - Rand Water</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+  <style>
+    :root {
+      --randwater-primary: #0066CC;
+      --randwater-secondary: #00A3E0;
+      --randwater-accent: #FF6600;
+      --randwater-light: #E6F3FF;
+    }
+    
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      padding: 20px 0;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+    
+    .container {
+      max-width: 1200px;
+    }
+    
+    .report-card {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+    
+    .filter-section {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      border: none;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 102, 204, 0.3);
+    }
+    
+    .back-btn {
+      color: white;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.2);
+      transition: all 0.3s;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+    
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      color: white;
+    }
+    
+    .select2-container {
+      width: 100% !important;
+    }
+    
+    .tax-summary-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+    }
+    
+    .tax-summary-card h4 {
+      margin: 0;
+      font-size: 2rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="container">
+      <a href="{{ url_for('randwater_admin_panel') }}" class="back-btn">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
+      <h2><i class="fas fa-calculator"></i> Bulk Tax Reports</h2>
+      <p class="mb-0">Generate tax reports for multiple employees</p>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="report-card">
+      <h4 class="mb-4"><i class="fas fa-filter"></i> Filter Options</h4>
+      
+      <div class="filter-section">
+        <div class="row mb-3">
+          <div class="col-md-8">
+            <label class="form-label"><strong>Select Employees</strong></label>
+            <select id="employeeFilter" class="form-select" multiple>
+              <option value="all">All Employees</option>
+              {% for emp in employees %}
+              <option value="{{ emp.employee_id }}">{{ emp.employee_id }} - {{ emp.first_name }} {{ emp.surname }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="col-md-4">
+            <label class="form-label"><strong>Grade Band</strong></label>
+            <select id="gradeBandFilter" class="form-select">
+              <option value="all">All Grades</option>
+              {% for grade in grade_bands %}
+              <option value="{{ grade }}">{{ grade }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-12 text-end">
+            <button class="btn btn-secondary" onclick="resetFilters()">
+              <i class="fas fa-undo"></i> Reset
+            </button>
+            <button class="btn btn-primary" onclick="applyFilters()">
+              <i class="fas fa-search"></i> Generate Report
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tax Summary -->
+      <div id="taxSummary" style="display: none;">
+        <div class="row">
+          <div class="col-md-4">
+            <div class="tax-summary-card">
+              <small>Total Tax Liability</small>
+              <h4 id="totalTax">R 0.00</h4>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="tax-summary-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+              <small>Average Tax Per Employee</small>
+              <h4 id="avgTax">R 0.00</h4>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="tax-summary-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+              <small>Employees Included</small>
+              <h4 id="empCount">0</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Table -->
+      <div id="resultsSection" style="display: none;">
+        <h5 class="mt-4"><i class="fas fa-list"></i> Tax Details</h5>
+        
+        <div class="table-responsive mt-3">
+          <table class="table table-striped table-hover" id="resultsTable">
+            <thead class="table-primary">
+              <tr>
+                <th><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
+                <th>Employee ID</th>
+                <th>Name</th>
+                <th>Grade Band</th>
+                <th>Gross Income</th>
+                <th>Taxable Income</th>
+                <th>Tax Amount</th>
+                <th>Effective Rate</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody">
+            </tbody>
+          </table>
+        </div>
+        
+        <div class="mt-4 text-end">
+          <button class="btn btn-success btn-lg" onclick="exportToPDF()" id="exportBtn">
+            <i class="fas fa-file-pdf"></i> Export to PDF (<span id="selectedCount">0</span>)
+          </button>
+        </div>
+      </div>
+
+      <!-- Loading -->
+      <div id="loadingSpinner" style="display: none;" class="text-center my-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-3">Calculating tax data...</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+  
+  <script>
+    const allEmployees = {{ employees|tojson }};
+    let selectedEmployees = new Set();
+    
+    $(document).ready(function() {
+      $('#employeeFilter').select2({
+        placeholder: 'Select employees...',
+        allowClear: true
+      });
+    });
+    
+    function resetFilters() {
+      $('#employeeFilter').val(null).trigger('change');
+      $('#gradeBandFilter').val('all');
+      $('#resultsSection').hide();
+      $('#taxSummary').hide();
+    }
+    
+    function applyFilters() {
+      $('#loadingSpinner').show();
+      $('#resultsSection').hide();
+      $('#taxSummary').hide();
+      
+      setTimeout(() => {
+        const employeeIds = $('#employeeFilter').val() || [];
+        const gradeBand = $('#gradeBandFilter').val();
+        
+        let filtered = allEmployees.filter(emp => {
+          if (employeeIds.length > 0 && !employeeIds.includes('all') && !employeeIds.includes(emp.employee_id)) {
+            return false;
+          }
+          if (gradeBand !== 'all' && emp.grade_band !== gradeBand) {
+            return false;
+          }
+          return true;
+        });
+        
+        // Simulate tax calculation
+        filtered.forEach(emp => {
+          emp.grossIncome = emp.ctc || 0;
+          emp.taxableIncome = emp.grossIncome * 0.85; // Simplified
+          emp.taxAmount = emp.taxableIncome * 0.30; // Simplified
+          emp.effectiveRate = emp.grossIncome > 0 ? ((emp.taxAmount / emp.grossIncome) * 100).toFixed(2) : 0;
+        });
+        
+        displayResults(filtered);
+        $('#loadingSpinner').hide();
+        $('#resultsSection').show();
+        $('#taxSummary').show();
+      }, 800);
+    }
+    
+    function displayResults(employees) {
+      const tbody = $('#resultsBody');
+      tbody.empty();
+      
+      let totalTax = 0;
+      
+      employees.forEach(emp => {
+        totalTax += emp.taxAmount;
+        
+        const row = `
+          <tr class="employee-row">
+            <td><input type="checkbox" class="employee-checkbox" value="${emp.employee_id}" onchange="updateSelectedCount()"></td>
+            <td>${emp.employee_id}</td>
+            <td>${emp.first_name} ${emp.surname}</td>
+            <td><span class="badge bg-primary">${emp.grade_band}</span></td>
+            <td>R ${emp.grossIncome.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}</td>
+            <td>R ${emp.taxableIncome.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}</td>
+            <td>R ${emp.taxAmount.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}</td>
+            <td>${emp.effectiveRate}%</td>
+          </tr>
+        `;
+        tbody.append(row);
+      });
+      
+      // Update summary
+      $('#totalTax').text('R ' + totalTax.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
+      $('#avgTax').text('R ' + (totalTax / employees.length).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,'));
+      $('#empCount').text(employees.length);
+      
+      selectedEmployees.clear();
+      updateSelectedCount();
+    }
+    
+    function toggleSelectAll() {
+      const selectAll = $('#selectAll').prop('checked');
+      $('.employee-checkbox').prop('checked', selectAll);
+      updateSelectedCount();
+    }
+    
+    function updateSelectedCount() {
+      selectedEmployees.clear();
+      $('.employee-checkbox:checked').each(function() {
+        selectedEmployees.add($(this).val());
+      });
+      
+      $('#selectedCount').text(selectedEmployees.size || 'All');
+    }
+    
+    function exportToPDF() {
+      const selected = selectedEmployees.size > 0 ? Array.from(selectedEmployees) : 'all';
+      alert(`Generating PDF tax report for ${selected === 'all' ? 'all employees' : selectedEmployees.size + ' selected employee(s)'}...`);
+      
+      // In production, submit to backend for PDF generation
+      window.open('/export_tax_report_pdf?employees=' + (selected === 'all' ? 'all' : selected.join(',')), '_blank');
+    }
+  </script>
+</body>
+</html>
+

@@ -1,0 +1,1337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>Edit Package v3.0 - Tax Fix - {{ employee.employee_id }} | {{ config.COMPANY_NAME }}</title>
+    <!-- Version 3.0 - Fixed tax calculation with pension deductions, rebates, and medical credits -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        :root {
+            --randwater-primary: #1e3c72;
+            --randwater-secondary: #2a5298;
+            --randwater-accent: #3498db;
+        }
+        
+        .page-header {
+            background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+        
+        .section-card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+            border: 1px solid #dee2e6;
+            margin-bottom: 1.5rem;
+        }
+        
+        .section-header {
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            padding: 1rem 1.5rem;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        
+        .section-body {
+            padding: 1.5rem;
+        }
+        
+        .field-row {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f1f3f4;
+        }
+        
+        .field-row:last-child {
+            border-bottom: none;
+        }
+        
+        .field-label {
+            width: 200px;
+            font-weight: 500;
+            color: #495057;
+            flex-shrink: 0;
+        }
+        
+        .field-value {
+            flex: 1;
+            margin-left: 1rem;
+        }
+        
+        .field-info {
+            margin-left: 1rem;
+            color: #6c757d;
+            font-size: 0.875rem;
+            min-width: 150px;
+        }
+        
+        .warning-text {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        .calculated-field {
+            background-color: #f8f9fa;
+        }
+        
+        .toggle-btn {
+            min-width: 80px;
+        }
+        
+        .action-buttons {
+            position: sticky;
+            bottom: 0;
+            background: white;
+            border-top: 1px solid #dee2e6;
+            padding: 1rem 0;
+            margin-top: 2rem;
+        }
+        
+        .net-pay-section {
+            background: linear-gradient(135deg, #e8f5e8 0%, #f0f8ff 100%);
+            border: 2px solid #28a745;
+            margin-top: 2rem;
+        }
+        
+        .net-pay-section .section-header {
+            background: #28a745;
+            color: white;
+        }
+        
+        .net-pay-row .field-label {
+            font-weight: 600;
+            color: #155724;
+        }
+        
+        .net-pay-final {
+            border-top: 2px solid #28a745;
+            padding-top: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .net-pay-final .field-label {
+            font-size: 1.1rem;
+            color: #155724;
+        }
+        
+        .gross-income, .total-deductions, .net-pay {
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        
+        .net-pay {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="page-header">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col">
+                    <h1><i class="fas fa-edit"></i> Edit Package - {{ employee.employee_id }}</h1>
+                    <p class="mb-0">
+                        <strong>{{ employee.first_name or '' }} {{ employee.surname or '' }}</strong> | 
+                        {{ employee.department or 'N/A' }} | 
+                        {{ employee.job_title or 'N/A' }}<br>
+                        <small class="text-light">
+                            <i class="fas fa-user-tag"></i> Grade Band {{ employee.grade_band or 'N/A' }}
+                        </small>
+                    </p>
+                </div>
+                <div class="col-auto">
+                    {% if session.employee_id %}
+                    <a href="/employee/dashboard" class="btn btn-light">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                    {% else %}
+                    <a href="/manage_packages" class="btn btn-light">
+                        <i class="fas fa-arrow-left"></i> Back to Package Management
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Earnings Section -->
+        <div class="section-card">
+            <div class="section-header">
+                <h5 class="mb-0"><i class="fas fa-money-bill-wave"></i> Earnings & Allowances</h5>
+            </div>
+            <div class="section-body">
+                <div class="field-row">
+                    <div class="field-label">Cost to Company (CTC)</div>
+                    <div class="field-value">
+                        <input type="number" class="form-control calculated-field" id="edit_ctc" step="0.01" readonly>
+                    </div>
+                    <div class="field-info"></div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-label">Total Pensionable Emolument</div>
+                    <div class="field-value">
+                        <div class="input-group">
+                            <input type="number" class="form-control" id="edit_tpe" step="0.01">
+                            <button class="btn btn-outline-secondary toggle-btn" type="button" id="tpe_toggle" onclick="toggleTPEMode()">
+                                <span id="tpe_mode_text">Value</span>
+                            </button>
+                        </div>
+                        <div id="tpe_warning" class="warning-text" style="display: none;"></div>
+                    </div>
+                    <div class="field-info">
+                        <div id="tpe_display_info">
+                            <span id="tpe_percentage">0.0</span>% of CTC
+                            <div id="tpe_value_display" style="display: none;">
+                                <small>Value: R<span id="tpe_value_amount">0.00</span></small>
+                            </div>
+                        </div>
+                        <small>Pension calculation base</small>
+                    </div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-label">Cash Component</div>
+                    <div class="field-value">
+                        <input type="text" class="form-control calculated-field" id="edit_cash" readonly>
+                    </div>
+                    <div class="field-info"></div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-label">Car Allowance</div>
+                    <div class="field-value">
+                        <input type="number" class="form-control" id="edit_car_allowance" step="0.01">
+                        <div id="car_warning" class="warning-text" style="display: none;"></div>
+                    </div>
+                    <div class="field-info">
+                        <span id="car_percentage">0.0</span>% of CTC
+                    </div>
+                </div>
+                
+                <div class="field-row">
+                     <div class="field-label">Housing Allowance</div>
+                    <div class="field-value">
+                        <input type="text" class="form-control calculated-field" id="edit_housing" readonly>
+                    </div>
+                    <div class="field-info"></div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-label">Cellphone Allowance</div>
+                    <div class="field-value">
+                        <input type="text" class="form-control calculated-field" id="edit_cellphone" readonly>
+                    </div>
+                    <div class="field-info"></div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-label">Data Service Allowance</div>
+                    <div class="field-value">
+                        <input type="text" class="form-control calculated-field" id="edit_data_service" readonly>
+                    </div>
+                    <div class="field-info"></div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-label">Annual Bonus (13th Cheque)</div>
+                    <div class="field-value">
+                        <div class="mb-2">
+                            <label class="form-label small">Step 1: Bonus Amount</label>
+                            <input type="number" class="form-control" id="edit_bonus" step="0.01" placeholder="Enter annual bonus amount">
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label small">Step 2: Payment Method</label>
+                            <select class="form-select" id="edit_bonus_type" onchange="updateBonusCalculation()">
+                                <option value="">Select payment method...</option>
+                                <option value="annual">Annual (this amount paid once per year)</option>
+                                <option value="monthly">Monthly (this amount provisioned each month)</option>
+                            </select>
+                        </div>
+                        <div id="bonus_warning" class="warning-text" style="display: none;"></div>
+                    </div>
+                    <div class="field-info">
+                        <span id="bonus_percentage">0.0</span>% of CTC<br>
+                        <small id="bonus_calculation_text">Enter amount and select method</small>
+                    </div>
+                 </div>
+                 
+                 <div class="field-row">
+                     <div class="field-label">Bonus Provision (Monthly)</div>
+                     <div class="field-value">
+                         <input type="text" class="form-control calculated-field" id="edit_bonus_provision" readonly>
+                     </div>
+                     <div class="field-info"></div>
+                 </div>
+                 
+                 <div class="field-row" style="border-top: 2px solid #ddd; margin-top: 10px; padding-top: 10px;">
+                     <div class="field-label"><strong>Total Earnings</strong></div>
+                     <div class="field-value">
+                         <input type="text" class="form-control calculated-field" id="total_earnings" readonly style="font-weight: bold; background-color: #e3f2fd;">
+                     </div>
+                     <div class="field-info"></div>
+                 </div>
+            </div>
+        </div>
+
+        <!-- Employer Contributions -->
+        <div class="section-card">
+            <div class="section-header">
+                <h5 class="mb-0"><i class="fas fa-building"></i> Employer Contributions</h5>
+            </div>
+            <div class="section-body">
+                <!-- Hidden fields for pension fund and option (used in save) -->
+                <input type="hidden" id="edit_pension_fund">
+                <input type="hidden" id="edit_pension_option">
+                
+                <div class="field-row">
+                    <div class="field-label">Pension ER Contribution</div>
+                    <div class="field-value">
+                        <input type="text" class="form-control calculated-field" id="edit_pension_er" readonly>
+                    </div>
+                    <div class="field-info"></div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-label">Medical Aid ER Contribution</div>
+                    <div class="field-value">
+                        <input type="text" class="form-control calculated-field" id="edit_medical_er" readonly>
+                    </div>
+                    <div class="field-info"></div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-label">Group Life ER Contribution</div>
+                    <div class="field-value">
+                        <input type="text" class="form-control calculated-field" id="edit_group_life_er" readonly>
+                    </div>
+                    <div class="field-info"></div>
+                </div>
+                
+                <div class="field-row" style="border-top: 2px solid #ddd; margin-top: 10px; padding-top: 10px;">
+                    <div class="field-label"><strong>Total ER Contributions</strong></div>
+                    <div class="field-value">
+                        <input type="text" class="form-control calculated-field" id="total_er_contributions" readonly style="font-weight: bold; background-color: #e8f5e9;">
+                    </div>
+                    <div class="field-info"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Employee Deductions -->
+        <div class="section-card">
+            <div class="section-header">
+                <h5 class="mb-0"><i class="fas fa-minus-circle"></i> Employee Deductions</h5>
+            </div>
+            <div class="section-body">
+                <div class="field-row">
+                    <div class="field-label">Pension EE Contribution</div>
+                    <div class="field-value">
+                        <input type="text" class="form-control calculated-field" id="edit_pension_ee" readonly>
+                    </div>
+                    <div class="field-info"></div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-label">Medical Aid EE Contribution</div>
+                    <div class="field-value">
+                        <input type="text" class="form-control calculated-field" id="edit_medical_ee_deduction" readonly>
+                    </div>
+                    <div class="field-info"></div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-label">Group Life EE Contribution</div>
+                    <div class="field-value">
+                        <input type="text" class="form-control calculated-field" id="edit_group_life_ee_deduction" readonly>
+                    </div>
+                    <div class="field-info"></div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-label">UIF Contribution</div>
+                    <div class="field-value">
+                        <input type="text" class="form-control calculated-field" id="edit_uif_deduction" readonly>
+                    </div>
+                    <div class="field-info"></div>
+                </div>
+                
+                <div class="field-row">
+                    <div class="field-label">
+                        Income Tax (PAYE)
+                        <i class="fas fa-question-circle text-primary ms-1" 
+                           style="cursor: pointer;" 
+                           onclick="generateTaxReport()" 
+                           title="View detailed tax calculation report"></i>
+                    </div>
+                    <div class="field-value">
+                        <input type="text" class="form-control calculated-field" id="edit_tax_deduction" readonly>
+                    </div>
+                    <div class="field-info"></div>
+                </div>
+                
+                <div class="field-row" style="border-top: 2px solid #ddd; margin-top: 10px; padding-top: 10px;">
+                    <div class="field-label"><strong>Total EE Deductions</strong></div>
+                    <div class="field-value">
+                        <input type="text" class="form-control calculated-field" id="total_ee_deductions" readonly style="font-weight: bold; background-color: #ffebee;">
+                    </div>
+                    <div class="field-info"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Net Pay Summary -->
+        <div class="section-card net-pay-section">
+            <div class="section-header">
+                <h5 class="mb-0"><i class="fas fa-calculator"></i> Net Pay Summary</h5>
+            </div>
+            <div class="section-body">
+                <div class="field-row net-pay-row">
+                    <div class="field-label">Gross Monthly Income</div>
+                    <div class="field-value">
+                        <input type="text" class="form-control calculated-field gross-income" id="gross_income" readonly>
+                    </div>
+                    <div class="field-info"></div>
+                </div>
+                
+                <div class="field-row net-pay-row">
+                    <div class="field-label">Total Deductions</div>
+                    <div class="field-value">
+                        <input type="text" class="form-control calculated-field total-deductions" id="total_deductions" readonly>
+                    </div>
+                    <div class="field-info"></div>
+                </div>
+                
+                <div class="field-row net-pay-final">
+                    <div class="field-label"><strong>Net Monthly Pay</strong></div>
+                    <div class="field-value">
+                        <input type="text" class="form-control calculated-field net-pay" id="net_pay" readonly>
+                    </div>
+                    <div class="field-info"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <div class="row">
+                <div class="col">
+                    <div class="alert alert-info">
+                        <strong>Current TCTC:</strong> R <span id="calculated_tctc">0.00</span> | 
+                        <strong>TCTC Limit:</strong> R <span id="tctc_limit">0.00</span>
+                        <span id="save-status" class="badge bg-secondary ms-2" style="display: none;">Draft Saved</span>
+                    </div>
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-secondary me-2" onclick="resetToSAP()">
+                        <i class="fas fa-undo"></i> Reset to SAP
+                    </button>
+                    <button type="button" class="btn btn-info me-2" onclick="saveDraft()">
+                        <i class="fas fa-save"></i> Save Draft
+                    </button>
+                    <button type="button" class="btn btn-success" onclick="submitPackage()">
+                        <i class="fas fa-check-circle"></i> Submit Final
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let currentEmployeeId = '{{ employee.employee_id }}';
+        let originalPackageData = {{ employee | tojson }};
+        let tpeMode = 'value';
+
+        // First populate with original data (this creates the form structure)
+        document.addEventListener('DOMContentLoaded', function() {
+            // Start with original data to create the form
+            populateEditForm(originalPackageData);
+            
+            // Then check for draft and overwrite if it exists
+            loadDraftOrOriginal();
+        });
+        
+        async function loadDraftOrOriginal() {
+            try {
+                const response = await fetch(`/api/admin/package/${currentEmployeeId}/load-draft`);
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.draft && data.draft.package_components) {
+                        console.log('=== DRAFT LOAD DEBUG START ===');
+                        console.log('Draft found! package_components:', data.draft.package_components);
+                        
+                        const draft = data.draft.package_components;
+                        
+                        console.log('Applying draft values...');
+                        // Apply draft values to editable fields
+                        if (draft.tpe !== undefined) {
+                            document.getElementById('edit_tpe').value = draft.tpe;
+                            console.log('✓ Set TPE to:', draft.tpe);
+                        }
+                        if (draft.car_allowance !== undefined) {
+                            document.getElementById('edit_car_allowance').value = draft.car_allowance;
+                            console.log('✓ Set Car Allowance to:', draft.car_allowance);
+                        }
+                        
+                        // Bonus: draft contains monthly provision, display as annual
+                        if (draft.bonus !== undefined) {
+                            const annualBonus = draft.bonus * 12;
+                            document.getElementById('edit_bonus').value = annualBonus.toFixed(2);
+                            console.log('✓ Set Bonus to:', annualBonus);
+                        }
+                        if (draft.bonus_type) document.getElementById('edit_bonus_type').value = draft.bonus_type;
+                        
+                        // Set pension options if they exist
+                        if (draft.pension_option) document.getElementById('edit_pension_option').value = draft.pension_option;
+                        if (draft.group_life_option) document.getElementById('edit_group_life_option').value = draft.group_life_option;
+                        
+                        console.log('Triggering recalculations...');
+                        // Trigger recalculations
+                        calculateAllValues();
+                        console.log('=== DRAFT LOAD DEBUG END ===');
+                        
+                        // Show banner that draft was loaded
+                        const saveStatus = document.getElementById('save-status');
+                        if (saveStatus) {
+                            saveStatus.textContent = 'Draft Loaded - Continue editing';
+                            saveStatus.className = 'badge bg-info ms-2';
+                            saveStatus.style.display = 'inline';
+                        }
+                        return;
+                    }
+                }
+                console.log('No draft found');
+            } catch (error) {
+                console.log('Error loading draft:', error);
+            }
+        }
+
+        function populateEditForm(employeeData) {
+            console.log('Employee Data:', employeeData);
+            console.log('Available fields:', Object.keys(employeeData));
+            
+            // CTC (fixed)
+            document.getElementById('edit_ctc').value = employeeData.ctc || 0;
+            
+            // Main editable fields - use employee data directly
+            document.getElementById('edit_tpe').value = employeeData.basic_salary || 0;
+            document.getElementById('edit_car_allowance').value = employeeData.car_allowance || 0;
+            
+            // Bonus: Step 1 should be ANNUAL amount (bonus provision from SAP is monthly, multiply by 12)
+            let monthlyBonusProvision = employeeData.bonus || 0;
+            let annualBonusAmount = monthlyBonusProvision * 12;
+            console.log('=== BONUS LOAD DEBUG ===');
+            console.log('Monthly provision from DB:', monthlyBonusProvision);
+            console.log('Annual amount (×12):', annualBonusAmount);
+            document.getElementById('edit_bonus').value = annualBonusAmount.toFixed(2);
+            document.getElementById('edit_bonus_type').value = 'monthly'; // Default to monthly payment method
+            console.log('=== END BONUS LOAD DEBUG ===');
+            
+            // Pension options - Modeller view (read-only display from SAP data)
+            const pensionFund = employeeData.pension_fund || 'RWPROV';
+            const pensionOption = 'B'; // Default option
+            
+            // Hidden fields for form submission
+            document.getElementById('edit_pension_fund').value = pensionFund;
+            document.getElementById('edit_pension_option').value = pensionOption;
+            
+            // Fixed allowances (readonly) - use employee data directly
+            document.getElementById('edit_cellphone').value = formatCurrency(employeeData.cellphone_allowance || 0);
+            document.getElementById('edit_data_service').value = formatCurrency(employeeData.data_service_allowance || 0);
+            document.getElementById('edit_housing').value = formatCurrency(employeeData.housing_allowance || 0);
+            
+            // Medical aid from employee data (fixed) - using correct SAP field names
+            console.log('Medical ER Contribution:', employeeData.medical_er_contribution);
+            console.log('Medical EE Contribution:', employeeData.medical_ee_contribution);
+            document.getElementById('edit_medical_er').value = formatCurrency(employeeData.medical_er_contribution || 0);
+            document.getElementById('edit_medical_ee_deduction').value = formatCurrency(employeeData.medical_ee_contribution || 0);
+            
+            // Group life - initially use SAP data (will recalculate if TPE changes)
+            // Store initial TPE to detect changes
+            const initialTPE = employeeData.basic_salary || 0;
+            window.initialTPE = initialTPE;
+            window.initialGroupLifeER = employeeData.group_life_er_contribution || 0;
+            window.initialGroupLifeEE = employeeData.group_life_ee_contribution || 0;
+            
+            document.getElementById('edit_group_life_er').value = formatCurrency(employeeData.group_life_er_contribution || 0);
+            document.getElementById('edit_group_life_ee_deduction').value = formatCurrency(employeeData.group_life_ee_contribution || 0);
+            
+            document.getElementById('tctc_limit').textContent = (employeeData.ctc || 0).toFixed(2);
+            
+            // Load group life config from pension_config.json
+            loadGroupLifeConfig();
+            
+            // Add event listeners for real-time calculation
+            ['edit_tpe', 'edit_car_allowance', 'edit_bonus', 'edit_pension_option'].forEach(fieldId => {
+                const element = document.getElementById(fieldId);
+                if (element) {
+                    element.addEventListener('input', () => {
+                        if (fieldId === 'edit_bonus') {
+                            updateBonusCalculation();
+                        }
+                        calculateAllValues();
+                        validateBusinessRules();
+                    });
+                    element.addEventListener('change', () => {
+                        if (fieldId === 'edit_bonus') {
+                            updateBonusCalculation();
+                        }
+                        calculateAllValues();
+                        validateBusinessRules();
+                    });
+                }
+            });
+            
+            // Trigger initial calculation
+            console.log('Triggering initial calculations...');
+            calculateAllValues();
+            validateBusinessRules();
+            
+            // Force update percentages with a small delay to ensure DOM is ready
+            setTimeout(() => {
+                const ctc = parseFloat(document.getElementById('edit_ctc').value) || 0;
+                const tpe = parseFloat(document.getElementById('edit_tpe').value) || 0;
+                const carAllowance = parseFloat(document.getElementById('edit_car_allowance').value) || 0;
+                const bonus = parseFloat(document.getElementById('edit_bonus').value) || 0;
+                const bonusType = document.getElementById('edit_bonus_type').value;
+                
+                console.log('Force updating percentages with values:', {ctc, tpe, carAllowance, bonus, bonusType});
+                updatePercentageDisplays(ctc, tpe, carAllowance, bonus, bonusType);
+                
+                // Also directly update to ensure they're visible
+                if (ctc > 0) {
+                    document.getElementById('tpe_percentage').textContent = ((tpe / ctc) * 100).toFixed(1);
+                    document.getElementById('car_percentage').textContent = ((carAllowance / ctc) * 100).toFixed(1);
+                    document.getElementById('bonus_percentage').textContent = ((bonus / ctc) * 100).toFixed(1);
+                    console.log('Direct percentage updates applied');
+                }
+            }, 100);
+            
+            console.log('Form population complete!');
+        }
+
+        function toggleTPEMode() {
+            const tpeInput = document.getElementById('edit_tpe');
+            const modeText = document.getElementById('tpe_mode_text');
+            const valueDisplay = document.getElementById('tpe_value_display');
+            const ctc = parseFloat(document.getElementById('edit_ctc').value) || 0;
+            
+            if (tpeMode === 'value') {
+                // Switch to percentage mode
+                tpeMode = 'percentage';
+                const currentValue = parseFloat(tpeInput.value) || 0;
+                const percentage = ctc > 0 ? (currentValue / ctc * 100) : 0;
+                tpeInput.value = percentage.toFixed(1);
+                tpeInput.step = '0.1';
+                tpeInput.max = '100';
+                modeText.textContent = '%';
+                valueDisplay.style.display = 'block'; // Show value when in percentage mode
+                document.getElementById('tpe_value_amount').textContent = currentValue.toFixed(2);
+            } else {
+                // Switch to value mode
+                tpeMode = 'value';
+                const currentPercentage = parseFloat(tpeInput.value) || 0;
+                const value = ctc * (currentPercentage / 100);
+                tpeInput.value = value.toFixed(2);
+                tpeInput.step = '0.01';
+                tpeInput.removeAttribute('max');
+                modeText.textContent = 'Value';
+                valueDisplay.style.display = 'none'; // Hide value display in value mode
+            }
+            
+            calculateAllValues();
+        }
+
+         function updateBonusCalculation() {
+             // The monthly provision is now handled by the dedicated bonus provision field
+             // in calculateAllValues(), so this function just triggers the calculation
+             calculateAllValues();
+         }
+
+        function calculateAllValues() {
+            const ctc = parseFloat(document.getElementById('edit_ctc').value) || 0;
+            
+            // Get TPE value (handle percentage mode)
+            let tpe = parseFloat(document.getElementById('edit_tpe').value) || 0;
+            if (tpeMode === 'percentage') {
+                tpe = ctc * (tpe / 100);
+            }
+            
+             const carAllowance = parseFloat(document.getElementById('edit_car_allowance').value) || 0;
+             const annualBonus = parseFloat(document.getElementById('edit_bonus').value) || 0;
+             const bonusType = document.getElementById('edit_bonus_type').value;
+             
+             // Fixed allowances from SAP - remove commas before parsing
+            const cellphone = parseFloat((document.getElementById('edit_cellphone').value || '0').replace(/,/g, '')) || 0;
+            const dataService = parseFloat((document.getElementById('edit_data_service').value || '0').replace(/,/g, '')) || 0;
+            const housing = parseFloat((document.getElementById('edit_housing').value || '0').replace(/,/g, '')) || 0;
+            const medicalER = parseFloat((document.getElementById('edit_medical_er').value || '0').replace(/,/g, '')) || 0;
+            const groupLifeER = parseFloat((document.getElementById('edit_group_life_er').value || '0').replace(/,/g, '')) || 0;
+            
+            // Calculate pension based on TPE and pension option
+            const pensionData = calculatePensionContributions(tpe);
+            const pensionER = pensionData.employer;
+            const pensionEE = pensionData.employee;
+            document.getElementById('edit_pension_er').value = formatCurrency(pensionER);
+            document.getElementById('edit_pension_ee').value = formatCurrency(pensionEE);
+            
+            // Calculate group life - only recalculate if TPE has changed from initial value
+            let groupLifeData;
+            if (window.initialTPE && Math.abs(tpe - window.initialTPE) > 0.01) {
+                // TPE has changed - recalculate using configured split
+                groupLifeData = calculateGroupLifeContributions(tpe);
+                document.getElementById('edit_group_life_er').value = formatCurrency(groupLifeData.employer);
+                document.getElementById('edit_group_life_ee_deduction').value = formatCurrency(groupLifeData.employee);
+            } else {
+                // TPE hasn't changed - use values from form (SAP data)
+                const groupLifeER = parseFloat(document.getElementById('edit_group_life_er').value.replace(/,/g, '')) || 0;
+                const groupLifeEE = parseFloat(document.getElementById('edit_group_life_ee_deduction').value.replace(/,/g, '')) || 0;
+                groupLifeData = {
+                    employer: groupLifeER,
+                    employee: groupLifeEE
+                };
+            }
+            
+             // Calculate monthly bonus provision
+             // The edit_bonus field ALWAYS contains the annual amount
+             // Monthly provision is always annual / 12 regardless of payment method
+             const bonusProvision = annualBonus / 12;
+             
+             console.log('=== BONUS CALCULATION DEBUG ===');
+             console.log('Annual Bonus from field:', annualBonus);
+             console.log('Payment Method:', bonusType);
+             console.log('Monthly Provision (÷12):', bonusProvision);
+             console.log('=== END BONUS CALCULATION DEBUG ===');
+             
+             // Update bonus provision field
+             document.getElementById('edit_bonus_provision').value = formatCurrency(bonusProvision);
+            
+            // Calculate cash component (what's left after all deductions)
+            // Formula: CTC - Car Allowance - Housing - Cellphone - Data Service - ER Contributions - Bonus Provision
+            console.log('=== CASH COMPONENT CALCULATION ===');
+            console.log('CTC:', ctc);
+            console.log('Car Allowance:', carAllowance);
+            console.log('Housing:', housing);
+            console.log('Cellphone:', cellphone);
+            console.log('Data Service:', dataService);
+            console.log('Pension ER:', pensionData.employer);
+            console.log('Medical ER:', medicalER);
+            console.log('Group Life ER:', groupLifeData.employer);
+            console.log('Bonus Provision:', bonusProvision);
+            
+            const cash = ctc - carAllowance - housing - cellphone - dataService - pensionData.employer - medicalER - groupLifeData.employer - bonusProvision;
+            
+            console.log('Cash Component = CTC - Car - Housing - Cellphone - Data - Pension ER - Medical ER - Group Life ER - Bonus Provision');
+            console.log('Cash Component =', ctc, '-', carAllowance, '-', housing, '-', cellphone, '-', dataService, '-', pensionData.employer, '-', medicalER, '-', groupLifeData.employer, '-', bonusProvision);
+            console.log('Cash Component =', cash);
+            console.log('=== END CASH COMPONENT ===');
+            
+            // Validate: Cash component cannot be negative
+            if (cash < 0) {
+                document.getElementById('edit_cash').value = formatCurrency(cash);
+                document.getElementById('edit_cash').style.backgroundColor = '#ffcccc';
+                alert('WARNING: Cash component is negative (R' + formatCurrency(cash) + ')! The package exceeds the CTC limit. Please reduce TPE, Car Allowance, or other components.');
+            } else {
+                document.getElementById('edit_cash').value = formatCurrency(cash);
+                document.getElementById('edit_cash').style.backgroundColor = '';
+            }
+            
+            // Calculate UIF (1% of total earnings including basic salary, max R177.12)
+            const totalEarningsForUIF = tpe + carAllowance + cash + cellphone + dataService + housing;
+            const uif = Math.min(totalEarningsForUIF * 0.01, 177.12);
+            document.getElementById('edit_uif_deduction').value = formatCurrency(uif);
+            
+            // Calculate Gross Income first (ALLOWANCES ONLY - excludes basic salary)
+            // Taxable Income = Cash + Car (80%) + Housing + Cellphone + Data Service
+            const taxableIncome = cash + (carAllowance * 0.8) + housing + cellphone + dataService;
+            const tax = calculateTax(taxableIncome, pensionEE, pensionER, annualBonus);
+            document.getElementById('edit_tax_deduction').value = formatCurrency(tax);
+            
+            // Tax calculation debug is now inside the calculateTax function
+            
+            // Don't force formatting during typing - only calculated fields get formatted
+            // User can type freely, formatting happens only on save
+            
+            // Calculate Gross Monthly Income = Cash + Allowances (TPE is NOT included - it's only for pension calculation)
+            const grossIncome = cash + carAllowance + housing + cellphone + dataService;
+            
+            // Calculate Total Employee Deductions
+            const medicalEE = parseFloat(document.getElementById('edit_medical_ee_deduction').value) || 0;
+            const totalDeductions = pensionEE + medicalEE + groupLifeData.employee + uif + tax;
+            
+            // Net Pay = Gross Income - Total Deductions
+            const netPay = grossIncome - totalDeductions;
+            
+            // Calculate and display totals
+            const totalEarnings = grossIncome;
+            const totalERContributions = pensionER + medicalER + groupLifeData.employer;
+            const totalEEDeductions = pensionEE + medicalEE + groupLifeData.employee + uif + tax;
+            
+            document.getElementById('total_earnings').value = formatCurrency(totalEarnings);
+            document.getElementById('total_er_contributions').value = formatCurrency(totalERContributions);
+            document.getElementById('total_ee_deductions').value = formatCurrency(totalEEDeductions);
+            
+            // Update Net Pay fields
+            document.getElementById('gross_income').value = formatCurrency(grossIncome);
+            document.getElementById('total_deductions').value = formatCurrency(totalDeductions);
+            document.getElementById('net_pay').value = formatCurrency(netPay);
+            
+            // Debug Net Pay calculation
+            console.log('=== NET PAY CALCULATION DEBUG ===');
+            console.log('TPE (for pension calculation only):', tpe);
+            console.log('Cash Component:', cash);
+            console.log('Car Allowance:', carAllowance);
+            console.log('Cellphone:', cellphone);
+            console.log('Data Service:', dataService);
+            console.log('Housing:', housing);
+            console.log('Gross Monthly Income (Cash + Allowances):', grossIncome);
+            console.log('Pension EE:', pensionEE);
+            console.log('Medical EE:', medicalEE);
+            console.log('Group Life EE:', groupLifeData.employee);
+            console.log('UIF:', uif);
+            console.log('Tax:', tax);
+            console.log('Total Deductions:', totalDeductions);
+            console.log('Net Pay (Gross - Deductions):', netPay);
+            console.log('=== END NET PAY CALCULATION DEBUG ===');
+            
+             // Update percentage displays - fix bonus percentage calculation
+             updatePercentageDisplays(ctc, tpe, carAllowance, annualBonus, bonusType);
+             
+             // Ensure percentages are always updated directly
+             if (ctc > 0) {
+                 document.getElementById('tpe_percentage').textContent = ((tpe / ctc) * 100).toFixed(1);
+                 document.getElementById('car_percentage').textContent = ((carAllowance / ctc) * 100).toFixed(1);
+                 // Bonus percentage: annual bonus as % of annual CTC
+                 const annualCTC = ctc * 12;
+                 document.getElementById('bonus_percentage').textContent = ((annualBonus / annualCTC) * 100).toFixed(1);
+             }
+            
+            // Update TPE value display when in percentage mode
+            if (tpeMode === 'percentage') {
+                document.getElementById('tpe_value_amount').textContent = tpe.toFixed(2);
+            }
+            
+            // Update TCTC display
+            document.getElementById('calculated_tctc').textContent = ctc.toFixed(2);
+            
+            // Update bonus calculation text
+            if (bonusType === 'monthly') {
+                document.getElementById('bonus_calculation_text').textContent = `Monthly provision integrated into CTC`;
+            } else if (bonusType === 'annual') {
+                document.getElementById('bonus_calculation_text').textContent = `Annual payment outside CTC`;
+            } else {
+                document.getElementById('bonus_calculation_text').textContent = 'Enter amount and select method';
+            }
+        }
+
+        function updatePercentageDisplays(ctc, tpe, carAllowance, bonus, bonusType) {
+            console.log('Updating percentages:', {ctc, tpe, carAllowance, bonus, bonusType});
+            if (ctc > 0) {
+                const tpePercent = ((tpe / ctc) * 100).toFixed(1);
+                const carPercent = ((carAllowance / ctc) * 100).toFixed(1);
+                console.log('Calculated percentages:', {tpePercent, carPercent});
+                
+                // Update with explicit logging
+                const tpeElement = document.getElementById('tpe_percentage');
+                const carElement = document.getElementById('car_percentage');
+                console.log('TPE element found:', tpeElement);
+                console.log('Car element found:', carElement);
+                
+                if (tpeElement) {
+                    tpeElement.textContent = tpePercent;
+                    console.log('Set TPE percentage to:', tpePercent);
+                }
+                if (carElement) {
+                    carElement.textContent = carPercent;
+                    console.log('Set Car percentage to:', carPercent);
+                }
+                
+                // Calculate bonus percentage based on type
+                let bonusPercent;
+                if (bonusType === 'monthly') {
+                    // For monthly: calculate annual equivalent (monthly × 12) as % of CTC
+                    bonusPercent = ((bonus * 12) / ctc) * 100;
+                } else if (bonusType === 'annual') {
+                    // For annual: use the amount directly as % of CTC
+                    bonusPercent = (bonus / ctc) * 100;
+                } else {
+                    bonusPercent = 0;
+                }
+                document.getElementById('bonus_percentage').textContent = bonusPercent.toFixed(1);
+            }
+        }
+
+        function calculatePensionContributions(tpe) {
+            const pensionOption = document.getElementById('edit_pension_option').value;
+            
+            // Based on Rand Water Provident Fund rules
+            const pensionRules = {
+                'A': { employee: 0.0867, employer: 0.1719 },      // 8.67% EE, 17.19% ER
+                'B': { employee: 0.0867, employer: 0.1719 },      // 8.67% EE, 17.19% ER  
+                'C': { employee: 0.0867, employer: 0.0945 },      // 8.67% EE, 9.45% ER
+                'D': { employee: 0.0867, employer: 0.1719 },      // 8.67% EE, 17.19% ER
+                'E': { employee: 0.0867, employer: 0.1719 },      // 8.67% EE, 17.19% ER
+                'F': { employee: 0.0867, employer: 0.1719 },      // 8.67% EE, 17.19% ER
+                'G': { employee: 0.0867, employer: 0.1719 },      // 8.67% EE, 17.19% ER
+                'none': { employee: 0, employer: 0 },
+                'SAMWU': { employee: 0.075, employer: 0.15 }       // Approximate SAMWU rates
+            };
+            
+            const rates = pensionRules[pensionOption] || pensionRules['B']; // Default to Option B
+            
+            return {
+                employee: tpe * rates.employee,
+                employer: tpe * rates.employer
+            };
+        }
+
+        function formatCurrency(value) {
+            // Format number as currency with thousand separators: 0,000.00
+            const num = parseFloat(value) || 0;
+            return num.toLocaleString('en-ZA', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            });
+        }
+
+        function loadGroupLifeConfig() {
+            // Load group life split configuration
+            fetch('/static/pension_config.json')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.group_life_rates && data.group_life_rates.cost_split) {
+                        window.groupLifeConfig = data.group_life_rates.cost_split;
+                        console.log('Group Life Config loaded:', window.groupLifeConfig);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading group life config:', error);
+                    // Use defaults if config fails to load
+                    window.groupLifeConfig = { employer_ratio: 0.54, employee_ratio: 0.46 };
+                });
+        }
+
+        function calculateGroupLifeContributions(tpe) {
+            // Old Mutual Group Life Insurance calculation
+            // Rate: R0.771 per R1000 of insured amount per month
+            // Insured amount: 4× Annual Pensionable Salary
+            const annualSalary = tpe * 12;
+            const insuredAmount = annualSalary * 4;
+            const monthlyPremium = (insuredAmount / 1000) * 0.771;
+            
+            // Split ratios - configurable by super admin (default: 54% ER, 46% EE)
+            // These can be updated via Super Admin Dashboard → Pension & Group Life Config
+            const erRatio = window.groupLifeConfig?.employer_ratio || 0.54;
+            const eeRatio = window.groupLifeConfig?.employee_ratio || 0.46;
+            
+            return {
+                employer: monthlyPremium * erRatio,
+                employee: monthlyPremium * eeRatio
+            };
+        }
+
+        function calculateTax(monthlyTaxableIncome, pensionEE, pensionER, annualBonus) {
+            console.log('=== TAX CALCULATION DEBUG ===');
+            
+            // 1. Calculate annual taxable income
+            const annualTaxableIncome = monthlyTaxableIncome * 12;
+            console.log('Taxable Income Monthly:', monthlyTaxableIncome.toFixed(2));
+            console.log('Taxable Income Annual:', annualTaxableIncome.toFixed(2));
+            
+            // 2. Deduct pension contributions (EE + ER)
+            const totalPensionAnnual = (pensionEE + pensionER) * 12;
+            const netTaxableIncome = annualTaxableIncome - totalPensionAnnual;
+            console.log('Pension EE Monthly:', pensionEE.toFixed(2));
+            console.log('Pension ER Monthly:', pensionER.toFixed(2));
+            console.log('Total Pension Annual (EE + ER):', totalPensionAnnual.toFixed(2));
+            console.log('Net Taxable Income:', netTaxableIncome.toFixed(2));
+            
+            // 3. Apply SARS Tax Brackets 2024/2025
+            let grossTax = 0;
+            
+            if (netTaxableIncome <= 237100) {
+                grossTax = netTaxableIncome * 0.18;
+            } else if (netTaxableIncome <= 370500) {
+                grossTax = 42678 + (netTaxableIncome - 237100) * 0.26;
+            } else if (netTaxableIncome <= 512800) {
+                grossTax = 77362 + (netTaxableIncome - 370500) * 0.31;
+            } else if (netTaxableIncome <= 673000) {
+                grossTax = 121475 + (netTaxableIncome - 512800) * 0.36;
+            } else if (netTaxableIncome <= 857900) {
+                grossTax = 179147 + (netTaxableIncome - 673000) * 0.39;
+            } else if (netTaxableIncome <= 1817000) {
+                grossTax = 251258 + (netTaxableIncome - 857900) * 0.41;
+            } else {
+                grossTax = 644489 + (netTaxableIncome - 1817000) * 0.45;
+            }
+            
+            console.log('Gross Tax:', grossTax.toFixed(2));
+            
+            // 4. Apply rebates (age-based)
+            const primaryRebate = 17235;
+            let totalRebate = primaryRebate;
+            console.log('Primary Rebate:', primaryRebate.toFixed(2));
+            
+            // 5. Apply Medical Tax Credit (MTC)
+            // First 2 people: R364/month each, Additional: R246/month each
+            const medicalDependents = 4; // Default to 4 (main + 3 children)
+            let medicalCreditAnnual = 0;
+            
+            if (medicalDependents > 0) {
+                const firstTwo = Math.min(medicalDependents, 2);
+                const additional = Math.max(0, medicalDependents - 2);
+                const medicalCreditMonthly = (firstTwo * 364) + (additional * 246);
+                medicalCreditAnnual = medicalCreditMonthly * 12;
+                console.log('Medical Dependents:', medicalDependents);
+                console.log('Medical Credit Monthly:', medicalCreditMonthly.toFixed(2));
+                console.log('Medical Credit Annual:', medicalCreditAnnual.toFixed(2));
+            }
+            
+            // 6. Calculate annual tax
+            let annualTax = grossTax - totalRebate - medicalCreditAnnual;
+            annualTax = Math.max(0, annualTax);
+            console.log('Annual Tax:', annualTax.toFixed(2));
+            
+            // 7. Calculate monthly tax
+            const monthlyTax = annualTax / 12;
+            console.log('Monthly Tax:', monthlyTax.toFixed(2));
+            
+            // 8. Calculate bonus tax (18% on annual bonus)
+            const bonusTax = (annualBonus * 0.18) / 12;
+            console.log('Bonus Annual:', annualBonus.toFixed(2));
+            console.log('Bonus Tax Monthly:', bonusTax.toFixed(2));
+            
+            // 9. Return total monthly tax (salary tax + bonus tax provision)
+            const totalTax = monthlyTax + bonusTax;
+            console.log('Total Tax (Monthly + Bonus):', totalTax.toFixed(2));
+            console.log('=== END TAX CALCULATION DEBUG ===');
+            
+            return totalTax;
+        }
+
+        function generateTaxReport() {
+            // Gather all the data needed for the tax report
+            const employeeId = currentEmployeeId || originalPackageData?.employee_id || 'UNKNOWN';
+            // Build employee name from first_name and surname
+            const firstName = originalPackageData?.first_name || '';
+            const surname = originalPackageData?.surname || '';
+            const employeeName = (firstName + ' ' + surname).trim() || 'N/A';
+            
+            // Get all values directly from form (don't recalculate)
+            const ctc = parseFloat(document.getElementById('edit_ctc').value.replace(/,/g, '')) || 0;
+            const tpe = parseFloat(document.getElementById('edit_tpe').value) || 0;
+            const carAllowance = parseFloat(document.getElementById('edit_car_allowance').value.replace(/,/g, '')) || 0;
+            const cellphone = parseFloat(document.getElementById('edit_cellphone').value.replace(/,/g, '')) || 0;
+            const dataService = parseFloat(document.getElementById('edit_data_service').value.replace(/,/g, '')) || 0;
+            const housing = parseFloat(document.getElementById('edit_housing').value.replace(/,/g, '')) || 0;
+            const annualBonus = parseFloat(document.getElementById('edit_bonus').value.replace(/,/g, '')) || 0;
+            
+            const pensionER = parseFloat(document.getElementById('edit_pension_er').value.replace(/,/g, '')) || 0;
+            const pensionEE = parseFloat(document.getElementById('edit_pension_ee').value.replace(/,/g, '')) || 0;
+            const cash = parseFloat(document.getElementById('edit_cash').value.replace(/,/g, '')) || 0;
+            
+            const taxableIncome = cash + (carAllowance * 0.8) + housing + cellphone + dataService;
+            const tax = parseFloat(document.getElementById('edit_tax_deduction').value.replace(/,/g, '')) || 0;
+            
+            // Prepare data for the report
+            const reportData = {
+                employee_id: employeeId,
+                employee_name: employeeName,
+                ctc: ctc,
+                tpe: tpe,
+                cash_component: cash,
+                car_allowance: carAllowance,
+                cellphone_allowance: cellphone,
+                data_service_allowance: dataService,
+                housing_allowance: housing,
+                pension_ee: pensionEE,
+                pension_er: pensionER,
+                annual_bonus: annualBonus,
+                taxable_income_monthly: taxableIncome,
+                monthly_tax: tax,
+                medical_dependents: 4  // Default - could be made dynamic
+            };
+            
+            console.log('Generating tax report with data:', reportData);
+            
+            // Send request to backend to generate PDF
+            fetch('/admin/randwater/generate-tax-report', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(reportData)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.text().then(text => { throw new Error(text); });
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // Log debug info if available
+                console.log('=== TAX REPORT DEBUG INFO ===');
+                console.log('Employee ID:', employeeId);
+                console.log('Employee Name:', employeeName);
+                console.log('Report Data:', reportData);
+                console.log('Blob size:', blob.size, 'bytes');
+                console.log('=== END DEBUG INFO ===');
+                
+                // Create a download link for the PDF
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Tax_Calculation_Report_${employeeId}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+                console.log('Tax report downloaded successfully');
+            })
+            .catch(error => {
+                console.error('Error generating tax report:', error);
+                alert('Error generating tax report: ' + error.message);
+            });
+        }
+
+        function validateBusinessRules() {
+            // Get band range from the data (since it's no longer editable)
+            const bandRange = originalPackageData.package_components?.band_range || 'o_to_q';
+            const tpe = parseFloat(document.getElementById('edit_tpe').value) || 0;
+            const carAllowance = parseFloat(document.getElementById('edit_car_allowance').value) || 0;
+            let bonus = parseFloat(document.getElementById('edit_bonus').value) || 0;
+            const bonusType = document.getElementById('edit_bonus_type').value;
+            const currentTCTC = parseFloat(document.getElementById('calculated_tctc').textContent) || 0;
+            
+            // Convert TPE to value if in percentage mode
+            let tpeValue = tpe;
+            if (tpeMode === 'percentage') {
+                tpeValue = currentTCTC * (tpe / 100);
+            }
+            
+            // Step 1 is always annual amount, no conversion needed
+            const annualBonus = bonus; // Input is already annual amount
+            
+            // Only apply validations for O to Q band employees
+            if (bandRange === 'o_to_q') {
+                // TPE validation (50-70% of CTC)
+                const tpeWarning = document.getElementById('tpe_warning');
+                if (tpeWarning) {
+                    const tpePercent = currentTCTC > 0 ? (tpeValue / currentTCTC) * 100 : 0;
+                    if (tpePercent < 50) {
+                        tpeWarning.textContent = `Warning: TPE is ${tpePercent.toFixed(1)}% of CTC (should be 50-70%)`;
+                        tpeWarning.style.display = 'block';
+                    } else if (tpePercent > 70) {
+                        tpeWarning.textContent = `Warning: TPE is ${tpePercent.toFixed(1)}% of CTC (should be 50-70%)`;
+                        tpeWarning.style.display = 'block';
+                    } else {
+                        tpeWarning.style.display = 'none';
+                    }
+                }
+                
+                // Car Allowance validation (30%+ of CTC)
+                const carWarning = document.getElementById('car_warning');
+                if (carWarning) {
+                    const carPercent = currentTCTC > 0 ? (carAllowance / currentTCTC) * 100 : 0;
+                    if (carPercent < 30) {
+                        carWarning.textContent = `Warning: Car Allowance is ${carPercent.toFixed(1)}% of CTC (should be 30%+)`;
+                        carWarning.style.display = 'block';
+                    } else {
+                        carWarning.style.display = 'none';
+                    }
+                }
+                
+                // Bonus validation (10-70% of CTC)
+                const bonusWarning = document.getElementById('bonus_warning');
+                if (bonusWarning) {
+                    const bonusPercent = currentTCTC > 0 ? (annualBonus / currentTCTC) * 100 : 0;
+                    if (bonusPercent < 10) {
+                        bonusWarning.textContent = `Warning: Annual bonus is ${bonusPercent.toFixed(1)}% of CTC (should be 10-70%)`;
+                        bonusWarning.style.display = 'block';
+                    } else if (bonusPercent > 70) {
+                        bonusWarning.textContent = `Warning: Annual bonus is ${bonusPercent.toFixed(1)}% of CTC (should be 10-70%)`;
+                        bonusWarning.style.display = 'block';
+                    } else {
+                        bonusWarning.style.display = 'none';
+                    }
+                }
+            } else {
+                // Hide warnings for non-O to Q band
+                const warnings = ['tpe_warning', 'car_warning', 'bonus_warning'];
+                warnings.forEach(warningId => {
+                    const warning = document.getElementById(warningId);
+                    if (warning) warning.style.display = 'none';
+                });
+            }
+        }
+
+        function getFormData() {
+            // Get form data
+            let tpe = parseFloat(document.getElementById('edit_tpe').value) || 0;
+            if (tpeMode === 'percentage') {
+                const ctc = parseFloat(document.getElementById('edit_ctc').value) || 0;
+                tpe = ctc * (tpe / 100);
+            }
+            
+            const annualBonusAmount = parseFloat(document.getElementById('edit_bonus').value) || 0;
+            const bonusType = document.getElementById('edit_bonus_type').value;
+            const bonusToSave = annualBonusAmount / 12;
+            
+            // Get calculated values from the form
+            const pensionEE = parseFloat(document.getElementById('edit_pension_ee').value.replace(/,/g, '')) || 0;
+            const pensionER = parseFloat(document.getElementById('edit_pension_er').value.replace(/,/g, '')) || 0;
+            const groupLifeEE = parseFloat(document.getElementById('edit_group_life_ee_deduction').value.replace(/,/g, '')) || 0;
+            const groupLifeER = parseFloat(document.getElementById('edit_group_life_er').value.replace(/,/g, '')) || 0;
+            const cashComponent = parseFloat(document.getElementById('edit_cash').value.replace(/,/g, '')) || 0;
+            const tax = parseFloat(document.getElementById('edit_tax_deduction').value.replace(/,/g, '')) || 0;
+            const medicalEE = parseFloat(document.getElementById('edit_medical_ee_deduction').value.replace(/,/g, '')) || 0;
+            const medicalER = parseFloat(document.getElementById('edit_medical_er').value.replace(/,/g, '')) || 0;
+            const uif = parseFloat(document.getElementById('edit_uif_deduction').value.replace(/,/g, '')) || 0;
+            const housingAllowance = parseFloat(document.getElementById('edit_housing').value.replace(/,/g, '')) || 0;
+            const cellphoneAllowance = parseFloat(document.getElementById('edit_cellphone').value.replace(/,/g, '')) || 0;
+            const dataServiceAllowance = parseFloat(document.getElementById('edit_data_service').value.replace(/,/g, '')) || 0;
+            
+            return {
+                tpe: parseFloat(tpe.toFixed(2)),
+                car_allowance: parseFloat((parseFloat(document.getElementById('edit_car_allowance').value) || 0).toFixed(2)),
+                housing_allowance: parseFloat(housingAllowance.toFixed(2)),
+                cellphone_allowance: parseFloat(cellphoneAllowance.toFixed(2)),
+                data_service_allowance: parseFloat(dataServiceAllowance.toFixed(2)),
+                bonus: parseFloat(bonusToSave.toFixed(2)),
+                bonus_type: bonusType,
+                pension_fund: (document.getElementById('edit_pension_fund')?.value || 'RWPROV'),
+                pension_option: (document.getElementById('edit_pension_option')?.value || 'B'),
+                pension_ee: parseFloat(pensionEE.toFixed(2)),
+                pension_er: parseFloat(pensionER.toFixed(2)),
+                group_life_ee: parseFloat(groupLifeEE.toFixed(2)),
+                group_life_er: parseFloat(groupLifeER.toFixed(2)),
+                medical_ee: parseFloat(medicalEE.toFixed(2)),
+                medical_er: parseFloat(medicalER.toFixed(2)),
+                uif: parseFloat(uif.toFixed(2)),
+                tax: parseFloat(tax.toFixed(2)),
+                cash_component: parseFloat(cashComponent.toFixed(2)),
+                employee_subgroup: (document.getElementById('edit_employee_subgroup')?.value || 'other'),
+                band_range: (document.getElementById('edit_band_range')?.value || 'o_to_q'),
+                group_life_option: (document.getElementById('edit_group_life_option')?.value || 'standard')
+            };
+        }
+        
+        function saveDraft() {
+            console.log('=== SAVE DRAFT DEBUG START ===');
+            
+            // Check if cash component is negative
+            const cashValue = parseFloat(document.getElementById('edit_cash').value.replace(/,/g, '')) || 0;
+            console.log('Cash Value:', cashValue);
+            
+            if (cashValue < 0) {
+                alert('Cannot save draft: Cash component is negative. Please adjust the package components to stay within the CTC limit.');
+                return;
+            }
+            
+            const newData = getFormData();
+            console.log('Form Data:', newData);
+            console.log('Employee ID:', currentEmployeeId);
+            console.log('API URL:', `/api/admin/package/${currentEmployeeId}/save-draft`);
+            
+            fetch(`/api/admin/package/${currentEmployeeId}/save-draft`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    package_components: newData,
+                    status: 'draft'
+                })
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                console.log('Response headers:', response.headers);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                if (data.success) {
+                    document.getElementById('save-status').style.display = 'inline';
+                    document.getElementById('save-status').textContent = 'Draft Saved - ' + new Date().toLocaleTimeString();
+                    setTimeout(() => {
+                        document.getElementById('save-status').style.display = 'none';
+                    }, 3000);
+                } else {
+                    alert('Error saving draft: ' + (data.error || 'Unknown error'));
+                }
+                console.log('=== SAVE DRAFT DEBUG END ===');
+            })
+            .catch(error => {
+                console.error('Fetch error details:', error);
+                console.error('Error message:', error.message);
+                console.error('Error stack:', error.stack);
+                alert('Connection error saving draft. Check console for details. Error: ' + error.message);
+                console.log('=== SAVE DRAFT DEBUG END ===');
+            });
+        }
+        
+        function resetToSAP() {
+            if (!confirm('Are you sure you want to reset to the original SAP data? All unsaved changes will be lost.')) {
+                return;
+            }
+            
+            // Reload the page to get fresh data from SAP
+            window.location.reload();
+        }
+        
+        function submitPackage() {
+            // Check if cash component is negative
+            const cashValue = parseFloat(document.getElementById('edit_cash').value.replace(/,/g, '')) || 0;
+            if (cashValue < 0) {
+                alert('Cannot submit: Cash component is negative. Please adjust the package components to stay within the CTC limit.');
+                return;
+            }
+            
+            const newData = getFormData();
+            
+            if (!confirm('Submit this package as final? It will be exported to SAP and cannot be changed.')) {
+                return;
+            }
+            
+            fetch(`/api/admin/package/${currentEmployeeId}/submit`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    package_components: newData,
+                    status: 'submitted'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Package submitted successfully. It will be exported to SAP.');
+                    window.location.href = '/manage_packages';
+                } else {
+                    alert('Error submitting package: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error submitting package');
+            });
+        }
+    </script>
+</body>
+</html>

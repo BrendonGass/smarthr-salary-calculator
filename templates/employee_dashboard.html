@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Employee Dashboard - {{ employee.first_name }} {{ employee.surname }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --randwater-primary: #0066CC;
+      --randwater-secondary: #00A3E0;
+      --randwater-accent: #FF6600;
+      --randwater-dark: #003366;
+      --randwater-light: #E6F3FF;
+    }
+    
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      background: linear-gradient(135deg, var(--randwater-light) 0%, #fff 100%);
+      min-height: 100vh;
+    }
+    
+    .navbar {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      padding: 1rem 0;
+    }
+    
+    .navbar-brand {
+      color: white !important;
+      font-weight: 600;
+    }
+    
+    .randwater-logo {
+      max-height: 50px;
+      margin-right: 1rem;
+    }
+    
+    .welcome-card {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .info-card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border-left: 4px solid var(--randwater-primary);
+    }
+    
+    .notification-item {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+      border-left: 4px solid var(--randwater-accent);
+    }
+    
+    .btn-randwater {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 500;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-randwater:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,102,204,0.3);
+      color: white;
+    }
+    
+    .status-badge {
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+    
+    .status-active {
+      background: #d1edff;
+      color: var(--randwater-primary);
+    }
+    
+    .container-main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container-fluid">
+      <div class="d-flex align-items-center">
+        <img src="/static/images/randwater-logo.png" alt="Rand Water" class="randwater-logo">
+        <span class="navbar-brand">Employee Portal</span>
+      </div>
+      <div class="d-flex align-items-center">
+        <span class="text-white me-3">
+          <i class="fas fa-user"></i> {{ employee.first_name }} {{ employee.surname }}
+        </span>
+        <a href="/employee/logout" class="btn btn-outline-light btn-sm">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-main">
+    <!-- Welcome Section -->
+    <div class="welcome-card">
+      <div class="row">
+        <div class="col-md-8">
+          <h2><i class="fas fa-home text-primary"></i> Welcome, {{ employee.first_name }}!</h2>
+          <p class="lead mb-3">Your compensation package portal is now active.</p>
+          <p class="mb-0">
+            <span class="status-badge status-active">
+              <i class="fas fa-check-circle"></i> Access Active
+            </span>
+          </p>
+        </div>
+        <div class="col-md-4 text-end">
+          <div class="text-muted">
+            <small>Employee ID: <strong>{{ employee.employee_id }}</strong></small><br>
+            <small>Grade Band: <strong>{{ employee.grade_band }}</strong></small><br>
+            <small>Department: <strong>{{ employee.department }}</strong></small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Package Information -->
+      <div class="col-lg-8">
+        <div class="info-card">
+          <h5><i class="fas fa-money-check-alt text-primary"></i> Package Information</h5>
+          <div class="row mt-3">
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label text-muted">Total Pensionable Emolument</label>
+                <div class="h4 text-primary">R {{ "{:,.2f}".format(employee.basic_salary) }}</div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="mb-3">
+                <label class="form-label text-muted">Current CTC</label>
+                <div class="h4 text-primary">R {{ "{:,.2f}".format(employee.ctc) }}</div>
+              </div>
+            </div>
+          </div>
+          <div class="mt-3">
+            <p class="text-muted mb-2">
+              <i class="fas fa-info-circle"></i> 
+              Your package modeling period is active until {{ employee.access_expires }}.
+            </p>
+            {% if employee.package_submitted %}
+            <button class="btn-randwater" style="opacity: 0.5; cursor: not-allowed;" disabled>
+              <i class="fas fa-calculator"></i> Model Package
+            </button>
+            {% else %}
+            <a href="/employee/package/{{ employee.employee_id }}" class="btn-randwater">
+              <i class="fas fa-calculator"></i> Model Package
+            </a>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="info-card">
+          <h5><i class="fas fa-calendar-alt text-primary"></i> Access Information</h5>
+          <div class="row">
+            <div class="col-md-4">
+              <label class="form-label text-muted">Access Granted</label>
+              <div class="fw-bold">{{ employee.access_granted }}</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label text-muted">Access Expires</label>
+              <div class="fw-bold">{{ employee.access_expires }}</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label text-muted">Days Remaining</label>
+              <div class="fw-bold text-warning">{{ employee.days_remaining }} days</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Notifications -->
+      <div class="col-lg-4">
+        <div class="info-card">
+          <h5><i class="fas fa-bell text-warning"></i> Notifications</h5>
+          
+          {% if notifications %}
+            {% for notification in notifications %}
+            <div class="notification-item">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="flex-grow-1">
+                  <p class="mb-1">{{ notification.message }}</p>
+                  <small class="text-muted">
+                    <i class="fas fa-clock"></i> {{ notification.timestamp[:19].replace('T', ' ') }}
+                  </small>
+                </div>
+                <div class="ms-2">
+                  {% if not notification.read %}
+                  <span class="badge bg-warning">New</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="text-center text-muted py-3">
+              <i class="fas fa-inbox fa-2x mb-2"></i>
+              <p>No notifications at this time.</p>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="info-card">
+          <h5><i class="fas fa-bolt text-primary"></i> Quick Actions</h5>
+          <div class="d-grid gap-2">
+            <a href="/employee/payslip/{{ employee.employee_id }}" class="btn btn-outline-primary">
+              <i class="fas fa-file-alt"></i> View Payslip
+            </a>
+            <a href="/employee/help" class="btn btn-outline-primary">
+              <i class="fas fa-question-circle"></i> Help & Support
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Package Management Section -->
+    <div class="row mt-4">
+      <div class="col-12">
+        <div class="info-card">
+          <h5><i class="fas fa-briefcase text-primary"></i> My Package Status</h5>
+          
+          <!-- Simplified Package Summary -->
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr>
+                  <th>Package Status</th>
+                  <th>Current CTC</th>
+                  <th>Access Expires</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>
+                    {% if employee.package_submitted %}
+                      <span class="badge bg-success">
+                        <i class="fas fa-check-circle"></i> Submitted
+                      </span>
+                    {% else %}
+                      <span class="badge bg-warning">
+                        <i class="fas fa-clock"></i> Pending
+                      </span>
+                    {% endif %}
+                  </td>
+                  <td>
+                    <strong>R {{ "{:,.2f}".format(employee.ctc) }}</strong>
+                  </td>
+                  <td>
+                    <small class="text-muted">{{ employee.access_expires }}</small>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="text-center py-4 mt-5">
+    <div class="container">
+      <small class="text-muted">
+        Rand Water Salary Package Calculator v1.0
+      </small>
+    </div>
+  </footer>
+
+  <script>
+    function viewMyPackageDetails(employeeId) {
+      // Show package details in a modal or redirect to details page
+      window.location.href = `/employee/package/${employeeId}`;
+    }
+  </script>
+</body>
+</html>

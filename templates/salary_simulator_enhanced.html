@@ -1,0 +1,1436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Salary Simulator - Rand Water</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    :root {
+      --randwater-primary: #1e3c72;
+      --randwater-secondary: #2a5298;
+      --randwater-accent: #3498db;
+    }
+    
+    body {
+      background-color: #f5f7fa;
+    }
+    
+    .page-header {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      padding: 2rem 0;
+      margin-bottom: 2rem;
+    }
+    
+    .package-container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    
+    .section-card {
+      background: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      border: 1px solid #dee2e6;
+      margin-bottom: 1.5rem;
+    }
+    
+    .package-section {
+      background: white;
+      border-radius: 0.5rem;
+      box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+      border: 1px solid #dee2e6;
+      margin-bottom: 1.5rem;
+    }
+    
+    .section-header {
+      background: #f8f9fa;
+      border-bottom: 1px solid #dee2e6;
+      padding: 1rem 1.5rem;
+      border-radius: 0.5rem 0.5rem 0 0;
+    }
+    
+    .section-header h5 {
+      margin: 0;
+      color: #495057;
+      font-weight: 600;
+    }
+    
+    .section-body {
+      padding: 1.5rem;
+    }
+    
+    .field-row {
+      display: flex;
+      align-items: center;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid #f1f3f4;
+    }
+    
+    .field-row:last-child {
+      border-bottom: none;
+    }
+    
+    .field-label {
+      width: 250px;
+      font-weight: 500;
+      color: #495057;
+      flex-shrink: 0;
+    }
+    
+    .field-value {
+      flex: 1;
+      margin-left: 1rem;
+      max-width: 400px;
+    }
+    
+    .field-info {
+      margin-left: 1rem;
+      color: #6c757d;
+      font-size: 0.875rem;
+      min-width: 200px;
+    }
+    
+    .calculated-field {
+      background-color: #f8f9fa;
+      border-color: #dee2e6;
+      font-weight: 600;
+      color: #495057;
+    }
+    
+    .total-row {
+      background-color: #e8f4f8;
+      padding: 1rem 0;
+      margin-top: 0.5rem;
+      border-top: 2px solid #dee2e6;
+      border-bottom: 2px solid #dee2e6;
+    }
+    
+    .total-row .field-label {
+      font-weight: 700;
+      color: #1e3c72;
+    }
+    
+    .total-field {
+      background-color: #d1ecf1;
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: #0c5460;
+      border-color: #17a2b8;
+    }
+    
+    .net-pay-section {
+      background: linear-gradient(135deg, #e8f5e8 0%, #f0f8ff 100%);
+      border: 2px solid #28a745;
+      margin-top: 2rem;
+    }
+    
+    .net-pay-section .section-header {
+      background: #28a745;
+      color: white;
+      border-bottom-color: #218838;
+    }
+    
+    .net-pay-section .section-header h5 {
+      color: white;
+    }
+    
+    .net-pay-row .field-label {
+      font-weight: 600;
+      color: #155724;
+    }
+    
+    .net-pay-final {
+      border-top: 2px solid #28a745;
+      padding-top: 1rem;
+      margin-top: 1rem;
+      background-color: #d4edda;
+    }
+    
+    .net-pay-final .field-label {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #155724;
+    }
+    
+    .gross-income, .total-deductions {
+      font-weight: 600;
+      font-size: 1.05rem;
+      background-color: #e8f4f8;
+    }
+    
+    .net-pay {
+      background: #d4edda;
+      border: 2px solid #28a745;
+      color: #155724;
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+    
+    .simulator-actions {
+      background: white;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      border: 1px solid #dee2e6;
+    }
+    
+    .back-link {
+      color: var(--randwater-primary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    
+    .back-link:hover {
+      text-decoration: underline;
+    }
+    
+    @media print {
+      @page {
+        size: A4;
+        margin: 1cm;
+      }
+      
+      body {
+        background: white;
+        margin: 0;
+        padding: 0;
+      }
+      
+      .simulator-actions, .no-print, .page-header {
+        display: none !important;
+      }
+      
+      .container {
+        max-width: 100%;
+        padding: 0;
+      }
+      
+      .package-container {
+        max-width: 100%;
+      }
+      
+      .package-section {
+        box-shadow: none;
+        border: 1px solid #dee2e6;
+        margin-bottom: 0.3rem;
+        page-break-inside: avoid;
+      }
+      
+      .section-header {
+        background: #f8f9fa !important;
+        padding: 0.3rem 0.8rem;
+        border-bottom: 1px solid #495057;
+      }
+      
+      .section-header h5 {
+        font-size: 0.75rem;
+        color: #000 !important;
+        margin: 0;
+      }
+      
+      .section-body {
+        padding: 0.3rem 0.8rem;
+      }
+      
+      .field-row {
+        padding: 0.2rem 0;
+        font-size: 0.65rem;
+        border-bottom: none;
+      }
+      
+      .field-label {
+        width: 180px;
+        font-size: 0.65rem;
+      }
+      
+      .field-value {
+        max-width: 200px;
+      }
+      
+      .field-value input, .field-value select {
+        font-size: 0.65rem;
+        padding: 0.15rem 0.3rem;
+        height: auto;
+        border: 1px solid #ccc;
+      }
+      
+      .field-info {
+        font-size: 0.6rem;
+        min-width: 120px;
+      }
+      
+      .total-row {
+        background-color: #e9ecef !important;
+        padding: 0.25rem 0;
+        margin-top: 0.2rem;
+        border-top: 1px solid #495057;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      
+      .total-field {
+        font-size: 0.75rem;
+        background-color: #d1ecf1 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      
+      .net-pay-section {
+        background: #d4edda !important;
+        border: 1px solid #28a745 !important;
+        margin-top: 0.3rem;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      
+      .net-pay-section .section-header {
+        background: #28a745 !important;
+        color: white !important;
+        padding: 0.25rem 0.8rem;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      
+      .net-pay-section .section-header h5 {
+        color: white !important;
+        font-size: 0.8rem;
+      }
+      
+      .net-pay-section .field-row {
+        padding: 0.2rem 0;
+      }
+      
+      .net-pay {
+        background: #d4edda !important;
+        border: 2px solid #28a745 !important;
+        font-size: 0.85rem;
+        font-weight: bold;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      
+      .net-pay-final {
+        padding: 0.3rem 0;
+        margin-top: 0.3rem;
+      }
+      
+      /* Add logo and header for print */
+      body::before {
+        content: "";
+        display: block;
+        background: url('/static/images/randwater-logo.png') no-repeat center top;
+        background-size: 150px auto;
+        height: 80px;
+        margin-bottom: 0.5rem;
+      }
+      
+      /* Add title header after logo */
+      body::after {
+        content: "RAND WATER - SALARY SIMULATION PAYSLIP";
+        display: block;
+        text-align: center;
+        font-size: 1rem;
+        font-weight: bold;
+        color: #1e3c72;
+        padding: 0.3rem 0;
+        border-bottom: 2px solid #1e3c72;
+        margin-bottom: 0.5rem;
+      }
+      
+      /* Two column layout for print */
+      .print-layout {
+        display: flex;
+        width: 100%;
+        margin: 0.5rem 0;
+      }
+      
+      .print-column {
+        flex: 1;
+        padding: 0 0.5rem;
+      }
+      
+      .print-section {
+        margin-bottom: 0.3rem;
+      }
+      
+      /* Hide screen-only fields in print */
+      .print-hide {
+        display: none !important;
+      }
+      
+      /* Show print-only fields */
+      .print-only {
+        display: block !important;
+      }
+      
+      /* Add footer */
+      .package-container::after {
+        content: "Rand Water Salary Package Calculator v1.0";
+        display: block;
+        text-align: center;
+        font-size: 0.65rem;
+        color: #6c757d;
+        padding-top: 0.5rem;
+        margin-top: 0.5rem;
+        border-top: 1px solid #dee2e6;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <div class="page-header">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col">
+          <h1><i class="fas fa-calculator"></i> Salary Simulator</h1>
+          <p class="mb-0">Model salary packages with real-time net pay calculations</p>
+        </div>
+        <div class="col-auto">
+          <a href="{{ url_for('randwater_admin_panel') }}" class="btn btn-light">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="simulator-actions no-print">
+      <div class="d-flex justify-content-end align-items-center">
+        <button class="btn btn-success btn-sm me-2" onclick="saveSimulation()">
+          <i class="fas fa-save"></i> Save Simulation
+        </button>
+        <button class="btn btn-info btn-sm me-2" onclick="showSavedSimulations()">
+          <i class="fas fa-folder-open"></i> Load Saved
+        </button>
+        <button class="btn btn-warning btn-sm" onclick="window.print()">
+          <i class="fas fa-print"></i> Print Payslip
+        </button>
+      </div>
+    </div>
+
+    <div class="package-container">
+      <!-- Employee Information -->
+      <div class="package-section">
+        <div class="section-header">
+          <h5 class="mb-0"><i class="fas fa-user"></i> Simulation Information</h5>
+        </div>
+        <div class="section-body">
+          <div class="field-row">
+            <div class="field-label">Simulation ID</div>
+            <div class="field-value">
+              <input type="text" class="form-control" id="simulationId" value="SIM001" onblur="checkSimulationIdChange()">
+            </div>
+            <div class="field-info">Change ID to start new simulation</div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">Employee Subgroup</div>
+            <div class="field-value">
+              <select class="form-select" id="employeeSubgroup">
+                <option value="other" selected>Other</option>
+                <option value="support_staff">Support Staff</option>
+              </select>
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">Band Range</div>
+            <div class="field-value">
+              <select class="form-select" id="bandRange" onchange="calculate()">
+                <option value="O-Q" selected>O to Q Band</option>
+                <option value="non-O-Q">Non-O to Q Band</option>
+              </select>
+            </div>
+            <div class="field-info"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Earnings & Allowances -->
+      <div class="package-section print-hide">
+        <div class="section-header">
+          <h5 class="mb-0"><i class="fas fa-money-bill-wave"></i> Earnings & Allowances</h5>
+        </div>
+        <div class="section-body">
+          <div class="field-row">
+            <div class="field-label">Cost to Company (CTC)</div>
+            <div class="field-value">
+              <input type="number" class="form-control" id="tctc" value="35500" step="100" onchange="calculate()">
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">Total Pensionable Emolument</div>
+            <div class="field-value">
+              <input type="number" class="form-control" id="tpe" value="20500" step="100" onchange="calculate()">
+            </div>
+            <div class="field-info">Pension calculation base</div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">Cash Component</div>
+            <div class="field-value">
+              <input type="text" class="form-control calculated-field" id="cashComponent" readonly>
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">Car Allowance</div>
+            <div class="field-value">
+              <input type="number" class="form-control" id="carAllowance" value="0" step="100" onchange="calculate()">
+            </div>
+            <div class="field-info"><span id="carPercentage">0.0% of CTC</span></div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">Housing Allowance</div>
+            <div class="field-value">
+              <input type="number" class="form-control" id="housingAllowance" value="3950" step="100" onchange="calculate()">
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">Cellphone Allowance</div>
+            <div class="field-value">
+              <input type="number" class="form-control" id="cellphoneAllowance" value="0" step="10" onchange="calculate()">
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">Data Service Allowance</div>
+            <div class="field-value">
+              <input type="number" class="form-control" id="dataAllowance" value="0" step="10" onchange="calculate()">
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">Annual Bonus (13th Cheque)</div>
+            <div class="field-value">
+              <div class="mb-2">
+                <label class="form-label small">Step 1: Bonus Amount</label>
+                <input type="number" class="form-control" id="thirteenthCheque" value="20499.96" step="100" onchange="validateBonus(); calculate()">
+              </div>
+              <div>
+                <label class="form-label small">Step 2: Payment Method</label>
+                <select class="form-select" id="bonusFrequency" onchange="calculate()">
+                  <option value="annual" selected>Annual (above amount ÷ 12 = monthly provision)</option>
+                  <option value="monthly">Monthly (above amount = monthly provision)</option>
+                </select>
+              </div>
+              <div id="bonusWarning" class="text-danger small mt-1" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i> <span id="bonusWarningText"></span>
+              </div>
+            </div>
+            <div class="field-info"><span id="bonusPercentage">57.7% of CTC</span><br><small>Monthly provision integrated into CTC</small></div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">Bonus Provision (Monthly)</div>
+            <div class="field-value">
+              <input type="text" class="form-control calculated-field" id="bonusProvision" readonly>
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row total-row">
+            <div class="field-label"><strong>Total Earnings</strong></div>
+            <div class="field-value">
+              <input type="text" class="form-control calculated-field total-field" id="totalEarnings" readonly>
+            </div>
+            <div class="field-info"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Employer Contributions -->
+      <div class="package-section print-hide">
+        <div class="section-header">
+          <h5 class="mb-0"><i class="fas fa-building"></i> Employer Contributions</h5>
+        </div>
+        <div class="section-body">
+          <!-- Pension Selection -->
+          <div class="field-row">
+            <div class="field-label">Retirement Fund Name</div>
+            <div class="field-value">
+              <select class="form-select" id="retirementFund" onchange="calculate()">
+                <option value="none">None</option>
+                <option value="RWPROV" selected>RWPROV (Rand Water Provident Fund)</option>
+                <option value="RWMPPROV">RWMPPROV (Rand Water Main Pension)</option>
+                <option value="SAMWU">SAMWU</option>
+              </select>
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">Retirement Fund Option</div>
+            <div class="field-value">
+              <select class="form-select" id="pensionOption" onchange="calculate()">
+                <option value="none">None</option>
+                <option value="A">Option A (8.67% EE / 17.19% ER)</option>
+                <option value="B" selected>Option B (8.67% EE / 17.19% ER) - Death 4.0x</option>
+                <option value="C">Option C (8.67% EE / 9.45% ER)</option>
+                <option value="D">Option D (8.67% EE / 17.19% ER) - Death 2.0x</option>
+                <option value="E">Option E (8.67% EE / 17.19% ER) - Death 2.5x</option>
+                <option value="F">Option F (8.67% EE / 17.19% ER) - Death 2.0x</option>
+                <option value="G">Option G (8.67% EE / 17.19% ER) - Death 2.5x</option>
+                <option value="SAMWU">SAMWU</option>
+              </select>
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">Pension ER Contribution</div>
+            <div class="field-value">
+              <input type="text" class="form-control calculated-field" id="pensionER" readonly>
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <!-- Medical Aid Selection -->
+          <div class="field-row">
+            <div class="field-label">Medical Aid Provider</div>
+            <div class="field-value">
+              <select class="form-select" id="medicalProvider" onchange="updateMedicalOptions(); calculate();">
+                <option value="none">None</option>
+                <option value="RandWater" selected>Rand Water</option>
+                <option value="Bonitas">Bonitas</option>
+              </select>
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">Medical Aid Option</div>
+            <div class="field-value">
+              <select class="form-select" id="medicalOption" onchange="calculate()">
+                <option value="A" selected>Option A</option>
+                <option value="B">Option B</option>
+              </select>
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">Subsidised Members</div>
+            <div class="field-value">
+              <div class="row">
+                <div class="col-6">
+                  <label class="form-label small">Adults</label>
+                  <input type="number" class="form-control" id="subsidisedAdults" value="1" min="0" max="5" onchange="calculate()">
+                </div>
+                <div class="col-6">
+                  <label class="form-label small">Children</label>
+                  <input type="number" class="form-control" id="subsidisedChildren" value="2" min="0" max="10" onchange="calculate()">
+                </div>
+              </div>
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">Unsubsidised Members</div>
+            <div class="field-value">
+              <div class="row">
+                <div class="col-6">
+                  <label class="form-label small">Adults</label>
+                  <input type="number" class="form-control" id="unsubsidisedAdults" value="0" min="0" max="5" onchange="calculate()">
+                </div>
+                <div class="col-6">
+                  <label class="form-label small">Children</label>
+                  <input type="number" class="form-control" id="unsubsidisedChildren" value="0" min="0" max="10" onchange="calculate()">
+                </div>
+              </div>
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">Medical Aid ER Contribution</div>
+            <div class="field-value">
+              <input type="text" class="form-control calculated-field" id="medicalER" readonly>
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">Group Life ER Contribution</div>
+            <div class="field-value">
+              <input type="text" class="form-control calculated-field" id="groupLifeER" readonly>
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row total-row">
+            <div class="field-label"><strong>Total ER Contributions</strong></div>
+            <div class="field-value">
+              <input type="text" class="form-control calculated-field total-field" id="totalERContributions" readonly>
+            </div>
+            <div class="field-info"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Employee Deductions -->
+      <div class="package-section">
+        <div class="section-header">
+          <h5 class="mb-0"><i class="fas fa-minus-circle"></i> Employee Deductions</h5>
+        </div>
+        <div class="section-body">
+          <div class="field-row">
+            <div class="field-label">Pension EE Contribution</div>
+            <div class="field-value">
+              <input type="text" class="form-control calculated-field" id="pensionEE" readonly>
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">Medical Aid EE Contribution</div>
+            <div class="field-value">
+              <input type="text" class="form-control calculated-field" id="medicalEE" readonly>
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">Group Life EE Contribution</div>
+            <div class="field-value">
+              <input type="text" class="form-control calculated-field" id="groupLifeEE" readonly>
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">UIF Contribution</div>
+            <div class="field-value">
+              <input type="text" class="form-control calculated-field" id="uifAmount" readonly>
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row">
+            <div class="field-label">Income Tax (PAYE)</div>
+            <div class="field-value">
+              <input type="text" class="form-control calculated-field" id="taxAmount" readonly>
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row total-row">
+            <div class="field-label"><strong>Total EE Deductions</strong></div>
+            <div class="field-value">
+              <input type="text" class="form-control calculated-field total-field" id="totalEEDeductions" readonly>
+            </div>
+            <div class="field-info"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Net Pay Summary -->
+      <div class="package-section net-pay-section">
+        <div class="section-header">
+          <h5 class="mb-0"><i class="fas fa-calculator"></i> Net Pay Summary</h5>
+        </div>
+        <div class="section-body">
+          <div class="field-row net-pay-row">
+            <div class="field-label">Gross Monthly Income</div>
+            <div class="field-value">
+              <input type="text" class="form-control calculated-field gross-income" id="grossIncome" readonly>
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row net-pay-row">
+            <div class="field-label">Total Deductions</div>
+            <div class="field-value">
+              <input type="text" class="form-control calculated-field total-deductions" id="totalDeductions" readonly>
+            </div>
+            <div class="field-info"></div>
+          </div>
+          
+          <div class="field-row net-pay-final">
+            <div class="field-label"><strong>Net Monthly Pay</strong></div>
+            <div class="field-value">
+              <input type="text" class="form-control calculated-field net-pay" id="netPay" readonly>
+            </div>
+            <div class="field-info"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRINT-ONLY SECTIONS - For Payslip Print Layout -->
+      <div class="print-only" style="display: none;">
+        <!-- Two Column Layout for Print -->
+        <div class="row print-layout">
+          <!-- LEFT COLUMN: Earnings -->
+          <div class="col-6 print-column">
+            <div class="package-section print-section">
+              <div class="section-header">
+                <h5 class="mb-0"><i class="fas fa-money-bill-wave"></i> Earnings</h5>
+              </div>
+              <div class="section-body">
+                <div class="field-row" id="print-cash-row">
+                  <div class="field-label">Cash Component</div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field" id="print-cash" readonly>
+                  </div>
+                </div>
+                <div class="field-row" id="print-car-row">
+                  <div class="field-label">Car Allowance</div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field" id="print-car" readonly>
+                  </div>
+                </div>
+                <div class="field-row" id="print-housing-row">
+                  <div class="field-label">Housing Allowance</div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field" id="print-housing" readonly>
+                  </div>
+                </div>
+                <div class="field-row" id="print-cellphone-row">
+                  <div class="field-label">Cellphone Allowance</div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field" id="print-cellphone" readonly>
+                  </div>
+                </div>
+                <div class="field-row" id="print-data-row">
+                  <div class="field-label">Data Service Allowance</div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field" id="print-data" readonly>
+                  </div>
+                </div>
+                <div class="field-row total-row">
+                  <div class="field-label"><strong>Total Earnings</strong></div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field total-field" id="print-totalEarnings" readonly>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- ER Contributions Below Earnings -->
+            <div class="package-section print-section">
+              <div class="section-header">
+                <h5 class="mb-0"><i class="fas fa-building"></i> Employer Contributions</h5>
+              </div>
+              <div class="section-body">
+                <div class="field-row">
+                  <div class="field-label">Pension ER Contribution</div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field" id="print-pensionER" readonly>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field-label">Medical Aid ER Contribution</div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field" id="print-medicalER" readonly>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field-label">Group Life ER Contribution</div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field" id="print-groupLifeER" readonly>
+                  </div>
+                </div>
+                <div class="field-row total-row">
+                  <div class="field-label"><strong>Total ER Contributions</strong></div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field total-field" id="print-totalER" readonly>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- RIGHT COLUMN: Deductions -->
+          <div class="col-6 print-column">
+            <div class="package-section print-section">
+              <div class="section-header">
+                <h5 class="mb-0"><i class="fas fa-minus-circle"></i> Employee Deductions</h5>
+              </div>
+              <div class="section-body">
+                <div class="field-row">
+                  <div class="field-label">Pension EE</div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field" id="print-pensionEE" readonly>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field-label">Medical Aid EE</div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field" id="print-medicalEE" readonly>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field-label">Group Life EE</div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field" id="print-groupLifeEE" readonly>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field-label">UIF</div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field" id="print-uif" readonly>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field-label">PAYE</div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field" id="print-tax" readonly>
+                  </div>
+                </div>
+                <div class="field-row total-row">
+                  <div class="field-label"><strong>Total Deductions</strong></div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field total-field" id="print-totalDeductions" readonly>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Package Structure Below Deductions -->
+            <div class="package-section print-section">
+              <div class="section-header">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Package Structure</h5>
+              </div>
+              <div class="section-body">
+                <div class="field-row">
+                  <div class="field-label">CTC (Monthly)</div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field" id="print-ctc" readonly>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field-label">Pensionable Salary (TPE)</div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field" id="print-tpe" readonly>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field-label">Pension Option</div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field" id="print-pensionOption" readonly>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field-label">Medical Aid</div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field" id="print-medicalOption" readonly>
+                  </div>
+                </div>
+                <div class="field-row">
+                  <div class="field-label">Total Dependents</div>
+                  <div class="field-value">
+                    <input type="text" class="form-control calculated-field" id="print-dependents" readonly>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Net Pay Summary at Bottom -->
+        <div class="package-section net-pay-section print-section">
+          <div class="section-header">
+            <h5 class="mb-0"><i class="fas fa-check-circle"></i> Net Pay Summary</h5>
+          </div>
+          <div class="section-body">
+            <div class="field-row">
+              <div class="field-label"><strong>Gross Monthly Income</strong></div>
+              <div class="field-value">
+                <input type="text" class="form-control calculated-field" id="print-grossIncome" readonly>
+              </div>
+            </div>
+            <div class="field-row">
+              <div class="field-label"><strong>Total Deductions</strong></div>
+              <div class="field-value">
+                <input type="text" class="form-control calculated-field" id="print-totalDeductionsFinal" readonly>
+              </div>
+            </div>
+            <div class="field-row net-pay-final">
+              <div class="field-label"><h5>Net Pay</h5></div>
+              <div class="field-value">
+                <input type="text" class="form-control calculated-field net-pay" id="print-netPay" readonly>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    // Pension contribution rates (from Rand Water Provident Fund document)
+    const PENSION_RATES = {
+      'A': { ee: 8.67, er: 17.19, netER: 16.652, risk: 0.538 },
+      'B': { ee: 8.67, er: 17.19, netER: 13.004, risk: 4.186 },
+      'C': { ee: 8.67, er: 9.45, netER: 8.912, risk: 0.538 },
+      'D': { ee: 8.67, er: 17.19, netER: 14.916, risk: 2.274 },
+      'E': { ee: 8.67, er: 17.19, netER: 14.482, risk: 2.708 },
+      'F': { ee: 8.67, er: 17.19, netER: 15.570, risk: 1.620 },
+      'G': { ee: 8.67, er: 17.19, netER: 15.300, risk: 1.890 },
+      'SAMWU': { ee: 7.5, er: 7.5, netER: 7.5, risk: 0 }
+    };
+    
+    // Medical Aid Rates (2025)
+    const MEDICAL_AID_RATES = {
+      'Bonitas': {
+        'Standard': {
+          main: 5439,
+          adult: 4715,
+          child: 1596,
+          employeeContribution: 0.30,
+          employerContribution: 0.70
+        }
+      },
+      'RandWater': {
+        'A': {
+          main: 3500,
+          adult: 2800,
+          child: 1400,
+          employeeContribution: 0.33,
+          employerContribution: 0.67
+        },
+        'B': {
+          main: 4200,
+          adult: 3400,
+          child: 1700,
+          employeeContribution: 0.33,
+          employerContribution: 0.67
+        }
+      }
+    };
+    
+    let currentSimulationId = 'SIM001';
+    
+    function checkSimulationIdChange() {
+      const newId = $('#simulationId').val();
+      
+      if (newId !== currentSimulationId && newId.trim() !== '') {
+        const savedSimulations = JSON.parse(localStorage.getItem('savedSimulations') || '[]');
+        const existing = savedSimulations.find(s => s.id === newId);
+        
+        if (existing) {
+          if (confirm(`Simulation "${newId}" already exists. Load it?`)) {
+            loadSimulation(newId);
+          } else {
+            $('#simulationId').val(currentSimulationId);
+          }
+        } else {
+          if (confirm(`Start a new simulation "${newId}"? Current data will be cleared.`)) {
+            currentSimulationId = newId;
+            clearFormData();
+          } else {
+            $('#simulationId').val(currentSimulationId);
+          }
+        }
+      }
+    }
+    
+    function clearFormData() {
+      $('#tctc').val(0);
+      $('#tpe').val(0);
+      $('#carAllowance').val(0);
+      $('#housingAllowance').val(0);
+      $('#cellphoneAllowance').val(0);
+      $('#dataAllowance').val(0);
+      $('#thirteenthCheque').val(0);
+      $('#subsidisedAdults').val(0);
+      $('#subsidisedChildren').val(0);
+      $('#unsubsidisedAdults').val(0);
+      $('#unsubsidisedChildren').val(0);
+      calculate();
+    }
+    
+    function formatCurrency(amount) {
+      return amount.toFixed(2);
+    }
+    
+    function updateMedicalOptions() {
+      const provider = $('#medicalProvider').val();
+      const optionSelect = $('#medicalOption');
+      
+      optionSelect.empty();
+      
+      if (provider === 'RandWater') {
+        optionSelect.append('<option value="A">Option A</option>');
+        optionSelect.append('<option value="B">Option B</option>');
+      } else if (provider === 'Bonitas') {
+        optionSelect.append('<option value="Standard">Standard</option>');
+      } else {
+        optionSelect.append('<option value="none">N/A</option>');
+      }
+    }
+    
+    function validateBonus() {
+      const tctc = parseFloat($('#tctc').val()) || 0;
+      const thirteenthCheque = parseFloat($('#thirteenthCheque').val()) || 0;
+      const bonusFrequency = $('#bonusFrequency').val();
+      const bandRange = $('#bandRange').val();
+      
+      if (thirteenthCheque > 0 && tctc > 0) {
+        // For validation, always compare the ANNUAL bonus amount to monthly CTC
+        let annualBonusAmount = 0;
+        if (bonusFrequency === 'monthly') {
+          // If user entered monthly amount, multiply by 12 for annual
+          annualBonusAmount = thirteenthCheque * 12;
+        } else {
+          // If user entered annual amount, use it directly
+          annualBonusAmount = thirteenthCheque;
+        }
+        
+        // Compare annual bonus to monthly CTC (this is how 13th cheque works)
+        const bonusPercentage = (annualBonusAmount / tctc) * 100;
+        $('#bonusPercentage').html(`${bonusPercentage.toFixed(1)}% of CTC<br><small>Monthly provision integrated into CTC</small>`);
+        
+        // Only show warnings for O-Q band
+        if (bandRange === 'O-Q') {
+          if (bonusPercentage < 10) {
+            $('#bonusWarning').show();
+            $('#bonusWarningText').text('Warning: Annual bonus is less than 10% of CTC');
+            $('#thirteenthCheque').addClass('border-warning');
+          } else if (bonusPercentage > 70) {
+            $('#bonusWarning').show();
+            $('#bonusWarningText').text('Warning: Annual bonus exceeds 70% of CTC');
+            $('#thirteenthCheque').addClass('border-warning');
+          } else {
+            $('#bonusWarning').hide();
+            $('#thirteenthCheque').removeClass('border-warning');
+          }
+        } else {
+          $('#bonusWarning').hide();
+          $('#thirteenthCheque').removeClass('border-warning');
+        }
+      } else {
+        $('#bonusWarning').hide();
+        $('#thirteenthCheque').removeClass('border-warning');
+      }
+    }
+    
+    function calculate() {
+      const tctc = parseFloat($('#tctc').val()) || 0;
+      const tpe = parseFloat($('#tpe').val()) || 0;
+      const carAllowance = parseFloat($('#carAllowance').val()) || 0;
+      const housingAllowance = parseFloat($('#housingAllowance').val()) || 0;
+      const cellphoneAllowance = parseFloat($('#cellphoneAllowance').val()) || 0;
+      const dataAllowance = parseFloat($('#dataAllowance').val()) || 0;
+      const thirteenthCheque = parseFloat($('#thirteenthCheque').val()) || 0;
+      const bonusFrequency = $('#bonusFrequency').val();
+      
+      validateBonus();
+      
+      let bonusProvisionMonthly = 0;
+      if (bonusFrequency === 'monthly') {
+        bonusProvisionMonthly = thirteenthCheque;
+      } else {
+        bonusProvisionMonthly = thirteenthCheque / 12;
+      }
+      $('#bonusProvision').val(formatCurrency(bonusProvisionMonthly));
+      
+      // Pension
+      const retirementFund = $('#retirementFund').val();
+      const pensionOption = $('#pensionOption').val();
+      let pensionEE = 0, pensionER = 0, groupLifeEE = 0, groupLifeER = 0;
+      
+      if (retirementFund !== 'none' && pensionOption !== 'none' && PENSION_RATES[pensionOption]) {
+        const rates = PENSION_RATES[pensionOption];
+        pensionEE = tpe * (rates.ee / 100);
+        pensionER = tpe * (rates.er / 100);
+        groupLifeEE = tpe * (rates.risk / 200);
+        groupLifeER = tpe * (rates.risk / 200);
+      }
+      
+      // Medical Aid
+      const medicalProvider = $('#medicalProvider').val();
+      const medicalOption = $('#medicalOption').val();
+      const subsidisedAdults = parseInt($('#subsidisedAdults').val()) || 0;
+      const subsidisedChildren = parseInt($('#subsidisedChildren').val()) || 0;
+      const unsubsidisedAdults = parseInt($('#unsubsidisedAdults').val()) || 0;
+      const unsubsidisedChildren = parseInt($('#unsubsidisedChildren').val()) || 0;
+      const bandRange = $('#bandRange').val();
+      
+      let medicalEE = 0, medicalER = 0;
+      if (medicalProvider !== 'none' && MEDICAL_AID_RATES[medicalProvider] && MEDICAL_AID_RATES[medicalProvider][medicalOption]) {
+        const rates = MEDICAL_AID_RATES[medicalProvider][medicalOption];
+        
+        const subsidisedCost = rates.main + (subsidisedAdults * rates.adult) + (subsidisedChildren * rates.child);
+        const unsubsidisedCost = (unsubsidisedAdults * rates.adult) + (unsubsidisedChildren * rates.child);
+        
+        let adjustmentFactor = 1.0;
+        if (medicalProvider === 'RandWater' && bandRange === 'O-Q') {
+          adjustmentFactor = 0.33;
+        }
+        
+        const adjustedSubsidisedCost = subsidisedCost * adjustmentFactor;
+        medicalEE = (adjustedSubsidisedCost * rates.employeeContribution) + unsubsidisedCost;
+        medicalER = adjustedSubsidisedCost * rates.employerContribution;
+      }
+      
+      // Cash component = CTC - ER contributions - bonus provision - car - cellphone - housing - data
+      const totalEmployerContributions = pensionER + medicalER + groupLifeER;
+      const cashComponent = tctc - totalEmployerContributions - bonusProvisionMonthly - carAllowance - housingAllowance - cellphoneAllowance - dataAllowance;
+      $('#cashComponent').val(formatCurrency(Math.max(0, cashComponent)));
+      
+      // Car percentage
+      const carPercentage = tctc > 0 ? (carAllowance / tctc) * 100 : 0;
+      $('#carPercentage').text(carPercentage.toFixed(1) + '% of CTC');
+      
+      // Total Earnings (allowances + cash component, NOT including TPE)
+      const totalEarnings = carAllowance + housingAllowance + cellphoneAllowance + dataAllowance + cashComponent;
+      $('#totalEarnings').val(formatCurrency(totalEarnings));
+      
+      // Gross income = Total Earnings (same value)
+      const grossIncome = totalEarnings;
+      
+      // UIF (on gross income)
+      const uif = Math.min(grossIncome * 0.01, 177.12);
+      
+      // SDL
+      const sdl = tctc * 0.01;
+      
+      // Tax (calculated on gross income)
+      const annualGross = grossIncome * 12;
+      const annualPension = pensionEE * 12;
+      const annualTaxableIncome = annualGross - annualPension;
+      
+      let annualTax = 0;
+      if (annualTaxableIncome > 1149000) {
+        annualTax = 235908 + (annualTaxableIncome - 1149000) * 0.45;
+      } else if (annualTaxableIncome > 708310) {
+        annualTax = 115762 + (annualTaxableIncome - 708310) * 0.41;
+      } else if (annualTaxableIncome > 370500) {
+        annualTax = 42678 + (annualTaxableIncome - 370500) * 0.31;
+      } else if (annualTaxableIncome > 237100) {
+        annualTax = 26679 + (annualTaxableIncome - 237100) * 0.26;
+      } else if (annualTaxableIncome > 95750) {
+        annualTax = 15714 + (annualTaxableIncome - 95750) * 0.21;
+      } else {
+        annualTax = annualTaxableIncome * 0.18;
+      }
+      
+      annualTax = Math.max(0, annualTax - 17235);
+      
+      const totalDependents = subsidisedAdults + subsidisedChildren + unsubsidisedAdults + unsubsidisedChildren;
+      const medicalCredit = totalDependents > 0 ? (364 + (totalDependents > 1 ? 364 : 0) + Math.max(0, totalDependents - 2) * 246) * 12 : 0;
+      annualTax = Math.max(0, annualTax - medicalCredit);
+      
+      const tax = annualTax / 12;
+      
+      const totalDeductions = pensionEE + medicalEE + groupLifeEE + uif + tax;
+      const netPay = grossIncome - totalDeductions;
+      
+      const totalEEDeductions = pensionEE + medicalEE + groupLifeEE + uif + tax;
+      const totalERContributions = pensionER + medicalER + groupLifeER;
+      
+      // Update displays
+      $('#pensionEE').val(formatCurrency(pensionEE));
+      $('#pensionER').val(formatCurrency(pensionER));
+      $('#groupLifeEE').val(formatCurrency(groupLifeEE));
+      $('#groupLifeER').val(formatCurrency(groupLifeER));
+      $('#medicalEE').val(formatCurrency(medicalEE));
+      $('#medicalER').val(formatCurrency(medicalER));
+      $('#uifAmount').val(formatCurrency(uif));
+      $('#taxAmount').val(formatCurrency(tax));
+      $('#sdlAmount').val(formatCurrency(sdl));
+      
+      $('#totalEEDeductions').val(formatCurrency(totalEEDeductions));
+      $('#totalERContributions').val(formatCurrency(totalERContributions));
+      
+      $('#grossIncome').val(formatCurrency(grossIncome));
+      $('#totalDeductions').val(formatCurrency(totalDeductions));
+      $('#netPay').val(formatCurrency(netPay));
+      
+      // Populate print-only fields
+      $('#print-cash').val(formatCurrency(cashComponent));
+      $('#print-car').val(formatCurrency(carAllowance));
+      $('#print-housing').val(formatCurrency(housingAllowance));
+      $('#print-cellphone').val(formatCurrency(cellphoneAllowance));
+      $('#print-data').val(formatCurrency(dataAllowance));
+      $('#print-totalEarnings').val(formatCurrency(totalEarnings));
+      
+      $('#print-pensionER').val(formatCurrency(pensionER));
+      $('#print-medicalER').val(formatCurrency(medicalER));
+      $('#print-groupLifeER').val(formatCurrency(groupLifeEE));  // Same as EE
+      $('#print-totalER').val(formatCurrency(totalERContributions));
+      
+      // Employee deductions
+      $('#print-pensionEE').val(formatCurrency(pensionEE));
+      $('#print-medicalEE').val(formatCurrency(medicalEE));
+      $('#print-groupLifeEE').val(formatCurrency(groupLifeEE));
+      $('#print-uif').val(formatCurrency(uif));
+      $('#print-tax').val(formatCurrency(tax));
+      $('#print-totalDeductions').val(formatCurrency(totalDeductions));
+      
+      // Package structure
+      $('#print-ctc').val(formatCurrency(tctc));
+      $('#print-tpe').val(formatCurrency(tpe));
+      $('#print-pensionOption').val($('#pensionOption option:selected').text());
+      $('#print-medicalOption').val($('#medicalOption option:selected').text());
+      $('#print-dependents').val(totalDependents);
+      
+      // Net Pay Summary
+      $('#print-grossIncome').val(formatCurrency(grossIncome));
+      $('#print-totalDeductionsFinal').val(formatCurrency(totalDeductions));
+      $('#print-netPay').val(formatCurrency(netPay));
+      
+      // Show/hide data allowance row based on value
+      if (dataAllowance > 0) {
+        $('#print-data-row').show();
+      } else {
+        $('#print-data-row').hide();
+      }
+    }
+    
+    function saveSimulation() {
+      const simulationData = {
+        id: $('#simulationId').val(),
+        employeeSubgroup: $('#employeeSubgroup').val(),
+        bandRange: $('#bandRange').val(),
+        tctc: $('#tctc').val(),
+        tpe: $('#tpe').val(),
+        carAllowance: $('#carAllowance').val(),
+        housingAllowance: $('#housingAllowance').val(),
+        cellphoneAllowance: $('#cellphoneAllowance').val(),
+        dataAllowance: $('#dataAllowance').val(),
+        thirteenthCheque: $('#thirteenthCheque').val(),
+        bonusFrequency: $('#bonusFrequency').val(),
+        retirementFund: $('#retirementFund').val(),
+        pensionOption: $('#pensionOption').val(),
+        medicalProvider: $('#medicalProvider').val(),
+        medicalOption: $('#medicalOption').val(),
+        subsidisedAdults: $('#subsidisedAdults').val(),
+        subsidisedChildren: $('#subsidisedChildren').val(),
+        unsubsidisedAdults: $('#unsubsidisedAdults').val(),
+        unsubsidisedChildren: $('#unsubsidisedChildren').val(),
+        timestamp: new Date().toISOString()
+      };
+      
+      let savedSimulations = JSON.parse(localStorage.getItem('savedSimulations') || '[]');
+      savedSimulations = savedSimulations.filter(s => s.id !== simulationData.id);
+      savedSimulations.push(simulationData);
+      localStorage.setItem('savedSimulations', JSON.stringify(savedSimulations));
+      
+      $.ajax({
+        url: '/save_simulation',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(simulationData),
+        success: function(response) {
+          alert('✓ Simulation saved successfully as ' + simulationData.id);
+        },
+        error: function() {
+          alert('✓ Simulation saved locally as ' + simulationData.id);
+        }
+      });
+    }
+    
+    function showSavedSimulations() {
+      const savedSimulations = JSON.parse(localStorage.getItem('savedSimulations') || '[]');
+      
+      if (savedSimulations.length === 0) {
+        alert('No saved simulations found.');
+        return;
+      }
+      
+      let html = '<div class="list-group">';
+      savedSimulations.forEach(sim => {
+        html += `
+          <a href="#" class="list-group-item list-group-item-action" onclick="loadSimulation('${sim.id}'); return false;">
+            <div class="d-flex w-100 justify-content-between">
+              <h6 class="mb-1">${sim.id}</h6>
+              <small>${new Date(sim.timestamp).toLocaleDateString()}</small>
+            </div>
+            <p class="mb-1">TCTC: R ${parseFloat(sim.tctc).toFixed(2)} | Band: ${sim.bandRange}</p>
+          </a>
+        `;
+      });
+      html += '</div>';
+      
+      const modalHtml = `
+        <div class="modal fade" id="savedSimModal" tabindex="-1">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h5 class="modal-title">Saved Simulations</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">${html}</div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      $('#savedSimModal').remove();
+      $('body').append(modalHtml);
+      
+      const modal = new bootstrap.Modal(document.getElementById('savedSimModal'));
+      modal.show();
+    }
+    
+    function loadSimulation(simId) {
+      const savedSimulations = JSON.parse(localStorage.getItem('savedSimulations') || '[]');
+      const simulation = savedSimulations.find(s => s.id === simId);
+      
+      if (!simulation) {
+        alert('Simulation not found');
+        return;
+      }
+      
+      currentSimulationId = simulation.id;
+      $('#simulationId').val(simulation.id);
+      $('#employeeSubgroup').val(simulation.employeeSubgroup);
+      $('#bandRange').val(simulation.bandRange);
+      $('#tctc').val(simulation.tctc);
+      $('#tpe').val(simulation.tpe);
+      $('#carAllowance').val(simulation.carAllowance);
+      $('#housingAllowance').val(simulation.housingAllowance);
+      $('#cellphoneAllowance').val(simulation.cellphoneAllowance);
+      $('#dataAllowance').val(simulation.dataAllowance);
+      $('#thirteenthCheque').val(simulation.thirteenthCheque);
+      $('#bonusFrequency').val(simulation.bonusFrequency || 'annual');
+      $('#retirementFund').val(simulation.retirementFund);
+      $('#pensionOption').val(simulation.pensionOption);
+      $('#medicalProvider').val(simulation.medicalProvider);
+      updateMedicalOptions();
+      $('#medicalOption').val(simulation.medicalOption);
+      $('#subsidisedAdults').val(simulation.subsidisedAdults);
+      $('#subsidisedChildren').val(simulation.subsidisedChildren);
+      $('#unsubsidisedAdults').val(simulation.unsubsidisedAdults);
+      $('#unsubsidisedChildren').val(simulation.unsubsidisedChildren);
+      
+      $('#savedSimModal').modal('hide');
+      calculate();
+      alert('✓ Loaded simulation: ' + simId);
+    }
+    
+    $(document).ready(function() {
+      updateMedicalOptions();
+      calculate();
+      
+      $('input, select').on('input change', function() {
+        calculate();
+      });
+    });
+  </script>
+</body>
+</html>

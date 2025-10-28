@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Package Details - {{ employee.first_name }} {{ employee.surname }}</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --randwater-primary: #0066CC;
+      --randwater-secondary: #00A3E0;
+      --randwater-accent: #FF6600;
+      --randwater-dark: #003366;
+      --randwater-light: #E6F3FF;
+    }
+    
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      background: linear-gradient(135deg, var(--randwater-light) 0%, #fff 100%);
+      min-height: 100vh;
+    }
+    
+    .navbar {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      padding: 1rem 0;
+    }
+    
+    .navbar-brand {
+      color: white !important;
+      font-weight: 600;
+    }
+    
+    .randwater-logo {
+      max-height: 50px;
+      margin-right: 1rem;
+    }
+    
+    .package-card {
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      padding: 2rem;
+      margin-bottom: 2rem;
+    }
+    
+    .component-card {
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      border-left: 4px solid var(--randwater-primary);
+    }
+    
+    .earnings-card {
+      border-left-color: #28a745;
+    }
+    
+    .deductions-card {
+      border-left-color: #dc3545;
+    }
+    
+    .summary-card {
+      border-left-color: var(--randwater-accent);
+    }
+    
+    .amount-display {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--randwater-primary);
+    }
+    
+    .amount-large {
+      font-size: 2rem;
+      font-weight: 700;
+    }
+    
+    .btn-randwater {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      border: none;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-weight: 500;
+      text-decoration: none;
+      display: inline-block;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-randwater:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0,102,204,0.3);
+      color: white;
+    }
+    
+    .container-main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+    
+    .table-salary {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .table-salary th {
+      background: var(--randwater-primary);
+      color: white;
+      font-weight: 500;
+      border: none;
+      padding: 1rem;
+    }
+    
+    .table-salary td {
+      padding: 1rem;
+      border: none;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    
+    .earning-row {
+      background: #f8f9ff;
+    }
+    
+    .deduction-row {
+      background: #fff8f8;
+    }
+    
+    .total-row {
+      background: var(--randwater-light);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="container-fluid">
+      <div class="d-flex align-items-center">
+        <img src="/static/images/randwater-logo.png" alt="Rand Water" class="randwater-logo">
+        <span class="navbar-brand">Package Details</span>
+      </div>
+      <div class="d-flex align-items-center">
+        <span class="text-white me-3">
+          <i class="fas fa-user"></i> {{ employee.first_name }} {{ employee.surname }}
+        </span>
+        <a href="/employee/dashboard" class="btn btn-outline-light btn-sm me-2">
+          <i class="fas fa-arrow-left"></i> Dashboard
+        </a>
+        <a href="/employee/logout" class="btn btn-outline-light btn-sm">
+          <i class="fas fa-sign-out-alt"></i> Logout
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container-main">
+    <!-- Package Header -->
+    <div class="package-card">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h2><i class="fas fa-calculator text-primary"></i> Compensation Package Details</h2>
+          <p class="lead mb-0">Detailed breakdown of your current compensation package</p>
+        </div>
+        <div class="col-md-4 text-end">
+          <div class="text-muted">
+            <small>Employee ID: <strong>{{ employee.employee_id }}</strong></small><br>
+            <small>Grade Band: <strong>{{ employee.grade_band }}</strong></small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <!-- Earnings Section -->
+      <div class="col-lg-6">
+        <div class="component-card earnings-card">
+          <h5><i class="fas fa-plus-circle text-success"></i> Earnings</h5>
+          <div class="table-responsive">
+            <table class="table table-salary mb-0">
+              <thead>
+                <tr>
+                  <th>Component</th>
+                  <th class="text-end">Amount (R)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="earning-row">
+                  <td><i class="fas fa-money-bill"></i> Basic Salary</td>
+                  <td class="text-end amount-display">
+                    <span class="view-mode">{{ "{:,.2f}".format(package.basic_salary) }}</span>
+                    <input type="number" class="form-control edit-mode" id="basic_salary" value="{{ package.basic_salary }}" step="0.01" style="display: none; text-align: right;">
+                  </td>
+                </tr>
+                <tr class="earning-row">
+                  <td><i class="fas fa-car"></i> Car Allowance</td>
+                  <td class="text-end amount-display">
+                    <span class="view-mode" id="car_allowance_display">{{ "{:,.2f}".format(package.car_allowance) }}</span>
+                    <input type="number" class="form-control edit-mode" id="car_allowance" value="{{ package.car_allowance }}" step="0.01" style="display: none; text-align: right;">
+                  </td>
+                </tr>
+                <tr class="earning-row">
+                  <td><i class="fas fa-home"></i> Housing Allowance</td>
+                  <td class="text-end amount-display">{{ "{:,.2f}".format(package.housing_allowance) }}</td>
+                </tr>
+                <tr class="total-row">
+                  <td><strong><i class="fas fa-sum"></i> Total Earnings</strong></td>
+                  <td class="text-end amount-display">
+                    <strong><span id="total_earnings_display">{{ "{:,.2f}".format(package.total_earnings) }}</span></strong>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Deductions Section -->
+      <div class="col-lg-6">
+        <div class="component-card deductions-card">
+          <h5><i class="fas fa-minus-circle text-danger"></i> Deductions</h5>
+          <div class="table-responsive">
+            <table class="table table-salary mb-0">
+              <thead>
+                <tr>
+                  <th>Component</th>
+                  <th class="text-end">Amount (R)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="deduction-row">
+                  <td><i class="fas fa-receipt"></i> PAYE Tax</td>
+                  <td class="text-end amount-display">
+                    <span id="paye_display">{{ "{:,.2f}".format(package.paye_tax) }}</span>
+                  </td>
+                </tr>
+                <tr class="deduction-row">
+                  <td><i class="fas fa-shield-alt"></i> UIF Contribution</td>
+                  <td class="text-end amount-display">
+                    <span id="uif_display">{{ "{:,.2f}".format(package.uif_contribution) }}</span>
+                  </td>
+                </tr>
+                <tr class="deduction-row">
+                  <td><i class="fas fa-heart"></i> Medical Aid</td>
+                  <td class="text-end amount-display">
+                    <span class="view-mode" id="medical_display">{{ "{:,.2f}".format(package.medical_aid) }}</span>
+                    <input type="number" class="form-control edit-mode" id="medical_aid" value="{{ package.medical_aid }}" step="0.01" style="display: none; text-align: right;">
+                  </td>
+                </tr>
+                <tr class="deduction-row">
+                  <td><i class="fas fa-piggy-bank"></i> Pension Fund</td>
+                  <td class="text-end amount-display">
+                    <span id="pension_display">{{ "{:,.2f}".format(package.pension_fund) }}</span>
+                  </td>
+                </tr>
+                <tr class="total-row">
+                  <td><strong><i class="fas fa-sum"></i> Total Deductions</strong></td>
+                  <td class="text-end amount-display">
+                    <strong><span id="total_deductions_display">{{ "{:,.2f}".format(package.total_deductions) }}</span></strong>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Net Pay Summary -->
+    <div class="component-card summary-card">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <h5><i class="fas fa-wallet text-success"></i> Net Pay Summary</h5>
+          <div class="row">
+            <div class="col-md-4">
+              <label class="form-label text-muted">Total Earnings</label>
+              <div class="amount-display">R <span id="total_earnings_display_2">{{ "{:,.2f}".format(package.total_earnings) }}</span></div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label text-muted">Total Deductions</label>
+              <div class="amount-display text-danger">R {{ "{:,.2f}".format(package.total_deductions) }}</div>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label text-muted">Current CTC</label>
+              <div class="amount-display">R {{ "{:,.2f}".format(employee.ctc) }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4 text-end">
+          <label class="form-label text-muted">Monthly Net Pay</label>
+          <div class="amount-display amount-large text-success">
+            R <span id="net_pay_display">{{ "{:,.2f}".format(package.net_pay) }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="text-center">
+      <button type="button" class="btn-randwater me-3" onclick="enableEditing()">
+        <i class="fas fa-edit"></i> Edit Package
+      </button>
+      <button type="button" class="btn btn-success me-3" id="saveBtn" onclick="saveChanges()" style="display: none;">
+        <i class="fas fa-save"></i> Save Changes
+      </button>
+      <button type="button" class="btn btn-secondary me-3" id="cancelBtn" onclick="cancelEditing()" style="display: none;">
+        <i class="fas fa-times"></i> Cancel
+      </button>
+      <a href="/employee/payslip/{{ employee.employee_id }}" class="btn btn-outline-primary me-2">
+        <i class="fas fa-file-alt"></i> View Payslip
+      </a>
+      <a href="/employee/download/{{ employee.employee_id }}" class="btn btn-outline-primary">
+        <i class="fas fa-download"></i> Download Summary
+      </a>
+    </div>
+
+    <!-- Important Notes -->
+    <div class="component-card mt-4">
+      <h6><i class="fas fa-info-circle text-warning"></i> Important Notes</h6>
+      <ul class="mb-0">
+        <li>This is your current compensation package effective from {{ employee.access_granted }}</li>
+        <li>All amounts are calculated on a monthly basis</li>
+        <li>Tax calculations are estimates and may vary based on your personal tax circumstances</li>
+        <li>For questions or clarifications, please contact HR at <strong>hr@randwater.co.za</strong></li>
+        <li>Your access to this portal expires on {{ employee.access_expires }}</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="text-center py-4 mt-5">
+    <div class="container">
+      <small class="text-muted">
+        Rand Water Salary Package Calculator v1.0
+      </small>
+    </div>
+  </footer>
+
+  <!-- JavaScript for editing functionality -->
+  <script>
+    let isCalculating = false;
+    
+    function enableEditing() {
+      // Hide view mode, show edit mode
+      document.querySelectorAll('.view-mode').forEach(el => el.style.display = 'none');
+      document.querySelectorAll('.edit-mode').forEach(el => el.style.display = 'block');
+      
+      // Hide edit button, show save/cancel buttons
+      document.querySelector('[onclick="enableEditing()"]').style.display = 'none';
+      document.getElementById('saveBtn').style.display = 'inline-block';
+      document.getElementById('cancelBtn').style.display = 'inline-block';
+      
+      // Add a visual indicator
+      document.querySelector('.package-card h2').innerHTML = 
+        '<i class="fas fa-edit text-warning"></i> Editing Compensation Package';
+      
+      // Add event listeners for real-time calculations
+      const basicSalaryInput = document.getElementById('basic_salary');
+      const carAllowanceInput = document.getElementById('car_allowance');
+      const medicalAidInput = document.getElementById('medical_aid');
+      
+      basicSalaryInput.addEventListener('input', calculateTaxes);
+      basicSalaryInput.addEventListener('keypress', handleEnterKey);
+      carAllowanceInput.addEventListener('input', calculateTaxes);
+      carAllowanceInput.addEventListener('keypress', handleEnterKey);
+      medicalAidInput.addEventListener('input', calculateTaxes);
+      medicalAidInput.addEventListener('keypress', handleEnterKey);
+    }
+    
+    function handleEnterKey(event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        saveChanges();
+      }
+    }
+    
+    function calculateTaxes() {
+      if (isCalculating) return;
+      isCalculating = true;
+      
+      const basicSalary = parseFloat(document.getElementById('basic_salary').value) || 0;
+      const carAllowance = parseFloat(document.getElementById('car_allowance').value) || 0;
+      const medicalAid = parseFloat(document.getElementById('medical_aid').value) || 0;
+      
+      if (basicSalary <= 0) {
+        isCalculating = false;
+        return;
+      }
+      
+      // Use the existing comprehensive SARS calculation endpoint
+      calculateTaxesFromBackend(basicSalary, carAllowance, medicalAid);
+    }
+    
+    function calculateTaxesFromBackend(basicSalary, carAllowance, medicalAid) {
+      // Prepare form data for the existing /calculate/randwater endpoint
+      const formData = new FormData();
+      
+      // Add earnings
+      formData.append('earnings[0][label]', 'Basic Salary');
+      formData.append('earnings[0][value]', basicSalary);
+      formData.append('earnings[1][label]', 'Car Allowance');
+      formData.append('earnings[1][value]', carAllowance);
+      
+      // Add deductions
+      formData.append('deductions[0][label]', 'Medical Aid');
+      formData.append('deductions[0][value]', medicalAid);
+      formData.append('deductions[1][label]', 'Pension Fund');
+      formData.append('deductions[1][value]', basicSalary * 0.075); // 7.5% pension
+      
+      // Add employee info (use defaults for now - could be made editable later)
+      formData.append('age', '35'); // Default age
+      formData.append('has_medical', medicalAid > 0 ? 'yes' : 'no');
+      formData.append('dependants', '0'); // Default no dependants
+      
+      // Call the comprehensive backend calculation
+      fetch('/calculate/randwater', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.error) {
+          console.error('Tax calculation error:', data.error);
+          isCalculating = false;
+          return;
+        }
+        
+        // Update displays with the proper SARS calculations
+        updateDisplayIfExists('paye_display', data.monthly_tax);
+        updateDisplayIfExists('uif_display', data.uif);
+        updateDisplayIfExists('pension_display', basicSalary * 0.075);
+        updateDisplayIfExists('medical_display', medicalAid);
+        updateDisplayIfExists('car_allowance_display', carAllowance);
+        updateDisplayIfExists('total_earnings_display', data.earnings);
+        updateDisplayIfExists('total_earnings_display_2', data.earnings);
+        updateDisplayIfExists('total_deductions_display', data.deductions);
+        updateDisplayIfExists('net_pay_display', data.take_home);
+        
+        console.log('=== PROPER SARS TAX CALCULATION ===');
+        console.log('Gross Earnings:', data.earnings);
+        console.log('Monthly PAYE Tax:', data.monthly_tax);
+        console.log('UIF Contribution:', data.uif);
+        console.log('Total Deductions:', data.deductions);
+        console.log('Net Take Home:', data.take_home);
+        
+        isCalculating = false;
+      })
+      .catch(error => {
+        console.error('Error calculating taxes:', error);
+        isCalculating = false;
+      });
+    }
+    
+    function updateDisplayIfExists(id, value) {
+      const element = document.getElementById(id);
+      if (element) {
+        element.textContent = value.toLocaleString('en-ZA', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+      }
+    }
+    
+
+    
+    function cancelEditing() {
+      // Show view mode, hide edit mode
+      document.querySelectorAll('.view-mode').forEach(el => el.style.display = 'inline');
+      document.querySelectorAll('.edit-mode').forEach(el => el.style.display = 'none');
+      
+      // Show edit button, hide save/cancel buttons
+      document.querySelector('[onclick="enableEditing()"]').style.display = 'inline-block';
+      document.getElementById('saveBtn').style.display = 'none';
+      document.getElementById('cancelBtn').style.display = 'none';
+      
+      // Reset title
+      document.querySelector('.package-card h2').innerHTML = 
+        '<i class="fas fa-calculator text-primary"></i> Compensation Package Details';
+        
+      // Reset form values
+      location.reload();
+    }
+    
+    function saveChanges() {
+      const basic_salary = parseFloat(document.getElementById('basic_salary').value) || 0;
+      const car_allowance = parseFloat(document.getElementById('car_allowance').value) || 0;
+      const medical_aid = parseFloat(document.getElementById('medical_aid').value) || 0;
+      
+      // Basic validation
+      if (basic_salary <= 0) {
+        alert('Basic salary must be greater than 0');
+        return;
+      }
+      
+      if (car_allowance < 0) {
+        alert('Car allowance cannot be negative');
+        return;
+      }
+      
+      if (medical_aid < 0) {
+        alert('Medical aid cannot be negative');
+        return;
+      }
+      
+      // Use the proper backend SARS calculation to get accurate values
+      const formData = new FormData();
+      
+      // Add earnings
+      formData.append('earnings[0][label]', 'Basic Salary');
+      formData.append('earnings[0][value]', basic_salary);
+      formData.append('earnings[1][label]', 'Car Allowance');
+      formData.append('earnings[1][value]', car_allowance);
+      
+      // Add deductions
+      formData.append('deductions[0][label]', 'Medical Aid');
+      formData.append('deductions[0][value]', medical_aid);
+      formData.append('deductions[1][label]', 'Pension Fund');
+      formData.append('deductions[1][value]', basic_salary * 0.075);
+      
+      // Add employee info
+      formData.append('age', '35'); // Could make this editable later
+      formData.append('has_medical', medical_aid > 0 ? 'yes' : 'no');
+      formData.append('dependants', '0');
+      
+      // Get proper tax calculation from backend first
+      fetch('/calculate/randwater', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(calculationData => {
+        if (calculationData.error) {
+          alert('Error calculating taxes: ' + calculationData.error);
+          document.getElementById('saveBtn').innerHTML = '<i class="fas fa-save"></i> Save Changes';
+          document.getElementById('saveBtn').disabled = false;
+          return;
+        }
+        
+        // Prepare data for submission with proper calculations
+        const packageData = {
+          basic_salary: basic_salary,
+          car_allowance: car_allowance,
+          medical_aid: medical_aid,
+          paye_tax: calculationData.monthly_tax,
+          uif_contribution: calculationData.uif,
+          pension_fund: basic_salary * 0.075,
+          other_deductions: 0,
+          total_deductions: calculationData.deductions,
+          total_earnings: calculationData.earnings,
+          net_pay: calculationData.take_home
+        };
+        
+        // Show loading state
+        document.getElementById('saveBtn').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+        document.getElementById('saveBtn').disabled = true;
+        
+        // Submit to server with proper SARS calculations
+        fetch(`/employee/package/{{ employee.employee_id }}/edit`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(packageData)
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert('Package updated successfully with comprehensive SARS tax calculations!');
+            location.reload(); // Reload to show updated values
+          } else {
+            alert('Error updating package: ' + (data.error || 'Unknown error'));
+            document.getElementById('saveBtn').innerHTML = '<i class="fas fa-save"></i> Save Changes';
+            document.getElementById('saveBtn').disabled = false;
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error saving changes. Please try again.');
+          document.getElementById('saveBtn').innerHTML = '<i class="fas fa-save"></i> Save Changes';
+          document.getElementById('saveBtn').disabled = false;
+        });
+      })
+      .catch(error => {
+        console.error('Error calculating taxes:', error);
+        alert('Error calculating taxes. Please try again.');
+        document.getElementById('saveBtn').innerHTML = '<i class="fas fa-save"></i> Save Changes';
+        document.getElementById('saveBtn').disabled = false;
+      });
+    }
+  </script>
+</body>
+</html>

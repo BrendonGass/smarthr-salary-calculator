@@ -12,6 +12,10 @@ import logging
 from typing import Dict, List, Optional
 import csv
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 
 # Import our models
 from models import (PackageManager, EmployeeAccess, NotificationManager, 
@@ -44,6 +48,62 @@ logger = logging.getLogger(__name__)
 # Initialize managers
 employee_access = EmployeeAccess()
 package_manager = PackageManager()
+
+# Dynamic user credentials storage (DEPRECATED - kept for backward compatibility)
+# Now using system_users.json instead
+USER_CREDENTIALS = {
+    'superadmin': {'password': 'SuperAdmin2024!', 'user_type': 'super_admin'},
+    'RandWaterAdmin': {'password': 'RandWater2024!', 'user_type': 'randwater_admin'}
+}
+
+def load_system_users():
+    """Load system users from JSON file"""
+    try:
+        with open('system_users.json', 'r') as f:
+            users = json.load(f)
+            return users
+    except FileNotFoundError:
+        # Create default users if file doesn't exist
+        default_users = [
+            {
+                'id': 1,
+                'username': 'superadmin',
+                'password': 'SuperSecret2024!',
+                'profile': 'superadmin',
+                'full_name': 'System Super Administrator',
+                'email': 'superadmin@randwater.co.za',
+                'status': 'active',
+                'created_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'last_login': None
+            },
+            {
+                'id': 2,
+                'username': 'randwateradmin',
+                'password': 'RandWater2024!',
+                'profile': 'admin',
+                'full_name': 'Rand Water Administrator',
+                'email': 'admin@randwater.co.za',
+                'status': 'active',
+                'created_date': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'last_login': None
+            }
+        ]
+        save_system_users(default_users)
+        return default_users
+    except Exception as e:
+        logger.error(f"Error loading system users: {str(e)}")
+        return []
+
+def save_system_users(users):
+    """Save system users to JSON file"""
+    try:
+        with open('system_users.json', 'w') as f:
+            json.dump(users, f, indent=2)
+        return True
+    except Exception as e:
+        logger.error(f"Error saving system users: {str(e)}")
+        return False
+
 notification_manager = NotificationManager()
 
 # Custom Jinja2 filters
@@ -114,7 +174,7 @@ def employee_login():
 def employee_logout():
     """Employee logout"""
     session.clear()
-    return redirect(url_for('employee_login'))
+    return redirect(url_for('unified_login'))
 
 @app.route('/employee/package-builder')
 def employee_package_builder():
@@ -125,8 +185,20 @@ def employee_package_builder():
     # Get employee's package
     package = package_manager.get_employee_package(session['employee_id'])
     if not package:
-        flash('No package found for your employee ID. Please contact HR.', 'error')
-        return redirect(url_for('employee_login'))
+        flash('No package found for your employee ID. Please contact HR.', 'warning')
+        # Create minimal package to prevent redirect loop
+        package = {
+            'employee_id': session['employee_id'],
+            'sap_data': {},
+            'package_components': {
+                'basic_salary': 0,
+                'car_allowance': 0,
+                'provident_fund': 0,
+                'bonus': 0
+            },
+            'current_tctc': 0,
+            'tctc_limit': 0
+        }
     
     # Get notifications
     notifications = notification_manager.get_employee_notifications(session['employee_id'])
@@ -138,7 +210,7 @@ def employee_package_builder():
 
 @app.route('/api/employee/package/update', methods=['POST'])
 def update_employee_package():
-    """Update employee package"""
+    """Update employee package with budget validation"""
     if not session.get('employee_id'):
         return jsonify({"error": "Not authenticated"}), 401
     
@@ -154,16 +226,28 @@ def update_employee_package():
                 except ValueError:
                     return jsonify({"error": f"Invalid value for {field}"}), 400
         
-        # Update package
-        updated_package = package_manager.update_employee_package(session['employee_id'], updates)
-        if updated_package:
-            return jsonify({
+        # Update package with budget validation
+        result = package_manager.update_employee_package(session['employee_id'], updates)
+        
+        if result['success']:
+            response = {
                 "success": True,
-                "package": updated_package,
+                "package": result['package'],
                 "message": "Package updated successfully"
-            })
+            }
+            
+            # Include warnings if any
+            if result.get('warnings'):
+                response['warnings'] = result['warnings']
+            
+            # Include auto-adjustments if any
+            if result.get('auto_adjustments'):
+                response['auto_adjustments'] = result['auto_adjustments']
+                response['message'] += " (Some values were auto-adjusted to fit budget constraints)"
+            
+            return jsonify(response)
         else:
-            return jsonify({"error": "Failed to update package"}), 400
+            return jsonify({"error": result['error']}), 400
             
     except Exception as e:
         return jsonify({"error": str(e)}), 400
@@ -226,31 +310,16 @@ def calculate_employee_net_pay():
 
 @app.route('/superadmin/login', methods=['GET', 'POST'])
 def super_admin_login():
-    """Super Admin login for system configuration"""
-    if session.get('isSuperAdmin'):
-        return redirect(url_for('super_admin_dashboard'))
-    
-    error = None
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        
-        # Super admin credentials (you only)
-        if username == 'SuperAdmin' and password == 'SmartHR2024!SuperAdmin':
-            session['isSuperAdmin'] = True
-            session['superadmin_username'] = username
-            return redirect(url_for('super_admin_dashboard'))
-        else:
-            error = "Invalid super admin credentials"
-    
-    return render_template('super_admin_login.html', error=error, config=RANDWATER_CONFIG)
+    """Super Admin login - redirects to unified login"""
+    # Redirect to unified login for consistent authentication
+    return redirect(url_for('unified_login'))
 
 @app.route('/superadmin/logout')
 def super_admin_logout():
     """Super Admin logout"""
     session.pop('isSuperAdmin', None)
     session.pop('superadmin_username', None)
-    return redirect(url_for('super_admin_login'))
+    return redirect(url_for('unified_login'))
 
 @app.route('/superadmin/dashboard')
 def super_admin_dashboard():
@@ -259,9 +328,14 @@ def super_admin_dashboard():
         return redirect(url_for('super_admin_login'))
     
     # Get system statistics
+    total_superadmins = len([u for u in USER_CREDENTIALS.values() if u['user_type'] == 'super_admin'])
+    total_randwater_admins = len([u for u in USER_CREDENTIALS.values() if u['user_type'] == 'randwater_admin'])
+    total_employees = len(employee_access.get_all_employees())  # All employees, not just active
+    
     stats = {
-        'total_randwater_admins': 3,
-        'total_employees': len(employee_access.get_active_employees()),
+        'total_superadmins': total_superadmins,
+        'total_randwater_admins': total_randwater_admins,
+        'total_employees': total_employees,
         'total_packages': len(package_manager.get_all_packages()),
         'system_version': '2.0.0'
     }
@@ -307,10 +381,47 @@ def calculation_tables():
         {'min': 1817001, 'max': 999999999, 'rate': 45}
     ]
     
+    # Load SMTP settings
+    smtp_settings = load_smtp_settings()
+    
     return render_template('calculation_tables.html',
                           tax_settings=tax_settings,
                           medical_aid_rates=medical_aid_rates,
                           tax_brackets=tax_brackets,
+                          smtp_settings=smtp_settings,
+                          config=RANDWATER_CONFIG)
+
+@app.route('/superadmin/system-security')
+def system_security():
+    """System Security Management"""
+    if not session.get('isSuperAdmin'):
+        return redirect(url_for('super_admin_login'))
+    
+    security_settings = load_security_settings()
+    return render_template('system_security.html',
+                          security_settings=security_settings,
+                          config=RANDWATER_CONFIG)
+
+@app.route('/superadmin/system-backup')
+def system_backup():
+    """System Backup Management"""
+    if not session.get('isSuperAdmin'):
+        return redirect(url_for('super_admin_login'))
+    
+    backups = get_backup_list()
+    return render_template('system_backup.html',
+                          backups=backups,
+                          config=RANDWATER_CONFIG)
+
+@app.route('/superadmin/system-analytics')
+def system_analytics():
+    """System Analytics Dashboard"""
+    if not session.get('isSuperAdmin'):
+        return redirect(url_for('super_admin_login'))
+    
+    analytics = get_system_analytics()
+    return render_template('system_analytics.html',
+                          analytics=analytics,
                           config=RANDWATER_CONFIG)
 
 @app.route('/superadmin/user-management')
@@ -321,14 +432,67 @@ def user_management():
     
     # Mock admin users (we'll implement proper user management)
     admin_users = [
-        {'id': 1, 'username': 'RandWaterAdmin', 'name': 'Primary Admin', 'status': 'Active', 'last_login': '2024-08-19'},
-        {'id': 2, 'username': 'RandWaterAdmin2', 'name': 'Secondary Admin', 'status': 'Active', 'last_login': '2024-08-18'},
-        {'id': 3, 'username': 'RandWaterAdmin3', 'name': 'Backup Admin', 'status': 'Inactive', 'last_login': '2024-08-15'}
+        {'id': 1, 'username': 'RandWaterAdmin', 'name': 'Annelise', 'full_name': 'Annelise', 'email': 'annelise@smarthr.co.za', 'role': 'admin', 'profile': 'admin', 'status': 'active', 'last_login': '2025-09-01'},
+        {'id': 2, 'username': 'RandWaterAdmin2', 'name': 'Secondary Admin', 'full_name': 'Secondary Admin', 'email': 'admin2@smarthr.co.za', 'role': 'admin', 'profile': 'admin', 'status': 'active', 'last_login': '2025-08-30'},
+        {'id': 3, 'username': 'RandWaterAdmin3', 'name': 'Backup Admin', 'full_name': 'Backup Admin', 'email': 'admin3@smarthr.co.za', 'role': 'admin', 'profile': 'admin', 'status': 'inactive', 'last_login': '2025-08-15'}
     ]
     
     return render_template('user_management.html',
                           admin_users=admin_users,
+                          users=admin_users,  # Template expects 'users' variable
                           config=RANDWATER_CONFIG)
+
+@app.route('/superadmin/user-management/update/<int:user_id>', methods=['POST'])
+def update_user(user_id):
+    """Update user information"""
+    if not session.get('isSuperAdmin'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        # Get JSON data from request
+        data = request.get_json()
+        if not data:
+            # Fallback to form data if no JSON
+            data = request.form.to_dict()
+        
+        username = data.get('username')
+        full_name = data.get('full_name')
+        email = data.get('email') 
+        user_profile = data.get('user_profile')
+        status = data.get('status')
+        new_password = data.get('new_password')
+        
+        # Debug logging
+        logger.info(f"Data received: username='{username}', full_name='{full_name}', email='{email}', profile='{user_profile}', status='{status}'")
+        logger.info(f"Request content type: {request.content_type}")
+        logger.info(f"Raw data: {data}")
+        
+        if not username or not full_name:
+            return jsonify({'error': 'Username and Full Name are required'}), 400
+        
+        # Update the credentials in memory if password is provided
+        if new_password and username in USER_CREDENTIALS:
+            USER_CREDENTIALS[username]['password'] = new_password
+            success_message = f'User {username} updated successfully! Password and credentials have been updated.'
+        else:
+            success_message = f'User {username} profile updated successfully! Note: No password change was made.'
+        
+        return jsonify({
+            'success': True, 
+            'message': success_message,
+            'user': {
+                'id': user_id,
+                'username': username,
+                'full_name': full_name,
+                'email': email,
+                'profile': user_profile,
+                'status': status
+            }
+        })
+        
+    except Exception as e:
+        logger.error(f"Error updating user {user_id}: {str(e)}")
+        return jsonify({'error': f'Error updating user: {str(e)}'}), 500
 
 @app.route('/superadmin/security-settings')
 def security_settings():
@@ -352,41 +516,219 @@ def security_settings():
                           config=RANDWATER_CONFIG)
 
 # ============================================================================
+# UNIFIED LOGIN SYSTEM
+# ============================================================================
+
+@app.route('/')
+def index():
+    """Root route - redirect to unified login"""
+    return redirect(url_for('unified_login'))
+
+@app.route('/login', methods=['GET', 'POST'])
+def unified_login():
+    """Unified login for all user types"""
+    if request.method == 'POST':
+        raw_username = request.form.get('username') or ''
+        username = raw_username.strip().lower()
+        password = (request.form.get('password') or '').strip()
+        
+        if not username or not password:
+            return render_template('unified_login.html', 
+                                 error="Please enter both username and password", 
+                                 config=RANDWATER_CONFIG)
+        
+        # Load system users and check credentials
+        system_users = load_system_users()
+        
+        # DEBUG: Print comprehensive login debugging info
+        print(f"\n=== PACKAGE BUILDER LOGIN DEBUG START ===")
+        print(f"Raw username input: '{raw_username}'")
+        print(f"Processed username: '{username}'")
+        print(f"Password length: {len(password)}")
+        print(f"Number of system users: {len(system_users)}")
+        
+        for i, user in enumerate(system_users):
+            print(f"User {i+1}: username='{user.get('username')}', profile='{user.get('profile')}', status='{user.get('status')}'")
+            stored_pw = user.get('password', '')
+            print(f"  Password hash: {stored_pw[:50]}..." if len(stored_pw) > 50 else f"  Password: {stored_pw}")
+        
+        try:
+            logger.info(f"Login attempt username='{username}'")
+        except Exception as e:
+            print(f"Logger error: {e}")
+        
+        user_found = False
+        username_matched = False
+        
+        # Check system users (super admin and randwater admin)
+        for user in system_users:
+            stored_pw = user.get('password', '')
+            is_hashed = isinstance(stored_pw, str) and (':' in stored_pw)
+            valid = (stored_pw == password)
+            db_username = str(user.get('username', '')).strip().lower()
+            
+            if db_username == username:
+                username_matched = True
+                if not valid and is_hashed:
+                    try:
+                        valid = check_password_hash(stored_pw, password)
+                    except Exception:
+                        valid = False
+            
+            if db_username == username and valid:
+                if user['status'] != 'active':
+                    return render_template('unified_login.html', 
+                                         error="Account is inactive. Please contact administrator.", 
+                                         config=RANDWATER_CONFIG)
+                
+                # Update last login
+                user['last_login'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                save_system_users(system_users)
+                
+                # Set session based on profile
+                if user['profile'] == 'superadmin':
+                    session['admin'] = True
+                    session['isSuperAdmin'] = True
+                    session['user_type'] = 'super_admin'
+                    session['username'] = username
+                    logger.info(f"Super Admin {username} logged in successfully")
+                    flash('Welcome Super Admin!', 'success')
+                    return redirect(url_for('super_admin_dashboard'))
+                
+                elif user['profile'] == 'admin':
+                    session['admin'] = True
+                    session['isRandWaterAdmin'] = True
+                    session['user_type'] = 'randwater_admin'
+                    session['username'] = username
+                    logger.info(f"Randwater Admin {username} logged in successfully")
+                    flash('Welcome RandWater Admin!', 'success')
+                    return redirect(url_for('randwater_admin_panel'))
+                
+                else:
+                    user_found = True
+                    break
+        
+        # If username matched but password invalid, show specific error
+        if not user_found and username_matched:
+            return render_template('unified_login.html', 
+                                 error="Invalid password", 
+                                 config=RANDWATER_CONFIG)
+        
+        # If no system user found, check employees
+        if not user_found:
+            employee_data = employee_access.validate_employee_access(username, password)
+            if employee_data:
+                session['employee_id'] = username
+                session['user_type'] = 'employee'
+                flash('Welcome to Package Builder!', 'success')
+                return redirect(url_for('employee_package_builder'))
+            else:
+                return render_template('unified_login.html', 
+                                     error="Invalid username or password", 
+                                     config=RANDWATER_CONFIG)
+    
+    # GET request - show login form
+    return render_template('unified_login.html', config=RANDWATER_CONFIG)
+
+@app.route('/logout')
+def logout():
+    """Unified logout for all user types"""
+    user_type = session.get('user_type', 'unknown')
+    session.clear()
+    flash(f'You have been logged out successfully', 'info')
+    return redirect(url_for('unified_login'))
+
+@app.route('/employee/dashboard/<employee_id>')
+def employee_dashboard(employee_id):
+    """Employee dashboard"""
+    if not session.get('isEmployee') or session.get('employee_id') != employee_id:
+        flash('Please log in as an employee to access this page', 'error')
+        return redirect(url_for('unified_login'))
+    
+    try:
+        # Get employee package data
+        package = package_manager.get_employee_package(employee_id)
+        employee_data = session.get('employee_data', {})
+        
+        # Get SAP data for the employee
+        sap_data = package_manager.get_sap_data_for_employee(employee_id)
+        
+        return render_template('employee_dashboard.html',
+                             employee=employee_data,
+                             package=package,
+                             sap_data=sap_data,
+                             config=RANDWATER_CONFIG)
+    except Exception as e:
+        logger.error(f"Error in employee dashboard for {employee_id}: {e}")
+        flash(f'Error loading dashboard: {str(e)}', 'error')
+        return redirect(url_for('unified_login'))
+
+# ============================================================================
 # ADMIN PORTAL ROUTES (Enhanced)
 # ============================================================================
 
 @app.route('/admin/randwater', methods=['GET', 'POST'])
 def randwater_admin_login():
-    """Rand Water admin login"""
-    if session.get('isRandWaterAdmin'):
-        return redirect(url_for('randwater_admin_panel'))
-    
-    error = None
-    if request.method == 'POST':
-        username = request.form.get('username')
-        password = request.form.get('password')
-        
-        # Rand Water admin authentication
-        if username == 'RandWaterAdmin' and password == 'RandWater2024!':
-            session['admin'] = True
-            session['isRandWaterAdmin'] = True
-            return redirect(url_for('randwater_admin_panel'))
-        else:
-            error = "Incorrect Rand Water admin credentials"
-    
-    return render_template('randwater_admin_login.html', error=error, config=RANDWATER_CONFIG)
+    """Rand Water admin login - redirects to unified login"""
+    # Redirect to unified login for consistent authentication
+    return redirect(url_for('unified_login'))
+
+
 
 @app.route('/admin/randwater/dashboard')
 def randwater_admin_panel():
     """Enhanced Rand Water admin panel"""
-    if not session.get('admin') and not session.get('isRandWaterAdmin'):
-        return redirect(url_for('randwater_admin_login'))
+    if not session.get('admin') and not session.get('isRandWaterAdmin') and not session.get('isSuperAdmin'):
+        return redirect(url_for('unified_login'))
     
-    # Get statistics
-    active_employees = employee_access.get_active_employees()
-    pending_submissions = employee_access.get_pending_submissions()
-    submitted_packages = package_manager.get_submitted_packages()
-    notifications = notification_manager.get_admin_notifications()
+    try:
+        # Get statistics
+        active_employees = employee_access.get_active_employees()
+        pending_submissions = employee_access.get_pending_submissions()
+        submitted_packages = package_manager.get_submitted_packages()
+        notifications = notification_manager.get_admin_notifications()
+    except Exception as e:
+        logger.error(f"Error getting statistics: {str(e)}")
+        # Provide default values if there are errors
+        active_employees = []
+        pending_submissions = []
+        submitted_packages = []
+        notifications = []
+    
+    # Enhance active employees with package data
+    enhanced_active_employees = []
+    for employee in active_employees:
+        try:
+            # Get employee package
+            package = package_manager.get_employee_package(employee['employee_id'])
+            
+            # Get SAP data if available
+            sap_data = package_manager.get_sap_data_for_employee(employee['employee_id']) if package else {}
+            
+            enhanced_employee = {
+                **employee,
+                'first_name': sap_data.get('FIRSTNAME', '') if sap_data else '',
+                'surname': sap_data.get('SURNAME', '') if sap_data else '',
+                'basic_salary': package['package_components']['basic_salary'] if package and package.get('package_components') else 0,
+                'ctc': package['current_tctc'] if package and package.get('current_tctc') else 0,
+                'department': sap_data.get('DEPARTMENT', 'N/A') if sap_data else 'N/A',
+                'job_title': sap_data.get('JOBLONG', 'N/A') if sap_data else 'N/A',
+                'package_submitted': package is not None and package.get('status') == 'SUBMITTED'
+            }
+            enhanced_active_employees.append(enhanced_employee)
+        except Exception as e:
+            logger.error(f"Error enhancing employee {employee.get('employee_id', 'Unknown')}: {str(e)}")
+            # Add employee with basic info only
+            enhanced_active_employees.append({
+                **employee,
+                'first_name': '',
+                'surname': '',
+                'basic_salary': 0,
+                'ctc': 0,
+                'department': 'N/A',
+                'job_title': 'N/A',
+                'package_submitted': False
+            })
     
     # Calculate days remaining for pending submissions
     current_date = datetime.now()
@@ -406,7 +748,7 @@ def randwater_admin_panel():
             employee['is_expired'] = True
     
     stats = {
-        'total_employees': len(active_employees),
+        'total_employees': len(enhanced_active_employees),
         'pending_submissions': len(pending_submissions),
         'submitted_packages': len(submitted_packages),
         'company': 'RANDWATER'
@@ -414,7 +756,7 @@ def randwater_admin_panel():
     
     return render_template('randwater_admin_panel_enhanced.html', 
                           stats=stats, 
-                          active_employees=active_employees,
+                          active_employees=enhanced_active_employees,
                           pending_submissions=pending_submissions,
                           submitted_packages=submitted_packages,
                           notifications=notifications,
@@ -424,17 +766,23 @@ def randwater_admin_panel():
 @app.route('/admin/randwater/upload-sap', methods=['GET', 'POST'])
 def upload_sap_data():
     """Upload SAP Excel data for employee packages"""
-    if not session.get('isRandWaterAdmin'):
-        return redirect(url_for('randwater_admin_login'))
+    if not (session.get('isRandWaterAdmin') or session.get('isSuperAdmin')):
+        return redirect(url_for('unified_login'))
     
     if request.method == 'POST':
         if 'sap_file' not in request.files:
-            flash('No file selected', 'error')
+            error_msg = 'No file selected'
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'success': False, 'error': error_msg})
+            flash(error_msg, 'error')
             return redirect(request.url)
         
         file = request.files['sap_file']
         if file.filename == '':
-            flash('No file selected', 'error')
+            error_msg = 'No file selected'
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'success': False, 'error': error_msg})
+            flash(error_msg, 'error')
             return redirect(request.url)
         
         if file and file.filename.endswith('.xlsx'):
@@ -594,15 +942,40 @@ def upload_sap_data():
                         logger.error(f"Error processing employee {employee.get('EMPLOYEECODE', 'UNKNOWN')}: {str(e)}")
                         continue
                 
-                flash(f'Successfully uploaded {len(employee_data)} employee records. Created {packages_created} packages and {access_created} access accounts for O-Q band employees.', 'success')
-                return redirect(url_for('randwater_admin_panel'))
+                success_message = f'Successfully uploaded {len(employee_data)} employee records. Created {packages_created} packages and {access_created} access accounts for O-Q band employees.'
+                
+                # Check if this is an AJAX request
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({
+                        'success': True,
+                        'message': success_message,
+                        'filename': file.filename,
+                        'records_processed': len(employee_data),
+                        'packages_created': packages_created,
+                        'access_created': access_created
+                    })
+                else:
+                    flash(success_message, 'success')
+                    return redirect(url_for('randwater_admin_panel'))
                 
             except Exception as e:
-                flash(f'Error processing file: {str(e)}', 'error')
+                error_message = f'Error processing file: {str(e)}'
                 logger.error(f'SAP upload error: {str(e)}')
-                return redirect(request.url)
+                
+                # Check if this is an AJAX request
+                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                    return jsonify({
+                        'success': False,
+                        'error': error_message
+                    })
+                else:
+                    flash(error_message, 'error')
+                    return redirect(request.url)
         else:
-            flash('Please upload an Excel (.xlsx) file', 'error')
+            error_msg = 'Please upload an Excel (.xlsx) file'
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify({'success': False, 'error': error_msg})
+            flash(error_msg, 'error')
             return redirect(request.url)
     
     return render_template('upload_sap_data.html', config=RANDWATER_CONFIG)
@@ -610,7 +983,7 @@ def upload_sap_data():
 @app.route('/admin/randwater/clear-uploaded-data', methods=['POST'])
 def clear_uploaded_data():
     """Clear all uploaded SAP data and employee access"""
-    if not session.get('isRandWaterAdmin'):
+    if not (session.get('isRandWaterAdmin') or session.get('isSuperAdmin')):
         return jsonify({"error": "Not authenticated"}), 401
     
     try:
@@ -744,7 +1117,7 @@ def manage_employee_access():
 @app.route('/admin/randwater/employee-details/<employee_id>')
 def get_employee_details(employee_id):
     """Get detailed employee information including package data"""
-    if not session.get('isRandWaterAdmin'):
+    if not (session.get('isRandWaterAdmin') or session.get('isSuperAdmin')):
         return jsonify({"error": "Not authenticated"}), 401
     
     try:
@@ -786,7 +1159,7 @@ def salary_simulator():
 @app.route('/api/salary-simulator/calculate', methods=['POST'])
 def calculate_salary_simulation():
     """Calculate salary simulation"""
-    if not session.get('isRandWaterAdmin'):
+    if not (session.get('isRandWaterAdmin') or session.get('isSuperAdmin')):
         return jsonify({"error": "Not authenticated"}), 401
     
     try:
@@ -966,7 +1339,7 @@ def send_email(recipients: List[str], subject: str, body: str, operation_type: s
 @app.route('/admin/randwater/bulk-email-credentials', methods=['POST'])
 def bulk_email_credentials():
     """Send login credentials to selected employees"""
-    if not session.get('isRandWaterAdmin'):
+    if not (session.get('isRandWaterAdmin') or session.get('isSuperAdmin')):
         return jsonify({"error": "Not authenticated"}), 401
     
     try:
@@ -1119,7 +1492,7 @@ def email_logs():
 @app.route('/admin/randwater/email-logs/download')
 def download_email_logs():
     """Download email logs as CSV"""
-    if not session.get('isRandWaterAdmin'):
+    if not (session.get('isRandWaterAdmin') or session.get('isSuperAdmin')):
         return jsonify({"error": "Not authenticated"}), 401
     
     try:
@@ -1202,7 +1575,7 @@ def smtp_config_management():
 @app.route('/admin/randwater/smtp-test', methods=['POST'])
 def test_smtp_connection():
     """Test SMTP connection"""
-    if not session.get('isRandWaterAdmin'):
+    if not (session.get('isRandWaterAdmin') or session.get('isSuperAdmin')):
         return jsonify({"error": "Not authenticated"}), 401
     
     try:
@@ -1217,7 +1590,7 @@ def test_smtp_connection():
 @app.route('/admin/randwater/clear-email-logs', methods=['POST'])
 def clear_email_logs():
     """Clear all email logs"""
-    if not session.get('isRandWaterAdmin'):
+    if not (session.get('isRandWaterAdmin') or session.get('isSuperAdmin')):
         return jsonify({"error": "Not authenticated"}), 401
     
     try:
@@ -1231,8 +1604,8 @@ def clear_email_logs():
 @app.route('/admin/randwater/manage-packages')
 def manage_packages():
     """Manage all employee packages"""
-    if not session.get('isRandWaterAdmin'):
-        return redirect(url_for('randwater_admin_login'))
+    if not (session.get('isRandWaterAdmin') or session.get('isSuperAdmin')):
+        return redirect(url_for('unified_login'))
     
     try:
         # Get all packages
@@ -1313,5 +1686,863 @@ def package_analytics():
         flash(f'Error loading analytics: {str(e)}', 'error')
         return redirect(url_for('randwater_admin_panel'))
 
+@app.route('/package_view/<employee_id>')
+def package_view(employee_id):
+    """Rand Water Admin - View package details with edit capabilities"""
+    if not session.get('admin') and not session.get('isRandWaterAdmin') and not session.get('isSuperAdmin'):
+        return redirect(url_for('unified_login'))
+    
+    try:
+        # Get employee package data
+        package = package_manager.get_employee_package(employee_id)
+        if not package:
+            flash(f'Package not found for employee {employee_id}', 'error')
+            return redirect(url_for('manage_packages'))
+        
+        # Debug: Log package structure
+        logger.info(f"Package structure for {employee_id}: {package}")
+        
+        # Get employee access info
+        employee_access_info = employee_access.get_employee_by_id(employee_id)
+        if not employee_access_info:
+            flash(f'Employee access not found for {employee_id}', 'error')
+            return redirect(url_for('manage_packages'))
+        
+        # Get SAP data for the employee
+        sap_data = package_manager.get_sap_data_for_employee(employee_id)
+        
+        # Debug: Log SAP data
+        logger.info(f"SAP data for {employee_id}: {sap_data}")
+        print(f"DEBUG: Package for {employee_id}: {package}")
+        print(f"DEBUG: SAP data for {employee_id}: {sap_data}")
+        
+        # Create employee object for template
+        employee = {
+            'employee_id': employee_id,
+            'first_name': sap_data.get('FIRSTNAME', '') if sap_data else '',
+            'surname': sap_data.get('SURNAME', '') if sap_data else '',
+            'grade_band': sap_data.get('BAND', 'O-Q') if sap_data else 'O-Q',
+            'department': sap_data.get('DEPARTMENT', 'General') if sap_data else 'General',
+            'job_title': sap_data.get('JOBLONG', 'Employee') if sap_data else 'Employee',
+            'basic_salary': package['package_components'].get('basic_salary', 0) if package.get('package_components') else 0,
+            'package': package,
+            'sap_data': sap_data
+        }
+        
+        # Get audit trail for this package
+        audit_trail = package_manager.get_employee_audit_trail(employee_id)
+        
+        # Admin view - no notifications
+        notifications = []
+        
+        return render_template('package_view_edit.html', 
+                             config=RANDWATER_CONFIG,
+                             employee=employee,
+                             audit_trail=audit_trail,
+                             notifications=notifications)
+        
+    except Exception as e:
+        logger.error(f"Error viewing package for {employee_id}: {str(e)}")
+        flash(f'Error viewing package: {str(e)}', 'error')
+        return redirect(url_for('manage_packages'))
+
+@app.route('/api/admin/package/<employee_id>')
+def get_package_for_edit(employee_id):
+    """Get package data for admin editing"""
+    if not session.get('admin') and not session.get('isRandWaterAdmin') and not session.get('isSuperAdmin'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        package = package_manager.get_employee_package(employee_id)
+        if not package:
+            return jsonify({'success': False, 'error': 'Package not found'})
+        
+        return jsonify({
+            'success': True,
+            'package': package
+        })
+    except Exception as e:
+        logger.error(f"Error getting package for {employee_id}: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/admin/package/<employee_id>/audit')
+def get_package_audit_trail(employee_id):
+    """Get audit trail for package changes"""
+    if not session.get('admin') and not session.get('isRandWaterAdmin') and not session.get('isSuperAdmin'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        # Load audit trail from file or database
+        audit_file = 'package_audit.json'
+        audit_trail = []
+        
+        if os.path.exists(audit_file):
+            with open(audit_file, 'r') as f:
+                all_audits = json.load(f)
+                audit_trail = [audit for audit in all_audits if audit.get('employee_id') == employee_id]
+        
+        return jsonify({
+            'success': True,
+            'audit_trail': audit_trail
+        })
+    except Exception as e:
+        logger.error(f"Error getting audit trail for {employee_id}: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/admin/package/<employee_id>/update', methods=['POST'])
+def update_package_admin(employee_id):
+    """Update package as admin with audit trail"""
+    if not session.get('admin') and not session.get('isRandWaterAdmin') and not session.get('isSuperAdmin'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        data = request.get_json()
+        package_components = data.get('package_components', {})
+        change_summary = data.get('change_summary', '')
+        
+        # Get current package
+        current_package = package_manager.get_employee_package(employee_id)
+        if not current_package:
+            return jsonify({'success': False, 'error': 'Package not found'})
+        
+        # Prepare updates dict for PackageManager
+        updates = {}
+        
+        # Map frontend field names to package component keys
+        if 'tpe' in package_components:
+            updates['basic_salary'] = float(package_components['tpe'])
+        if 'car_allowance' in package_components:
+            updates['car_allowance'] = float(package_components['car_allowance'])
+        if 'bonus' in package_components:
+            updates['bonus'] = float(package_components['bonus'])
+        if 'pension_option' in package_components:
+            updates['pension_option'] = package_components['pension_option']
+        if 'group_life_option' in package_components:
+            updates['group_life_option'] = package_components['group_life_option']
+        
+        # Update package using PackageManager (with validation)
+        result = package_manager.update_employee_package(employee_id, updates)
+        
+        if not result['success']:
+            return jsonify({'success': False, 'error': result.get('error', 'Failed to update package')})
+        
+        # Create audit trail entry
+        user_type = 'admin' if session.get('isRandWaterAdmin') else 'super_admin'
+        user_id = session.get('username', 'admin')
+        
+        package_manager.add_audit_entry(
+            employee_id=employee_id,
+            action='package_updated',
+            changes={'changes': change_summary},
+            user_type=user_type,
+            user_id=user_id
+        )
+        
+        # Get updated package
+        updated_package = package_manager.get_employee_package(employee_id)
+        
+        return jsonify({
+            'success': True,
+            'message': 'Package updated successfully',
+            'package': updated_package,
+            'current_tctc': updated_package.get('current_tctc', 0),
+            'warnings': result.get('warnings', []),
+            'percentages': result.get('percentages', {}),
+            'remaining_budget': result.get('remaining_budget', 0)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error updating package for {employee_id}: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/admin/package_edit_fullpage/<employee_id>')
+def package_edit_fullpage(employee_id):
+    """Full-page package edit interface"""
+    if not session.get('admin') and not session.get('isRandWaterAdmin') and not session.get('isSuperAdmin'):
+        return redirect(url_for('unified_login'))
+    
+    try:
+        # Get employee package data
+        package = package_manager.get_employee_package(employee_id)
+        if not package:
+            flash(f'Package not found for employee {employee_id}', 'error')
+            return redirect(url_for('manage_packages'))
+        
+        # Get employee access info
+        employee_access_info = employee_access.get_employee_by_id(employee_id)
+        if not employee_access_info:
+            flash(f'Employee access not found for {employee_id}', 'error')
+            return redirect(url_for('manage_packages'))
+        
+        # Get SAP data for the employee
+        sap_data = package_manager.get_sap_data_for_employee(employee_id)
+        
+        # Combine all employee data
+        employee = {
+            'employee_id': employee_id,
+            'sap_data': sap_data or {},
+            'package_components': package.get('package_components', {}),
+            'tctc_limit': package.get('tctc_limit', 0),
+            'current_tctc': package.get('current_tctc', 0)
+        }
+        
+        # Debug logging
+        print(f"DEBUG: Employee data being sent to template: {employee}")
+        print(f"DEBUG: SAP data keys: {list(employee['sap_data'].keys()) if employee['sap_data'] else 'None'}")
+        print(f"DEBUG: Package components keys: {list(employee['package_components'].keys()) if employee['package_components'] else 'None'}")
+        
+        return render_template('package_edit_fullpage.html', employee=employee)
+        
+    except Exception as e:
+        logger.error(f"Error loading full-page edit for {employee_id}: {str(e)}")
+        flash(f'Error loading package: {str(e)}', 'error')
+        return redirect(url_for('manage_packages'))
+
+@app.route('/package_edit/<employee_id>', methods=['POST'])
+def package_edit(employee_id):
+    """Edit/Update employee package"""
+    if not session.get('admin') and not session.get('isRandWaterAdmin') and not session.get('isSuperAdmin'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        # Get form data
+        data = request.get_json() if request.is_json else request.form.to_dict()
+        
+        logger.info(f"Package edit data received for {employee_id}: {data}")
+        
+        # Get current package
+        current_package = package_manager.get_employee_package(employee_id)
+        if not current_package:
+            return jsonify({'error': 'Package not found'}), 404
+        
+        # Update package components with new values
+        package_components = current_package.get('package_components', {})
+        
+        # Track changes for audit trail
+        changes = {}
+        old_values = {}
+        
+        # Update individual components if provided
+        if 'basic_salary' in data:
+            old_values['basic_salary'] = package_components.get('basic_salary', 0)
+            package_components['basic_salary'] = float(data['basic_salary'])
+            changes['basic_salary'] = {'old': old_values['basic_salary'], 'new': float(data['basic_salary'])}
+        if 'car_allowance' in data:
+            old_values['car_allowance'] = package_components.get('car_allowance', 0)
+            package_components['car_allowance'] = float(data['car_allowance'])
+            changes['car_allowance'] = {'old': old_values['car_allowance'], 'new': float(data['car_allowance'])}
+        if 'cellphone_allowance' in data:
+            old_values['cellphone_allowance'] = package_components.get('cellphone_allowance', 0)
+            package_components['cellphone_allowance'] = float(data['cellphone_allowance'])
+            changes['cellphone_allowance'] = {'old': old_values['cellphone_allowance'], 'new': float(data['cellphone_allowance'])}
+        if 'data_service_allowance' in data:
+            old_values['data_service_allowance'] = package_components.get('data_service_allowance', 0)
+            package_components['data_service_allowance'] = float(data['data_service_allowance'])
+            changes['data_service_allowance'] = {'old': old_values['data_service_allowance'], 'new': float(data['data_service_allowance'])}
+        if 'housing_allowance' in data:
+            old_values['housing_allowance'] = package_components.get('housing_allowance', 0)
+            package_components['housing_allowance'] = float(data['housing_allowance'])
+            changes['housing_allowance'] = {'old': old_values['housing_allowance'], 'new': float(data['housing_allowance'])}
+        if 'medical_aid' in data:
+            old_values['medical_aid'] = package_components.get('medical_aid', 0)
+            package_components['medical_aid'] = float(data['medical_aid'])
+            changes['medical_aid'] = {'old': old_values['medical_aid'], 'new': float(data['medical_aid'])}
+        if 'bonus' in data:
+            old_values['bonus'] = package_components.get('bonus', 0)
+            package_components['bonus'] = float(data['bonus'])
+            changes['bonus'] = {'old': old_values['bonus'], 'new': float(data['bonus'])}
+        if 'other_allowances' in data:
+            old_values['other_allowances'] = package_components.get('other_allowances', 0)
+            package_components['other_allowances'] = float(data['other_allowances'])
+            changes['other_allowances'] = {'old': old_values['other_allowances'], 'new': float(data['other_allowances'])}
+        
+        # Calculate new TCTC
+        new_tctc = sum([
+            package_components.get('basic_salary', 0),
+            package_components.get('car_allowance', 0),
+            package_components.get('cellphone_allowance', 0),
+            package_components.get('data_service_allowance', 0),
+            package_components.get('housing_allowance', 0),
+            package_components.get('medical_aid', 0),
+            package_components.get('bonus', 0),
+            package_components.get('other_allowances', 0)
+        ])
+        
+        # Update package
+        current_package['package_components'] = package_components
+        current_package['current_tctc'] = new_tctc
+        current_package['last_modified'] = datetime.now().isoformat()
+        
+        # Save updated package (in a real app, this would save to database)
+        success = package_manager.update_employee_package(employee_id, current_package)
+        
+        if success:
+            # Add audit trail entry for the changes
+            if changes:
+                user_type = 'admin' if session.get('isRandWaterAdmin') else 'super_admin'
+                user_id = session.get('username', 'admin')
+                logger.info(f"Creating audit trail entry for {employee_id}: changes={changes}, user_type={user_type}, user_id={user_id}")
+                package_manager.add_audit_entry(
+                    employee_id=employee_id,
+                    action='package_updated',
+                    changes=changes,
+                    user_type=user_type,
+                    user_id=user_id
+                )
+                logger.info(f"Audit trail entry created successfully")
+            
+            logger.info(f"Package updated successfully for {employee_id}, new TCTC: {new_tctc}")
+            
+            return jsonify({
+                'success': True,
+                'message': f'Package updated successfully for {employee_id}',
+                'new_tctc': new_tctc
+            })
+        else:
+            return jsonify({'error': 'Failed to save package'}), 500
+        
+    except Exception as e:
+        logger.error(f"Error updating package for {employee_id}: {str(e)}")
+        return jsonify({'error': f'Error updating package: {str(e)}'}), 500
+
+@app.route('/admin/randwater/employee-payslip/<employee_id>')
+def employee_payslip(employee_id):
+    """Rand Water Admin - Get employee payslip data from uploaded SAP file"""
+    if not session.get('admin') and not session.get('isRandWaterAdmin') and not session.get('isSuperAdmin'):
+        return jsonify({'error': 'Unauthorized'}), 401
+
+    def safe_float(value, default=0.0):
+        """Safely convert value to float, handling text values like 'Yes', 'No'"""
+        if value is None:
+            return default
+        try:
+            # Handle text values that should be numeric
+            if isinstance(value, str):
+                value = value.strip().upper()
+                if value in ['YES', 'NO', 'N/A', '']:
+                    return default
+                # Try to convert to float
+                return float(value)
+            return float(value)
+        except (ValueError, TypeError):
+            return default
+
+    try:
+        # Get employee package data
+        package = package_manager.get_employee_package(employee_id)
+        if not package:
+            return jsonify({'error': f'Employee {employee_id} package not found'}), 404
+        
+        # Get SAP data for the employee
+        sap_data = package_manager.get_sap_data_for_employee(employee_id)
+        if not sap_data:
+            return jsonify({'error': f'Employee {employee_id} SAP data not found'}), 404
+        
+        # Extract payslip data with safety checks
+        package_components = package.get('package_components', {})
+        if not package_components:
+            package_components = {}
+            
+        payslip_data = {
+            'success': True,
+            'employee': {
+                'employee_id': str(sap_data.get('EMPLOYEECODE', employee_id)),
+                'first_name': str(sap_data.get('FIRSTNAME', '')),
+                'surname': str(sap_data.get('SURNAME', '')),
+                'grade_band': str(sap_data.get('BAND', 'O-Q')),
+                'department': str(sap_data.get('DEPARTMENT', 'General')),
+                'job_title': str(sap_data.get('JOBLONG', 'Employee')),
+                'basic_salary': safe_float(sap_data.get('TPE', 0)),
+                'ctc': safe_float(sap_data.get('CTC', 0))
+            },
+            'payslip': {
+                'basic_salary': safe_float(package_components.get('basic_salary', 0)),
+                'car_allowance': safe_float(package_components.get('car_allowance', 0)),
+                'cellphone_allowance': safe_float(package_components.get('cellphone_allowance', 0)),
+                'data_service_allowance': safe_float(package_components.get('data_service_allowance', 0)),
+                'housing_allowance': safe_float(package_components.get('housing_allowance', 0)),
+                'provident_fund': safe_float(package_components.get('provident_fund', 0)),
+                'medical_aid': safe_float(package_components.get('medical_aid', 0)),
+                'bonus': safe_float(package_components.get('bonus', 0)),
+                'current_tctc': safe_float(package.get('current_tctc', 0)),
+                'tctc_limit': safe_float(package.get('tctc_limit', 0))
+            }
+        }
+        
+        # Calculate bonus provision (monthly amount deducted from package)
+        bonus_provision_monthly = payslip_data['payslip']['bonus'] / 12 if payslip_data['payslip']['bonus'] > 0 else 0
+        
+        # Calculate total monthly earnings
+        total_monthly = (payslip_data['payslip']['basic_salary'] + 
+                        payslip_data['payslip']['car_allowance'] + 
+                        payslip_data['payslip']['cellphone_allowance'] + 
+                        payslip_data['payslip']['data_service_allowance'] + 
+                        payslip_data['payslip']['housing_allowance'] + 
+                        payslip_data['payslip']['medical_aid'] + 
+                        bonus_provision_monthly)
+        
+        # Calculate net pay (basic salary - deductions)
+        net_pay = payslip_data['payslip']['basic_salary'] - payslip_data['payslip']['provident_fund']
+        
+        payslip_data['payslip']['bonus_provision_monthly'] = bonus_provision_monthly
+        payslip_data['payslip']['total_monthly_earnings'] = total_monthly
+        payslip_data['payslip']['net_pay'] = net_pay
+        
+        return jsonify(payslip_data)
+        
+    except Exception as e:
+        logger.error(f"Error getting employee payslip for {employee_id}: {str(e)}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+# ============================================================================
+# SMTP CONFIGURATION FUNCTIONS
+# ============================================================================
+
+def load_smtp_settings():
+    """Load SMTP settings from file"""
+    smtp_file = 'smtp_settings.json'
+    try:
+        if os.path.exists(smtp_file):
+            with open(smtp_file, 'r') as f:
+                return json.load(f)
+        return None
+    except Exception as e:
+        logger.error(f"Error loading SMTP settings: {e}")
+        return None
+
+def save_smtp_settings(settings):
+    """Save SMTP settings to file"""
+    smtp_file = 'smtp_settings.json'
+    try:
+        with open(smtp_file, 'w') as f:
+            json.dump(settings, f, indent=2)
+        return True
+    except Exception as e:
+        logger.error(f"Error saving SMTP settings: {e}")
+        return False
+
+# ===== SYSTEM SECURITY FUNCTIONS =====
+def load_security_settings():
+    """Load system security settings from file"""
+    security_file = 'security_settings.json'
+    try:
+        if os.path.exists(security_file):
+            with open(security_file, 'r') as f:
+                return json.load(f)
+        # Return default settings
+        return {
+            'password_policy': {
+                'min_length': 8,
+                'require_uppercase': True,
+                'require_lowercase': True,
+                'require_numbers': True,
+                'require_special': True,
+                'max_age_days': 90
+            },
+            'session_policy': {
+                'timeout_minutes': 30,
+                'max_concurrent_sessions': 3,
+                'require_2fa': False
+            },
+            'access_policy': {
+                'max_login_attempts': 5,
+                'lockout_duration_minutes': 15,
+                'audit_logging': True
+            }
+        }
+    except Exception as e:
+        logger.error(f"Error loading security settings: {e}")
+        return None
+
+def save_security_settings(settings):
+    """Save system security settings to file"""
+    security_file = 'security_settings.json'
+    try:
+        with open(security_file, 'w') as f:
+            json.dump(settings, f, indent=2)
+        return True
+    except Exception as e:
+        logger.error(f"Error saving security settings: {e}")
+        return False
+
+# ===== SYSTEM BACKUP FUNCTIONS =====
+def create_system_backup():
+    """Create a complete system backup"""
+    try:
+        # Ensure backups directory exists
+        if not os.path.exists('backups'):
+            os.makedirs('backups')
+            
+        backup_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        backup_data = {
+            'timestamp': backup_timestamp,
+            'created_date': datetime.now().isoformat(),
+            'employee_access': employee_access.get_all_employees(),
+            'employee_packages': package_manager.get_all_packages(),
+            'smtp_settings': load_smtp_settings(),
+            'security_settings': load_security_settings()
+        }
+        
+        backup_filename = f'system_backup_{backup_timestamp}.json'
+        backup_path = os.path.join('backups', backup_filename)
+        
+        with open(backup_path, 'w') as f:
+            json.dump(backup_data, f, indent=2)
+        
+        logger.info(f"System backup created: {backup_filename}")
+        return backup_filename
+    except Exception as e:
+        logger.error(f"Error creating system backup: {e}")
+        return None
+
+def get_backup_list():
+    """Get list of available system backups"""
+    try:
+        backups = []
+        if os.path.exists('backups'):
+            for filename in os.listdir('backups'):
+                if filename.startswith('system_backup_') and filename.endswith('.json'):
+                    filepath = os.path.join('backups', filename)
+                    stat = os.stat(filepath)
+                    backups.append({
+                        'filename': filename,
+                        'size': round(stat.st_size / 1024, 2),  # Size in KB
+                        'created': datetime.fromtimestamp(stat.st_ctime).strftime('%Y-%m-%d %H:%M:%S')
+                    })
+        return sorted(backups, key=lambda x: x['created'], reverse=True)
+    except Exception as e:
+        logger.error(f"Error getting backup list: {e}")
+        return []
+
+def restore_system_backup(backup_filename):
+    """Restore system from backup file"""
+    try:
+        backup_path = os.path.join('backups', backup_filename)
+        if not os.path.exists(backup_path):
+            return False, "Backup file not found"
+            
+        with open(backup_path, 'r') as f:
+            backup_data = json.load(f)
+        
+        # Restore employee access data
+        with open('employee_access.json', 'w') as f:
+            json.dump(backup_data.get('employee_access', []), f, indent=2)
+            
+        # Restore employee packages data
+        with open('employee_packages.json', 'w') as f:
+            json.dump(backup_data.get('employee_packages', []), f, indent=2)
+            
+        # Restore SMTP settings
+        if backup_data.get('smtp_settings'):
+            save_smtp_settings(backup_data['smtp_settings'])
+            
+        # Restore security settings
+        if backup_data.get('security_settings'):
+            save_security_settings(backup_data['security_settings'])
+        
+        logger.info(f"System restored from backup: {backup_filename}")
+        return True, "System successfully restored"
+    except Exception as e:
+        logger.error(f"Error restoring backup: {e}")
+        return False, f"Error restoring backup: {str(e)}"
+
+# ===== SYSTEM ANALYTICS FUNCTIONS =====
+def get_system_analytics():
+    """Calculate and return system analytics data"""
+    try:
+        # Get current data
+        all_employees = employee_access.get_all_employees()
+        all_packages = package_manager.get_all_packages()
+        
+        # Calculate analytics
+        analytics = {
+            'user_stats': {
+                'total_users': len(all_employees),
+                'active_packages': len(all_packages),
+                'completion_rate': round((len(all_packages) / max(len(all_employees), 1)) * 100, 1) if all_employees else 0
+            },
+            'system_stats': {
+                'uptime_days': 30,  # This would be calculated from actual system start time
+                'total_logins_today': len(all_employees) * 2,  # Simulated data
+                'avg_session_duration': 25,  # minutes - simulated
+                'peak_usage_hour': '14:00',
+                'server_status': 'Running',
+                'last_backup': get_last_backup_date()
+            },
+            'package_stats': calculate_package_statistics(all_packages),
+            'monthly_trends': get_monthly_trends()
+        }
+        return analytics
+    except Exception as e:
+        logger.error(f"Error calculating analytics: {e}")
+        return {
+            'user_stats': {'total_users': 0, 'active_packages': 0, 'completion_rate': 0},
+            'system_stats': {'uptime_days': 0, 'total_logins_today': 0, 'avg_session_duration': 0, 'peak_usage_hour': '00:00', 'server_status': 'Unknown', 'last_backup': 'Never'},
+            'package_stats': {'total_packages': 0, 'avg_tctc': 0, 'highest_tctc': 0, 'lowest_tctc': 0},
+            'monthly_trends': []
+        }
+
+def calculate_package_statistics(packages):
+    """Calculate package-related statistics"""
+    if not packages:
+        return {
+            'total_packages': 0,
+            'avg_tctc': 0,
+            'highest_tctc': 0,
+            'lowest_tctc': 0,
+            'avg_deductions': 0,
+            'most_common_benefits': []
+        }
+    
+    tctc_values = [float(p.get('tctc', 0)) for p in packages if p.get('tctc')]
+    
+    return {
+        'total_packages': len(packages),
+        'avg_tctc': round(sum(tctc_values) / len(tctc_values), 2) if tctc_values else 0,
+        'highest_tctc': max(tctc_values) if tctc_values else 0,
+        'lowest_tctc': min(tctc_values) if tctc_values else 0,
+        'avg_deductions': round(sum([float(p.get('total_deductions', 0)) for p in packages]) / len(packages), 2),
+        'most_common_benefits': ['Medical Aid', 'Provident Fund', 'Car Allowance']  # This would be calculated from actual data
+    }
+
+def get_last_backup_date():
+    """Get the date of the most recent backup"""
+    try:
+        backups = get_backup_list()
+        return backups[0]['created'] if backups else 'Never'
+    except:
+        return 'Never'
+
+def get_monthly_trends():
+    """Get monthly usage trends (simulated data for now)"""
+    return [
+        {'month': 'Jan', 'users': 45, 'packages': 42},
+        {'month': 'Feb', 'users': 48, 'packages': 46},
+        {'month': 'Mar', 'users': 52, 'packages': 49},
+        {'month': 'Apr', 'users': 55, 'packages': 52},
+        {'month': 'May', 'users': 58, 'packages': 55},
+        {'month': 'Jun', 'users': 62, 'packages': 59}
+    ]
+
+@app.route('/api/smtp/test', methods=['POST'])
+def test_smtp_connection_superadmin():
+    """Test SMTP connection and send test email"""
+    if not session.get('isSuperAdmin'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        data = request.get_json()
+        
+        # Extract SMTP settings
+        host = data.get('smtp_host')
+        port = int(data.get('smtp_port', 587))
+        username = data.get('smtp_username')
+        password = data.get('smtp_password')
+        security = data.get('smtp_security', 'tls')
+        from_name = data.get('smtp_from_name', 'Rand Water SmartHR')
+        
+        if not all([host, username, password]):
+            return jsonify({'error': 'Missing required SMTP settings'}), 400
+        
+        # Create test email
+        msg = MIMEMultipart()
+        msg['From'] = f"{from_name} <{username}>"
+        msg['To'] = username
+        msg['Subject'] = "SMTP Test - Rand Water SmartHR"
+        
+        body = f"""
+        SMTP Configuration Test Successful!
+        
+        This is a test email to verify your SMTP configuration for Rand Water SmartHR.
+        
+        Configuration Details:
+        - SMTP Host: {host}
+        - Port: {port}
+        - Security: {security.upper()}
+        - From: {from_name}
+        
+        If you received this email, your SMTP configuration is working correctly.
+        
+        Best regards,
+        Rand Water SmartHR System
+        """
+        
+        msg.attach(MIMEText(body, 'plain'))
+        
+        # Connect and send
+        if security == 'ssl':
+            server = smtplib.SMTP_SSL(host, port)
+        else:
+            server = smtplib.SMTP(host, port)
+            if security == 'tls':
+                server.starttls()
+        
+        server.login(username, password)
+        server.send_message(msg)
+        server.quit()
+        
+        return jsonify({'success': True, 'message': 'Test email sent successfully'})
+        
+    except Exception as e:
+        logger.error(f"SMTP test failed: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/smtp/save', methods=['POST'])
+def save_smtp_config():
+    """Save SMTP configuration"""
+    if not session.get('isSuperAdmin'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        data = request.get_json()
+        
+        # Validate required fields
+        required_fields = ['smtp_host', 'smtp_port', 'smtp_username', 'smtp_password']
+        for field in required_fields:
+            if not data.get(field):
+                return jsonify({'error': f'Missing required field: {field}'}), 400
+        
+        # Prepare settings
+        smtp_settings = {
+            'host': data.get('smtp_host'),
+            'port': int(data.get('smtp_port')),
+            'username': data.get('smtp_username'),
+            'password': data.get('smtp_password'),  # In production, encrypt this
+            'security': data.get('smtp_security', 'tls'),
+            'from_name': data.get('smtp_from_name', 'Rand Water SmartHR'),
+            'enable_notifications': data.get('enable_notifications', False),
+            'enable_reports': data.get('enable_reports', False),
+            'enable_alerts': data.get('enable_alerts', False),
+            'updated_date': datetime.now().isoformat(),
+            'updated_by': session.get('superadmin_username', 'Unknown')
+        }
+        
+        # Save settings
+        if save_smtp_settings(smtp_settings):
+            return jsonify({'success': True, 'message': 'SMTP settings saved successfully'})
+        else:
+            return jsonify({'error': 'Failed to save SMTP settings'}), 500
+            
+    except Exception as e:
+        logger.error(f"Error saving SMTP settings: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# ===== SYSTEM SECURITY API ROUTES =====
+@app.route('/api/security/save', methods=['POST'])
+def save_security_config():
+    """Save system security configuration"""
+    if not session.get('isSuperAdmin'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        data = request.get_json()
+        
+        # Save security settings
+        if save_security_settings(data):
+            return jsonify({'success': True, 'message': 'Security settings saved successfully'})
+        else:
+            return jsonify({'error': 'Failed to save security settings'}), 500
+            
+    except Exception as e:
+        logger.error(f"Error saving security settings: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# ===== PENSION & GROUP LIFE CONFIG API ROUTES =====
+@app.route('/api/pension-config/get', methods=['GET'])
+def get_pension_config():
+    """Get pension and group life configuration"""
+    if not session.get('isSuperAdmin'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        with open('pension_config.json', 'r') as f:
+            config = json.load(f)
+        return jsonify({'success': True, 'config': config})
+    except Exception as e:
+        logger.error(f"Error loading pension config: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/pension-config/save', methods=['POST'])
+def save_pension_config():
+    """Save pension and group life configuration"""
+    if not session.get('isSuperAdmin'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        data = request.get_json()
+        
+        # Update last_updated timestamp
+        data['last_updated'] = datetime.now().isoformat()
+        data['updated_by'] = session.get('username', 'superadmin')
+        
+        # Save to file
+        with open('pension_config.json', 'w') as f:
+            json.dump(data, f, indent=2)
+        
+        logger.info(f"Pension config updated by {data['updated_by']}")
+        return jsonify({'success': True, 'message': 'Configuration saved successfully'})
+        
+    except Exception as e:
+        logger.error(f"Error saving pension config: {e}")
+        return jsonify({'error': str(e)}), 500
+
+# ===== SYSTEM BACKUP API ROUTES =====
+@app.route('/api/backup/create', methods=['POST'])
+def create_backup():
+    """Create a new system backup"""
+    if not session.get('isSuperAdmin'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        backup_filename = create_system_backup()
+        if backup_filename:
+            return jsonify({'success': True, 'filename': backup_filename, 'message': 'Backup created successfully'})
+        else:
+            return jsonify({'error': 'Failed to create backup'}), 500
+            
+    except Exception as e:
+        logger.error(f"Error creating backup: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/backup/restore', methods=['POST'])
+def restore_backup():
+    """Restore system from backup"""
+    if not session.get('isSuperAdmin'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        data = request.get_json()
+        backup_filename = data.get('filename')
+        
+        if not backup_filename:
+            return jsonify({'error': 'Backup filename required'}), 400
+            
+        success, message = restore_system_backup(backup_filename)
+        if success:
+            return jsonify({'success': True, 'message': message})
+        else:
+            return jsonify({'error': message}), 500
+            
+    except Exception as e:
+        logger.error(f"Error restoring backup: {e}")
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/backup/download/<filename>')
+def download_backup(filename):
+    """Download a backup file"""
+    if not session.get('isSuperAdmin'):
+        return jsonify({'error': 'Unauthorized'}), 401
+    
+    try:
+        backup_path = os.path.join('backups', filename)
+        if os.path.exists(backup_path):
+            return send_file(backup_path, as_attachment=True)
+        else:
+            return jsonify({'error': 'Backup file not found'}), 404
+            
+    except Exception as e:
+        logger.error(f"Error downloading backup: {e}")
+        return jsonify({'error': str(e)}), 500
+
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    app.run(debug=False, host='0.0.0.0', port=5001)

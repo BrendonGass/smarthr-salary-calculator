@@ -195,6 +195,16 @@
       margin-left: 0.5rem;
     }
     
+    .error-badge {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      border-radius: 4px;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.8rem;
+      margin-left: 0.5rem;
+    }
+    
     .table-actions {
       display: flex;
       gap: 0.5rem;
@@ -592,6 +602,148 @@
         </button>
       </div>
     </div>
+
+    <!-- SMTP Email Configuration -->
+    <div class="table-section">
+      <h5>
+        <i class="fas fa-envelope"></i>
+        SMTP Email Configuration
+        <span class="warning-badge">System Settings</span>
+      </h5>
+      <div class="table-description">
+        <strong>Purpose:</strong> Configure email server settings for sending notifications and reports | 
+        <strong>Status:</strong> <span id="smtp-status" class="success-badge">{{ 'Connected' if smtp_settings and smtp_settings.host else 'Not Configured' }}</span>
+      </div>
+      
+      <form id="smtpForm">
+        <div class="row">
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-info text-white">
+                <h6 class="mb-0"><i class="fas fa-server"></i> Server Configuration</h6>
+              </div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label for="smtp_host" class="form-label">SMTP Host</label>
+                  <input type="text" class="form-control" id="smtp_host" name="smtp_host" 
+                         value="{{ smtp_settings.host if smtp_settings else '' }}" 
+                         placeholder="smtp.gmail.com">
+                  <small class="form-text text-muted">Your email provider's SMTP server address</small>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="smtp_port" class="form-label">Port</label>
+                  <select class="form-select" id="smtp_port" name="smtp_port">
+                    <option value="587" {{ 'selected' if smtp_settings and smtp_settings.port == 587 else '' }}>587 (TLS)</option>
+                    <option value="465" {{ 'selected' if smtp_settings and smtp_settings.port == 465 else '' }}>465 (SSL)</option>
+                    <option value="25" {{ 'selected' if smtp_settings and smtp_settings.port == 25 else '' }}>25 (Unsecured)</option>
+                  </select>
+                  <small class="form-text text-muted">Common ports: 587 (TLS), 465 (SSL), 25 (Unsecured)</small>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="smtp_security" class="form-label">Security</label>
+                  <select class="form-select" id="smtp_security" name="smtp_security">
+                    <option value="tls" {{ 'selected' if smtp_settings and smtp_settings.security == 'tls' else '' }}>TLS/STARTTLS</option>
+                    <option value="ssl" {{ 'selected' if smtp_settings and smtp_settings.security == 'ssl' else '' }}>SSL</option>
+                    <option value="none" {{ 'selected' if smtp_settings and smtp_settings.security == 'none' else '' }}>None</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6">
+            <div class="card">
+              <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0"><i class="fas fa-user-lock"></i> Authentication</h6>
+              </div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label for="smtp_username" class="form-label">Username/Email</label>
+                  <input type="email" class="form-control" id="smtp_username" name="smtp_username" 
+                         value="{{ smtp_settings.username if smtp_settings else '' }}" 
+                         placeholder="your-email@domain.com">
+                  <small class="form-text text-muted">Your email address for authentication</small>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="smtp_password" class="form-label">Password/App Password</label>
+                  <input type="password" class="form-control" id="smtp_password" name="smtp_password" 
+                         value="{{ smtp_settings.password if smtp_settings else '' }}" 
+                         placeholder="Enter password or app password">
+                  <small class="form-text text-muted">Use App Password for Gmail/Office365</small>
+                </div>
+                
+                <div class="mb-3">
+                  <label for="smtp_from_name" class="form-label">From Name</label>
+                  <input type="text" class="form-control" id="smtp_from_name" name="smtp_from_name" 
+                         value="{{ smtp_settings.from_name if smtp_settings else 'Rand Water SmartHR' }}" 
+                         placeholder="Rand Water SmartHR">
+                  <small class="form-text text-muted">Display name for outgoing emails</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="row mt-3">
+          <div class="col-md-12">
+            <div class="card">
+              <div class="card-header bg-success text-white">
+                <h6 class="mb-0"><i class="fas fa-cog"></i> Email Settings</h6>
+              </div>
+              <div class="card-body">
+                <div class="row">
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">
+                        <input type="checkbox" id="enable_notifications" name="enable_notifications" 
+                               {{ 'checked' if smtp_settings and smtp_settings.enable_notifications else '' }}>
+                        Enable Email Notifications
+                      </label>
+                      <small class="form-text text-muted">Send automatic notifications to employees</small>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">
+                        <input type="checkbox" id="enable_reports" name="enable_reports" 
+                               {{ 'checked' if smtp_settings and smtp_settings.enable_reports else '' }}>
+                        Enable Email Reports
+                      </label>
+                      <small class="form-text text-muted">Send periodic reports to admins</small>
+                    </div>
+                  </div>
+                  <div class="col-md-4">
+                    <div class="mb-3">
+                      <label class="form-label">
+                        <input type="checkbox" id="enable_alerts" name="enable_alerts" 
+                               {{ 'checked' if smtp_settings and smtp_settings.enable_alerts else '' }}>
+                        Enable System Alerts
+                      </label>
+                      <small class="form-text text-muted">Send alerts for system issues</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+      
+      <div class="mt-3">
+        <button class="btn btn-primary" onclick="testSMTPConnection()">
+          <i class="fas fa-paper-plane"></i> Test Connection
+        </button>
+        <button class="btn btn-success ms-2" onclick="saveSMTPSettings()">
+          <i class="fas fa-save"></i> Save SMTP Settings
+        </button>
+        <button class="btn btn-secondary ms-2" onclick="resetSMTPSettings()">
+          <i class="fas fa-undo"></i> Reset to Defaults
+        </button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -652,6 +804,92 @@
       }
     }
     
+    // SMTP Configuration Functions
+    function testSMTPConnection() {
+      const formData = new FormData(document.getElementById('smtpForm'));
+      const smtpData = Object.fromEntries(formData);
+      
+      // Show loading state
+      const testBtn = document.querySelector('[onclick="testSMTPConnection()"]');
+      const originalText = testBtn.innerHTML;
+      testBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+      testBtn.disabled = true;
+      
+      // Send test request
+      fetch('/api/smtp/test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(smtpData)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('✅ SMTP connection successful!\n\nTest email sent to: ' + smtpData.smtp_username);
+          document.getElementById('smtp-status').textContent = 'Connected';
+          document.getElementById('smtp-status').className = 'success-badge';
+        } else {
+          alert('❌ SMTP connection failed!\n\nError: ' + data.error);
+          document.getElementById('smtp-status').textContent = 'Connection Failed';
+          document.getElementById('smtp-status').className = 'error-badge';
+        }
+      })
+      .catch(error => {
+        alert('❌ Error testing connection: ' + error.message);
+        document.getElementById('smtp-status').textContent = 'Connection Error';
+        document.getElementById('smtp-status').className = 'error-badge';
+      })
+      .finally(() => {
+        // Restore button state
+        testBtn.innerHTML = originalText;
+        testBtn.disabled = false;
+      });
+    }
+    
+    function saveSMTPSettings() {
+      const formData = new FormData(document.getElementById('smtpForm'));
+      const smtpData = Object.fromEntries(formData);
+      
+      // Include checkbox states
+      smtpData.enable_notifications = document.getElementById('enable_notifications').checked;
+      smtpData.enable_reports = document.getElementById('enable_reports').checked;
+      smtpData.enable_alerts = document.getElementById('enable_alerts').checked;
+      
+      fetch('/api/smtp/save', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(smtpData)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('✅ SMTP settings saved successfully!');
+          document.getElementById('smtp-status').textContent = 'Configured';
+          document.getElementById('smtp-status').className = 'success-badge';
+        } else {
+          alert('❌ Failed to save SMTP settings: ' + data.error);
+        }
+      })
+      .catch(error => {
+        alert('❌ Error saving settings: ' + error.message);
+      });
+    }
+    
+    function resetSMTPSettings() {
+      if (confirm('Are you sure you want to reset SMTP settings to default values? This will clear all current settings.')) {
+        document.getElementById('smtpForm').reset();
+        document.getElementById('smtp_from_name').value = 'Rand Water SmartHR';
+        document.getElementById('smtp_port').value = '587';
+        document.getElementById('smtp_security').value = 'tls';
+        document.getElementById('smtp-status').textContent = 'Not Configured';
+        document.getElementById('smtp-status').className = 'warning-badge';
+        alert('SMTP settings reset to defaults. Remember to save changes.');
+      }
+    }
+
     // Initialize page
     document.addEventListener('DOMContentLoaded', function() {
       console.log('Calculation Tables Management loaded');

@@ -300,6 +300,13 @@
           <small class="text-muted">Locked - cannot be changed</small>
         </div>
         
+        <!-- SAP Allowances (Locked from SAP) -->
+        <div class="mb-3">
+          <label class="form-label fw-bold text-primary">Rand Water SAP Allowances:</label>
+          <div id="sap-allowances-list"></div>
+          <small class="text-muted">Locked - loaded from SAP data</small>
+        </div>
+        
         <!-- Additional Allowances (Editable) -->
         <div class="mb-3">
           <label class="form-label fw-bold text-success">Additional Allowances:</label>
@@ -309,7 +316,6 @@
               <select id="allowance-dropdown" class="form-select">
                 <option value="">Select allowance to add</option>
                 <option value="Travel Allowance">Travel Allowance</option>
-                <option value="Cellphone Allowance">Cellphone Allowance</option>
                 <option value="Internet Allowance">Internet Allowance</option>
                 <option value="Entertainment Allowance">Entertainment Allowance</option>
                 <option value="Other">Other</option>
@@ -655,16 +661,16 @@ function loadRandWaterDemoData() {
 }
 
 function populateRandWaterSAPAllowances(allowances) {
-  const container = document.getElementById('allowances-list');
+  const container = document.getElementById('sap-allowances-list');
   container.innerHTML = '';
   
   allowances.forEach(allowance => {
     const item = document.createElement('div');
-    item.className = 'mb-2 p-2 bg-light border rounded';
+    item.className = 'mb-2 p-2 bg-light border rounded locked-field';
     item.innerHTML = `
       <div class="d-flex justify-content-between align-items-center">
         <span class="fw-bold">${allowance.name}:</span>
-        <span class="text-success">R ${formatCurrency(allowance.amount)}</span>
+        <span class="text-primary amount-display">R ${formatCurrency(allowance.amount)}</span>
       </div>
     `;
     container.appendChild(item);
@@ -677,11 +683,11 @@ function populateRandWaterSAPDeductions(deductions) {
   
   deductions.forEach(deduction => {
     const item = document.createElement('div');
-    item.className = 'mb-2 p-2 bg-light border rounded';
+    item.className = 'mb-2 p-2 bg-light border rounded locked-field';
     item.innerHTML = `
       <div class="d-flex justify-content-between align-items-center">
         <span class="fw-bold">${deduction.name}:</span>
-        <span class="text-danger">R ${formatCurrency(deduction.amount)}</span>
+        <span class="text-danger amount-display">R ${formatCurrency(deduction.amount)}</span>
       </div>
     `;
     container.appendChild(item);
@@ -694,11 +700,11 @@ function populateRandWaterSAPEmployer(contributions) {
   
   contributions.forEach(contribution => {
     const item = document.createElement('div');
-    item.className = 'mb-2 p-2 bg-light border rounded';
+    item.className = 'mb-2 p-2 bg-light border rounded locked-field';
     item.innerHTML = `
       <div class="d-flex justify-content-between align-items-center">
         <span class="fw-bold">${contribution.name}:</span>
-        <span class="text-warning">R ${formatCurrency(contribution.amount)}</span>
+        <span class="text-warning amount-display">R ${formatCurrency(contribution.amount)}</span>
       </div>
     `;
     container.appendChild(item);
@@ -715,7 +721,7 @@ function populateRandWaterBenefits(benefits) {
     item.innerHTML = `
       <div class="d-flex justify-content-between align-items-center">
         <span class="fw-bold">${benefit.name}:</span>
-        <span class="text-warning">R ${formatCurrency(benefit.amount)}</span>
+        <span class="text-warning amount-display">R ${formatCurrency(benefit.amount)}</span>
       </div>
     `;
     container.appendChild(item);
@@ -780,26 +786,61 @@ function updateRandWaterTotals() {
   // Calculate totals based on all Rand Water components
   const basicSalary = parseFloat(document.getElementById('basic_salary').value) || 0;
   
-  // Calculate additional allowances
-  const additionalAllowances = Array.from(document.querySelectorAll('#additional-employer-list .text-success'))
+  // Calculate allowances from SAP and additional allowances
+  const sapAllowances = Array.from(document.querySelectorAll('#sap-allowances-list .amount-display'))
     .map(el => parseFloat(el.textContent.replace('R ', '').replace(',', '')) || 0);
   
-  const totalEarnings = basicSalary + additionalAllowances.reduce((sum, val) => sum + val, 0);
+  const additionalAllowances = Array.from(document.querySelectorAll('#allowances-list .amount-display'))
+    .map(el => parseFloat(el.textContent.replace('R ', '').replace(',', '')) || 0);
   
-  // Update display
+  // Gross allowances (car + cash + housing + cellphone + data service + critical skills)
+  const grossAllowances = sapAllowances.reduce((sum, val) => sum + val, 0) + 
+                         additionalAllowances.reduce((sum, val) => sum + val, 0);
+  
+  // Total earnings (basic salary + allowances) for display and UIF calculation
+  const totalEarnings = basicSalary + grossAllowances;
+  
+  // Update display - show total earnings
   document.getElementById('total-earnings').textContent = formatCurrency(totalEarnings);
   
-  // Similar calculations for deductions, employer contributions, and Rand Water benefits...
+  // Calculate deductions
+  const sapDeductions = Array.from(document.querySelectorAll('#sap-deductions-list .amount-display'))
+    .map(el => parseFloat(el.textContent.replace('R ', '').replace(',', '')) || 0);
   
-  // Calculate net pay
-  const totalDeductions = 0; // Calculate from all deduction sources
+  const additionalDeductions = Array.from(document.querySelectorAll('#deductions-list .amount-display'))
+    .map(el => parseFloat(el.textContent.replace('R ', '').replace(',', '')) || 0);
+  
+  const totalDeductions = sapDeductions.reduce((sum, val) => sum + val, 0) + 
+                         additionalDeductions.reduce((sum, val) => sum + val, 0);
+  
+  // Calculate employer contributions
+  const sapEmployer = Array.from(document.querySelectorAll('#sap-employer-list .amount-display'))
+    .map(el => parseFloat(el.textContent.replace('R ', '').replace(',', '')) || 0);
+  
+  const additionalEmployer = Array.from(document.querySelectorAll('#additional-employer-list .amount-display'))
+    .map(el => parseFloat(el.textContent.replace('R ', '').replace(',', '')) || 0);
+  
+  const totalEmployer = sapEmployer.reduce((sum, val) => sum + val, 0) + 
+                       additionalEmployer.reduce((sum, val) => sum + val, 0);
+  
+  // Calculate Rand Water benefits
+  const randwaterBenefits = Array.from(document.querySelectorAll('#randwater-benefits-list .amount-display'))
+    .map(el => parseFloat(el.textContent.replace('R ', '').replace(',', '')) || 0);
+  
+  const totalRandwaterBenefits = randwaterBenefits.reduce((sum, val) => sum + val, 0);
+  
+  // Calculate net pay: Total earnings - total deductions
   const netPay = totalEarnings - totalDeductions;
   document.getElementById('net_pay_val').textContent = formatCurrency(netPay);
   
-  // Calculate CTC
-  const totalEmployer = 0; // Calculate from all employer sources
+  // Calculate CTC: Total earnings + employer contributions
   const ctc = totalEarnings + totalEmployer;
   document.getElementById('ctc_total_val').textContent = formatCurrency(ctc);
+  
+  // Update other totals
+  document.getElementById('total-deductions').textContent = formatCurrency(totalDeductions);
+  document.getElementById('total-employer').textContent = formatCurrency(totalEmployer);
+  document.getElementById('total-randwater-benefits').textContent = formatCurrency(totalRandwaterBenefits);
 }
 
 function updateRandWaterStatus(status) {

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Security - Rand Water</title>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --randwater-primary: #0066CC;
+            --randwater-secondary: #00A3E0;
+            --randwater-accent: #FF6600;
+            --randwater-dark: #003366;
+            --randwater-light: #E6F3FF;
+        }
+        
+        body {
+            font-family: 'Ubuntu', sans-serif;
+            background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,102,204,0.2);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .content-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 2rem 0;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .section-title {
+            color: var(--randwater-primary);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-label {
+            font-weight: 600;
+            color: var(--randwater-dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .form-control {
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            padding: 0.75rem;
+            transition: border-color 0.3s ease;
+        }
+        
+        .form-control:focus {
+            border-color: var(--randwater-primary);
+            box-shadow: 0 0 0 0.2rem rgba(0,102,204,0.25);
+        }
+        
+        .form-check-input:checked {
+            background-color: var(--randwater-primary);
+            border-color: var(--randwater-primary);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+            border: none;
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,102,204,0.4);
+        }
+        
+        .alert {
+            border-radius: 8px;
+            border: none;
+        }
+        
+        .security-section {
+            border: 1px solid #e0e6ed;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .security-section h5 {
+            color: var(--randwater-primary);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <img src="{{ config.company_logo }}" alt="Rand Water" style="max-height: 50px;">
+                    <div>
+                        <h2 class="mb-0" style="color: var(--randwater-primary); font-weight: 700;">System Security</h2>
+                        <small class="text-muted">Configure security policies and access controls</small>
+                    </div>
+                </div>
+                <a href="{{ url_for('super_admin_dashboard') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="content-card">
+            <div id="alertContainer"></div>
+            
+            <!-- Password Policy Section -->
+            <div class="security-section">
+                <h5><i class="fas fa-key me-2"></i>Password Policy</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Minimum Password Length</label>
+                            <input type="number" class="form-control" id="minLength" 
+                                   value="{{ security_settings.password_policy.min_length }}" min="6" max="20">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Password Expiry (Days)</label>
+                            <input type="number" class="form-control" id="maxAgeDays" 
+                                   value="{{ security_settings.password_policy.max_age_days }}" min="30" max="365">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Password Requirements</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="requireUppercase" 
+                                       {% if security_settings.password_policy.require_uppercase %}checked{% endif %}>
+                                <label class="form-check-label" for="requireUppercase">
+                                    Require uppercase letters
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="requireLowercase" 
+                                       {% if security_settings.password_policy.require_lowercase %}checked{% endif %}>
+                                <label class="form-check-label" for="requireLowercase">
+                                    Require lowercase letters
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="requireNumbers" 
+                                       {% if security_settings.password_policy.require_numbers %}checked{% endif %}>
+                                <label class="form-check-label" for="requireNumbers">
+                                    Require numbers
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="requireSpecial" 
+                                       {% if security_settings.password_policy.require_special %}checked{% endif %}>
+                                <label class="form-check-label" for="requireSpecial">
+                                    Require special characters
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Session Management Section -->
+            <div class="security-section">
+                <h5><i class="fas fa-clock me-2"></i>Session Management</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Session Timeout (Minutes)</label>
+                            <input type="number" class="form-control" id="timeoutMinutes" 
+                                   value="{{ security_settings.session_policy.timeout_minutes }}" min="5" max="480">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Max Concurrent Sessions</label>
+                            <input type="number" class="form-control" id="maxConcurrentSessions" 
+                                   value="{{ security_settings.session_policy.max_concurrent_sessions }}" min="1" max="10">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="require2FA" 
+                                       {% if security_settings.session_policy.require_2fa %}checked{% endif %}>
+                                <label class="form-check-label" for="require2FA">
+                                    <strong>Require Two-Factor Authentication</strong>
+                                </label>
+                            </div>
+                            <small class="text-muted">When enabled, users must provide additional verification</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Access Control Section -->
+            <div class="security-section">
+                <h5><i class="fas fa-shield-alt me-2"></i>Access Control</h5>
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <label class="form-label">Max Login Attempts</label>
+                            <input type="number" class="form-control" id="maxLoginAttempts" 
+                                   value="{{ security_settings.access_policy.max_login_attempts }}" min="3" max="10">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Account Lockout Duration (Minutes)</label>
+                            <input type="number" class="form-control" id="lockoutDuration" 
+                                   value="{{ security_settings.access_policy.lockout_duration_minutes }}" min="5" max="60">
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="auditLogging" 
+                                       {% if security_settings.access_policy.audit_logging %}checked{% endif %}>
+                                <label class="form-check-label" for="auditLogging">
+                                    <strong>Enable Audit Logging</strong>
+                                </label>
+                            </div>
+                            <small class="text-muted">Log all user activities and system changes</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="text-center mt-4">
+                <button type="button" class="btn btn-primary" onclick="saveSecuritySettings()">
+                    <i class="fas fa-save"></i> Save Security Settings
+                </button>
+                <button type="button" class="btn btn-outline-secondary ms-3" onclick="resetToDefaults()">
+                    <i class="fas fa-undo"></i> Reset to Defaults
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function saveSecuritySettings() {
+            const settings = {
+                password_policy: {
+                    min_length: parseInt(document.getElementById('minLength').value),
+                    require_uppercase: document.getElementById('requireUppercase').checked,
+                    require_lowercase: document.getElementById('requireLowercase').checked,
+                    require_numbers: document.getElementById('requireNumbers').checked,
+                    require_special: document.getElementById('requireSpecial').checked,
+                    max_age_days: parseInt(document.getElementById('maxAgeDays').value)
+                },
+                session_policy: {
+                    timeout_minutes: parseInt(document.getElementById('timeoutMinutes').value),
+                    max_concurrent_sessions: parseInt(document.getElementById('maxConcurrentSessions').value),
+                    require_2fa: document.getElementById('require2FA').checked
+                },
+                access_policy: {
+                    max_login_attempts: parseInt(document.getElementById('maxLoginAttempts').value),
+                    lockout_duration_minutes: parseInt(document.getElementById('lockoutDuration').value),
+                    audit_logging: document.getElementById('auditLogging').checked
+                }
+            };
+
+            fetch('/api/security/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(settings)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showAlert('Security settings saved successfully!', 'success');
+                } else {
+                    showAlert('Error: ' + (data.error || 'Unknown error'), 'danger');
+                }
+            })
+            .catch(error => {
+                showAlert('Error saving settings: ' + error.message, 'danger');
+            });
+        }
+
+        function resetToDefaults() {
+            if (confirm('Are you sure you want to reset all security settings to defaults?')) {
+                document.getElementById('minLength').value = 8;
+                document.getElementById('maxAgeDays').value = 90;
+                document.getElementById('requireUppercase').checked = true;
+                document.getElementById('requireLowercase').checked = true;
+                document.getElementById('requireNumbers').checked = true;
+                document.getElementById('requireSpecial').checked = true;
+                document.getElementById('timeoutMinutes').value = 30;
+                document.getElementById('maxConcurrentSessions').value = 3;
+                document.getElementById('require2FA').checked = false;
+                document.getElementById('maxLoginAttempts').value = 5;
+                document.getElementById('lockoutDuration').value = 15;
+                document.getElementById('auditLogging').checked = true;
+                
+                showAlert('Settings reset to defaults. Click "Save" to apply changes.', 'info');
+            }
+        }
+
+        function showAlert(message, type) {
+            const alertContainer = document.getElementById('alertContainer');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            alertContainer.appendChild(alert);
+            
+            setTimeout(() => {
+                alert.remove();
+            }, 5000);
+        }
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

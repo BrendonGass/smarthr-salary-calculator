@@ -356,6 +356,7 @@
             <option value="">All Statuses</option>
             <option value="active">Active</option>
             <option value="expired">Expired</option>
+            <option value="revoked">Revoked</option>
             <option value="pending">Pending</option>
           </select>
         </div>
@@ -454,7 +455,7 @@
             </thead>
             <tbody>
               {% for employee in active_employees %}
-              <tr data-grade="{{ employee.grade_band }}" data-status="{{ 'active' if not employee.is_expired else 'expired' }}" data-package="{{ 'submitted' if employee.package_submitted else 'pending' }}">
+              <tr data-grade="{{ employee.grade_band }}" data-status="{{ 'revoked' if employee.access_status == 'REVOKED' else ('active' if not employee.is_expired else 'expired') }}" data-package="{{ 'submitted' if employee.package_submitted else 'pending' }}">
                 <td>
                   <input type="checkbox" class="employee-select" value="{{ employee.employee_id }}" data-username="{{ employee.username }}">
                 </td>
@@ -464,12 +465,14 @@
                 <td>{{ employee.access_granted.split('T')[0] if employee.access_granted else 'N/A' }}</td>
                 <td>{{ employee.access_expires.split('T')[0] if employee.access_expires else 'N/A' }}</td>
                 <td>
-                  {% if employee.access_expires and not employee.is_expired %}
+                  {% if employee.access_status == 'REVOKED' %}
+                    <span class="badge bg-danger">Access Revoked</span>
+                  {% elif employee.access_expires and not employee.is_expired %}
                     <span class="status-badge status-active">
                       Active ({{ employee.days_remaining }} days left)
                     </span>
                   {% else %}
-                    <span class="badge bg-danger">Expired</span>
+                    <span class="badge bg-warning">Expired</span>
                   {% endif %}
                 </td>
                 <td>
@@ -484,7 +487,11 @@
                     <button class="btn btn-sm btn-outline-primary" onclick="viewEmployee('{{ employee.employee_id }}')">
                       <i class="fas fa-eye"></i> View
                     </button>
-                    {% if not employee.is_expired %}
+                    {% if employee.access_status == 'REVOKED' %}
+                      <button class="btn btn-sm btn-outline-success" onclick="grantAccess('{{ employee.employee_id }}')">
+                        <i class="fas fa-key"></i> Restore Access
+                      </button>
+                    {% elif not employee.is_expired %}
                       <button class="btn btn-sm btn-outline-warning" onclick="extendAccess('{{ employee.employee_id }}')">
                         <i class="fas fa-clock"></i> Extend
                       </button>
@@ -660,8 +667,45 @@
       const endDate = document.getElementById('accessEndDate').value;
       
       if (confirm(`Extend access for ${selectedEmployees.length} selected employees from ${startDate} to ${endDate}?`)) {
-        // TODO: Implement API call to extend access
-        alert(`Access extended for ${selectedEmployees.length} employees from ${startDate} to ${endDate}`);
+        // Show loading state
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+        btn.disabled = true;
+        
+        // Call backend API to update access dates
+        fetch('/api/update-employee-access', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            employee_ids: selectedEmployees.map(emp => emp.id),
+            access_granted: startDate,
+            access_expires: endDate,
+            action: 'extend'
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Show success message briefly then reload
+            alert(`Successfully updated access for ${data.updated_count} employees!`);
+            // Force reload immediately after alert
+            window.location.href = window.location.href + '?t=' + Date.now();
+          } else {
+            alert(`Error: ${data.error}`);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error updating access dates. Please try again.');
+        })
+        .finally(() => {
+          // Restore button
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        });
       }
     }
     
@@ -678,8 +722,45 @@
       const endDate = document.getElementById('accessEndDate').value;
       
       if (confirm(`Grant access for ${selectedEmployees.length} selected employees from ${startDate} to ${endDate}?`)) {
-        // TODO: Implement API call to grant access
-        alert(`Access granted for ${selectedEmployees.length} employees from ${startDate} to ${endDate}`);
+        // Show loading state
+        const btn = event.target;
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+        btn.disabled = true;
+        
+        // Call backend API to update access dates
+        fetch('/api/update-employee-access', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            employee_ids: selectedEmployees.map(emp => emp.id),
+            access_granted: startDate,
+            access_expires: endDate,
+            action: 'grant'
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            // Show success message briefly then reload
+            alert(`Successfully updated access for ${data.updated_count} employees!`);
+            // Force reload immediately after alert
+            window.location.href = window.location.href + '?t=' + Date.now();
+          } else {
+            alert(`Error: ${data.error}`);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error updating access dates. Please try again.');
+        })
+        .finally(() => {
+          // Restore button
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+        });
       }
     }
     
@@ -691,60 +772,36 @@
       }
       
       if (confirm(`Revoke access for ${selectedEmployees.length} selected employees? This action cannot be undone.`)) {
-        // TODO: Implement API call to revoke access
-        alert(`Access revoked for ${selectedEmployees.length} employees`);
-      }
-    }
-    
-    function bulkEmailCredentials() {
-      const selectedEmployees = getSelectedEmployees();
-      if (selectedEmployees.length === 0) {
-        alert('Please select employees to email credentials to');
-        return;
-      }
-      
-      if (confirm(`Send login credentials to ${selectedEmployees.length} selected employees?`)) {
         // Show loading state
         const btn = event.target;
         const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Revoking...';
         btn.disabled = true;
         
-        // Call backend API
-        fetch('/admin/randwater/bulk-email-credentials', {
+        // Call backend API to revoke access
+        fetch('/api/revoke-employee-access', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            employee_ids: selectedEmployees.map(emp => emp.id)
+            employee_ids: selectedEmployees.map(emp => emp.id),
+            action: 'revoke'
           })
         })
         .then(response => response.json())
         .then(data => {
           if (data.success) {
-            // Show detailed results
-            let message = data.message + '\n\n';
-            if (data.details) {
-              message += `Total: ${data.details.total_employees}\n`;
-              message += `Successful: ${data.details.successful}\n`;
-              message += `Failed: ${data.details.failed}\n`;
-              
-              if (data.details.failed_details && data.details.failed_details.length > 0) {
-                message += '\nFailed employees:\n';
-                data.details.failed_details.forEach(fail => {
-                  message += `- ${fail.employee_id}: ${fail.error}\n`;
-                });
-              }
-            }
-            alert(message);
+            alert(`Successfully revoked access for ${data.revoked_count} employees!`);
+            // Reload the page to show updated data
+            location.reload();
           } else {
-            alert('❌ Error: ' + data.error);
+            alert(`Error: ${data.error}`);
           }
         })
         .catch(error => {
           console.error('Error:', error);
-          alert('❌ Error sending emails: ' + error.message);
+          alert('Error revoking access. Please try again.');
         })
         .finally(() => {
           // Restore button
@@ -753,6 +810,7 @@
         });
       }
     }
+    
     
     function viewEmployee(employeeId) {
       console.log('viewEmployee called with ID:', employeeId);
@@ -783,9 +841,13 @@
         .then(response => response.json())
         .then(data => {
           console.log('Employee data received:', data);
+          console.log('data.success value:', data.success);
+          console.log('typeof data.success:', typeof data.success);
           if (data.success) {
+            console.log('Calling displayEmployeeDetails with:', data.employee, data.package);
             displayEmployeeDetails(data.employee, data.package);
           } else {
+            console.log('data.success is falsy, showing error. data.error:', data.error);
             content.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
           }
         })
@@ -888,12 +950,34 @@
       }
     }
     
-         function grantAccess(employeeId) {
-       if (confirm('Grant access for employee ' + employeeId + '?')) {
-         // Implement grant access
-         alert('Access granted for: ' + employeeId);
-       }
-     }
+    function grantAccess(employeeId) {
+      if (confirm('Grant/Restore access for employee ' + employeeId + '?')) {
+        // Call the restore access API
+        fetch('/api/restore-employee-access', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            employee_ids: [employeeId]
+          })
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            alert(`Successfully restored access for ${data.restored_count} employee(s)!`);
+            // Force reload immediately after alert
+            window.location.href = window.location.href + '?t=' + Date.now();
+          } else {
+            alert(`Error: ${data.error}`);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error restoring access: ' + error.message);
+        });
+      }
+    }
      
      function generateNewPassword() {
        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -940,6 +1024,291 @@
          }
        }
      }
+     
+     function bulkEmailCredentials() {
+       console.log('Email User Details clicked');
+       
+       // Get all active employees
+       const employees = {{ employees|tojson|safe }};
+       console.log('Total employees:', employees.length);
+       
+       if (!employees || employees.length === 0) {
+         alert('No active employees to email');
+         return;
+       }
+       
+       // Show the email modal
+       const emailModal = new bootstrap.Modal(document.getElementById('emailCredentialsModal'));
+       
+       // Populate the employee list
+       const employeeList = document.getElementById('emailEmployeeList');
+       employeeList.innerHTML = '';
+       
+       employees.forEach((emp, index) => {
+         const row = document.createElement('div');
+         row.className = 'employee-email-row mb-3 p-3 border rounded';
+         row.innerHTML = `
+           <div class="row align-items-center">
+             <div class="col-md-1">
+               <input type="checkbox" class="form-check-input employee-checkbox" id="emp_${emp.employee_id}" value="${emp.employee_id}">
+             </div>
+             <div class="col-md-4">
+               <label for="emp_${emp.employee_id}" class="form-check-label">
+                 <strong>${emp.employee_id}</strong><br/>
+                 <small>${emp.first_name} ${emp.surname}</small><br/>
+                 <small class="text-muted">Band ${emp.grade_band}</small>
+               </label>
+             </div>
+             <div class="col-md-7">
+               <input type="email" class="form-control" id="email_${emp.employee_id}" placeholder="Enter email address" disabled>
+             </div>
+           </div>
+         `;
+         employeeList.appendChild(row);
+         
+         // Enable email input when checkbox is checked
+         const checkbox = row.querySelector(`#emp_${emp.employee_id}`);
+         const emailInput = row.querySelector(`#email_${emp.employee_id}`);
+         
+         checkbox.addEventListener('change', function() {
+           emailInput.disabled = !this.checked;
+           if (!this.checked) {
+             emailInput.value = '';
+           }
+         });
+       });
+       
+       emailModal.show();
+     }
+     
+     function selectAllEmployees() {
+       const checkboxes = document.querySelectorAll('.employee-checkbox');
+       const selectAllBtn = document.getElementById('selectAllBtn');
+       const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+       
+       checkboxes.forEach(checkbox => {
+         checkbox.checked = !allChecked;
+         checkbox.dispatchEvent(new Event('change'));
+       });
+       
+       selectAllBtn.textContent = allChecked ? 'Select All' : 'Deselect All';
+     }
+     
+     function sendCredentialEmails() {
+       console.log('=== SEND CREDENTIAL EMAILS DEBUG START ===');
+       
+       const employees = {{ employees|tojson|safe }};
+       console.log('Available employees:', employees);
+       console.log('Number of employees:', employees.length);
+       
+       const selectedEmployees = [];
+       
+       // Collect selected employees with their email addresses
+       employees.forEach(emp => {
+         console.log(`Processing employee: ${emp.employee_id} (${emp.first_name} ${emp.surname})`);
+         
+         const checkbox = document.getElementById(`emp_${emp.employee_id}`);
+         const emailInput = document.getElementById(`email_${emp.employee_id}`);
+         
+         console.log(`Checkbox element:`, checkbox);
+         console.log(`Email input element:`, emailInput);
+         
+         if (checkbox) {
+           console.log(`Checkbox checked: ${checkbox.checked}`);
+         }
+         
+         if (emailInput) {
+           console.log(`Email input value: "${emailInput.value}"`);
+         }
+         
+         if (checkbox && checkbox.checked) {
+           const email = emailInput.value.trim();
+           console.log(`Employee ${emp.employee_id} is selected with email: "${email}"`);
+           
+           if (!email) {
+             console.error(`Missing email for employee ${emp.employee_id}`);
+             alert(`Please enter an email address for ${emp.employee_id} (${emp.first_name} ${emp.surname})`);
+             throw new Error('Missing email');
+           }
+           
+           // Validate email format
+           const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+           if (!emailRegex.test(email)) {
+             console.error(`Invalid email format for employee ${emp.employee_id}: ${email}`);
+             alert(`Invalid email address for ${emp.employee_id}: ${email}`);
+             throw new Error('Invalid email');
+           }
+           
+           const employeeData = {
+             employee_id: emp.employee_id,
+             first_name: emp.first_name,
+             surname: emp.surname,
+             email: email
+           };
+           
+           console.log(`Adding employee to selected list:`, employeeData);
+           selectedEmployees.push(employeeData);
+         } else {
+           console.log(`Employee ${emp.employee_id} not selected or checkbox not found`);
+         }
+       });
+       
+       console.log('Final selected employees:', selectedEmployees);
+       console.log('Number of selected employees:', selectedEmployees.length);
+       
+       if (selectedEmployees.length === 0) {
+         console.error('No employees selected');
+         alert('Please select at least one employee');
+         return;
+       }
+       
+       // Confirm before sending
+       if (!confirm(`Send login credentials to ${selectedEmployees.length} employee(s)?`)) {
+         console.log('User cancelled email sending');
+         return;
+       }
+       
+       console.log('User confirmed email sending');
+       
+       // Show loading state
+       const sendBtn = document.getElementById('sendEmailBtn');
+       console.log('Send button element:', sendBtn);
+       sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+       sendBtn.disabled = true;
+       
+       const requestData = {
+         employees: selectedEmployees
+       };
+       
+       console.log('Request data being sent:', requestData);
+       console.log('Request URL: /api/send-employee-credentials');
+       console.log('Request method: POST');
+       
+       // Send emails
+       fetch('/api/send-employee-credentials', {
+         method: 'POST',
+         headers: {
+           'Content-Type': 'application/json'
+         },
+         body: JSON.stringify(requestData)
+       })
+       .then(response => {
+         console.log('Response received:', response);
+         console.log('Response status:', response.status);
+         console.log('Response statusText:', response.statusText);
+         console.log('Response headers:', response.headers);
+         
+         // Always try to parse JSON, even for error responses
+         return response.json().then(data => {
+           console.log('Parsed response data:', data);
+           
+           // Display debug information in console
+           if (data.debug) {
+             console.log('=== BACKEND DEBUG INFORMATION ===');
+             data.debug.forEach(debugLine => {
+               console.log(debugLine);
+             });
+             console.log('=== END BACKEND DEBUG ===');
+           }
+           
+           if (!response.ok) {
+             console.error(`HTTP Error: ${response.status} ${response.statusText}`);
+             console.error('Error response data:', data);
+             throw new Error(`HTTP error! status: ${response.status}`);
+           }
+           
+           return data;
+         }).catch(jsonError => {
+           console.error('Failed to parse JSON response:', jsonError);
+           console.log('Response text:', response.text());
+           throw new Error(`Failed to parse response: ${jsonError.message}`);
+         });
+       })
+       .then(data => {
+         console.log('Response data:', data);
+         
+         // Display debug information in console
+         if (data.debug) {
+           console.log('=== BACKEND DEBUG INFORMATION ===');
+           data.debug.forEach(debugLine => {
+             console.log(debugLine);
+           });
+           console.log('=== END BACKEND DEBUG ===');
+         }
+         
+         if (data.success) {
+           console.log('Email sending successful');
+           alert(`Successfully sent credentials to ${data.sent_count} employee(s)!`);
+           
+           // Close modal
+           const modal = bootstrap.Modal.getInstance(document.getElementById('emailCredentialsModal'));
+           modal.hide();
+         } else if (data.message) {
+           console.log('Email sending successful');
+           alert(data.message);
+           
+           // Close modal
+           const modal = bootstrap.Modal.getInstance(document.getElementById('emailCredentialsModal'));
+           modal.hide();
+         } else {
+           console.error('Email sending failed:', data.error);
+           console.error('Failed details:', data.details);
+           alert(`Error: ${data.error}`);
+         }
+       })
+       .catch(error => {
+         console.error('=== SEND CREDENTIAL EMAILS ERROR ===');
+         console.error('Error type:', typeof error);
+         console.error('Error message:', error.message);
+         console.error('Error stack:', error.stack);
+         console.error('Full error object:', error);
+         alert('Failed to send emails. Please try again.');
+       })
+       .finally(() => {
+         console.log('Restoring send button state');
+         sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send Emails';
+         sendBtn.disabled = false;
+         console.log('=== SEND CREDENTIAL EMAILS DEBUG END ===');
+       });
+     }
   </script>
+  
+  <!-- Email Credentials Modal -->
+  <div class="modal fade" id="emailCredentialsModal" tabindex="-1" aria-labelledby="emailCredentialsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title" id="emailCredentialsModalLabel">
+            <i class="fas fa-envelope"></i> Email Employee Credentials
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i> 
+            Select employees and enter their email addresses to send login credentials.
+          </div>
+          
+          <div class="mb-3">
+            <button class="btn btn-sm btn-outline-primary" id="selectAllBtn" onclick="selectAllEmployees()">
+              <i class="fas fa-check-square"></i> Select All
+            </button>
+          </div>
+          
+          <div id="emailEmployeeList">
+            <!-- Employee list will be populated here -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times"></i> Cancel
+          </button>
+          <button type="button" class="btn btn-success" id="sendEmailBtn" onclick="sendCredentialEmails()">
+            <i class="fas fa-paper-plane"></i> Send Emails
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

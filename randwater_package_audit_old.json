@@ -1,0 +1,123 @@
+{
+  "RW770487": [
+    {
+      "timestamp": "2025-08-25T11:05:46.919060",
+      "admin_user": "Unknown Admin",
+      "changes": {
+        "basic_salary": 52868,
+        "paye_tax": 9485.28,
+        "uif_contribution": 526.96,
+        "medical_aid": 1200,
+        "pension_fund": 3952.2,
+        "other_deductions": 0,
+        "total_deductions": 15164.44
+      },
+      "action": "package_update"
+    },
+    {
+      "timestamp": "2025-08-25T12:24:45.852940",
+      "admin_user": "RandWaterAdmin",
+      "changes": {
+        "basic_salary": 55000,
+        "paye_tax": 9485.28,
+        "uif_contribution": 526.96,
+        "medical_aid": 1200,
+        "pension_fund": 3952.2,
+        "other_deductions": 0,
+        "total_deductions": 15164.44
+      },
+      "action": "package_update"
+    },
+    {
+      "timestamp": "2025-08-25T12:29:10.363911",
+      "admin_user": "RandWaterAdmin",
+      "changes": {
+        "basic_salary": 55000,
+        "paye_tax": 9485.28,
+        "uif_contribution": 526.96,
+        "medical_aid": 1000,
+        "pension_fund": 3952.2,
+        "other_deductions": 0,
+        "total_deductions": 14964.44
+      },
+      "action": "package_update"
+    },
+    {
+      "timestamp": "2025-08-25T12:54:49.153316",
+      "admin_user": "Lerato Mokoena",
+      "changes": {
+        "basic_salary": 60000,
+        "medical_aid": 1200,
+        "paye_tax": 10800,
+        "uif_contribution": 177.12,
+        "pension_fund": 4500,
+        "other_deductions": 0,
+        "total_deductions": 16677.12
+      },
+      "action": "package_update"
+    },
+    {
+      "timestamp": "2025-08-25T13:02:53.781513",
+      "admin_user": "Lerato Mokoena",
+      "changes": {
+        "basic_salary": 75000,
+        "medical_aid": 1200,
+        "paye_tax": 20940.299166666668,
+        "uif_contribution": 177.12,
+        "pension_fund": 5625,
+        "other_deductions": 0,
+        "total_deductions": 27942.419166666667,
+        "net_pay": 47057.58083333333
+      },
+      "action": "package_update"
+    },
+    {
+      "timestamp": "2025-08-25T13:08:30.911669",
+      "admin_user": "Lerato Mokoena",
+      "changes": {
+        "basic_salary": 75000,
+        "car_allowance": 15000,
+        "medical_aid": 1200,
+        "paye_tax": 24420.05,
+        "uif_contribution": 177.12,
+        "pension_fund": 5625,
+        "other_deductions": 0,
+        "total_deductions": 31422.17,
+        "total_earnings": 90000,
+        "net_pay": 58577.83
+      },
+      "action": "package_update"
+    },
+    {
+      "timestamp": "2025-08-25T13:17:06.329928",
+      "admin_user": "Lerato Mokoena",
+      "changes": {
+        "basic_salary": 75000,
+        "car_allowance": 15000,
+        "medical_aid": 1200,
+        "paye_tax": 24420.05,
+        "uif_contribution": 177.12,
+        "pension_fund": 5625,
+        "other_deductions": 0,
+        "total_deductions": 31422.17,
+        "total_earnings": 90000,
+        "net_pay": 58577.83
+      },
+      "action": "package_update"
+    },
+    {
+      "timestamp": "2025-08-25T13:26:26.556782",
+      "admin_user": "RandWaterAdmin",
+      "changes": {
+        "basic_salary": 55000,
+        "paye_tax": 9485.28,
+        "uif_contribution": 526.96,
+        "medical_aid": 1200,
+        "pension_fund": 3952.2,
+        "other_deductions": 0,
+        "total_deductions": 15164.44
+      },
+      "action": "package_update"
+    }
+  ]
+}

@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Analytics - Rand Water</title>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --randwater-primary: #0066CC;
+            --randwater-secondary: #00A3E0;
+            --randwater-accent: #FF6600;
+            --randwater-dark: #003366;
+            --randwater-light: #E6F3FF;
+        }
+        
+        body {
+            font-family: 'Ubuntu', sans-serif;
+            background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+            min-height: 100vh;
+        }
+        
+        .header {
+            background: rgba(255,255,255,0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0,102,204,0.2);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 15px;
+            padding: 1.5rem;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.15);
+        }
+        
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--randwater-primary), var(--randwater-secondary));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            color: white;
+            font-size: 1.5rem;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--randwater-primary);
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-label {
+            color: #6c757d;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .chart-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+        
+        .chart-title {
+            color: var(--randwater-primary);
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+        }
+        
+        .metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+        
+        .metric-label {
+            font-weight: 500;
+            color: #495057;
+        }
+        
+        .metric-value {
+            font-weight: 600;
+            color: var(--randwater-primary);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        .status-running {
+            background-color: #28a745;
+        }
+        
+        .status-warning {
+            background-color: #ffc107;
+        }
+        
+        .status-error {
+            background-color: #dc3545;
+        }
+        
+        .refresh-btn {
+            background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+            border: none;
+            color: white;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,102,204,0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <img src="{{ config.company_logo }}" alt="Rand Water" style="max-height: 50px;">
+                    <div>
+                        <h2 class="mb-0" style="color: var(--randwater-primary); font-weight: 700;">System Analytics</h2>
+                        <small class="text-muted">Monitor system performance and usage</small>
+                    </div>
+                </div>
+                <div>
+                    <button type="button" class="refresh-btn me-3" onclick="refreshAnalytics()">
+                        <i class="fas fa-sync-alt me-2"></i>Refresh Data
+                    </button>
+                    <a href="{{ url_for('super_admin_dashboard') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- User Statistics -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-value">{{ analytics.user_stats.total_users }}</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-briefcase"></i>
+                </div>
+                <div class="stat-value">{{ analytics.user_stats.active_packages }}</div>
+                <div class="stat-label">Active Packages</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-percentage"></i>
+                </div>
+                <div class="stat-value">{{ analytics.user_stats.completion_rate }}%</div>
+                <div class="stat-label">Completion Rate</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-value">{{ analytics.system_stats.avg_session_duration }}</div>
+                <div class="stat-label">Avg Session (min)</div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row">
+            <!-- Monthly Trends Chart -->
+            <div class="col-md-8">
+                <div class="chart-card">
+                    <h5 class="chart-title"><i class="fas fa-chart-line me-2"></i>Monthly Usage Trends</h5>
+                    <canvas id="trendsChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+            
+            <!-- Package Distribution -->
+            <div class="col-md-4">
+                <div class="chart-card">
+                    <h5 class="chart-title"><i class="fas fa-chart-pie me-2"></i>Package Distribution</h5>
+                    <canvas id="packageChart" width="200" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Status and Package Statistics -->
+        <div class="row">
+            <!-- System Status -->
+            <div class="col-md-6">
+                <div class="chart-card">
+                    <h5 class="chart-title"><i class="fas fa-server me-2"></i>System Status</h5>
+                    <div class="metric-row">
+                        <span class="metric-label">
+                            <span class="status-indicator status-running"></span>
+                            Server Status
+                        </span>
+                        <span class="metric-value">{{ analytics.system_stats.server_status }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">
+                            <i class="fas fa-calendar me-2"></i>
+                            System Uptime
+                        </span>
+                        <span class="metric-value">{{ analytics.system_stats.uptime_days }} days</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">
+                            <i class="fas fa-sign-in-alt me-2"></i>
+                            Logins Today
+                        </span>
+                        <span class="metric-value">{{ analytics.system_stats.total_logins_today }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">
+                            <i class="fas fa-clock me-2"></i>
+                            Peak Usage Hour
+                        </span>
+                        <span class="metric-value">{{ analytics.system_stats.peak_usage_hour }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">
+                            <i class="fas fa-database me-2"></i>
+                            Last Backup
+                        </span>
+                        <span class="metric-value">{{ analytics.system_stats.last_backup }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Package Statistics -->
+            <div class="col-md-6">
+                <div class="chart-card">
+                    <h5 class="chart-title"><i class="fas fa-calculator me-2"></i>Package Statistics</h5>
+                    <div class="metric-row">
+                        <span class="metric-label">
+                            <i class="fas fa-briefcase me-2"></i>
+                            Total Packages
+                        </span>
+                        <span class="metric-value">{{ analytics.package_stats.total_packages }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">
+                            <i class="fas fa-money-bill me-2"></i>
+                            Average TCTC
+                        </span>
+                        <span class="metric-value">R {{ "%.2f"|format(analytics.package_stats.avg_tctc) }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">
+                            <i class="fas fa-arrow-up me-2"></i>
+                            Highest TCTC
+                        </span>
+                        <span class="metric-value">R {{ "%.2f"|format(analytics.package_stats.highest_tctc) }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">
+                            <i class="fas fa-arrow-down me-2"></i>
+                            Lowest TCTC
+                        </span>
+                        <span class="metric-value">R {{ "%.2f"|format(analytics.package_stats.lowest_tctc) }}</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">
+                            <i class="fas fa-minus me-2"></i>
+                            Avg Deductions
+                        </span>
+                        <span class="metric-value">R {{ "%.2f"|format(analytics.package_stats.avg_deductions) }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Most Common Benefits -->
+        <div class="chart-card">
+            <h5 class="chart-title"><i class="fas fa-star me-2"></i>Most Common Benefits</h5>
+            <div class="row">
+                {% for benefit in analytics.package_stats.most_common_benefits %}
+                <div class="col-md-4">
+                    <div class="text-center p-3 bg-light rounded">
+                        <i class="fas fa-check-circle text-success mb-2" style="font-size: 1.5rem;"></i>
+                        <h6 class="mb-0">{{ benefit }}</h6>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Monthly Trends Chart
+        const trendsCtx = document.getElementById('trendsChart').getContext('2d');
+        const trendsChart = new Chart(trendsCtx, {
+            type: 'line',
+            data: {
+                labels: {{ analytics.monthly_trends|map(attribute='month')|list|tojson }},
+                datasets: [{
+                    label: 'Users',
+                    data: {{ analytics.monthly_trends|map(attribute='users')|list|tojson }},
+                    borderColor: '#0066CC',
+                    backgroundColor: 'rgba(0,102,204,0.1)',
+                    tension: 0.4
+                }, {
+                    label: 'Packages',
+                    data: {{ analytics.monthly_trends|map(attribute='packages')|list|tojson }},
+                    borderColor: '#00A3E0',
+                    backgroundColor: 'rgba(0,163,224,0.1)',
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Package Distribution Chart
+        const packageCtx = document.getElementById('packageChart').getContext('2d');
+        const packageChart = new Chart(packageCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Active Packages', 'Pending Setup'],
+                datasets: [{
+                    data: [{{ analytics.user_stats.active_packages }}, {{ analytics.user_stats.total_users - analytics.user_stats.active_packages }}],
+                    backgroundColor: ['#0066CC', '#e9ecef'],
+                    borderColor: ['#0066CC', '#e9ecef'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+
+        function refreshAnalytics() {
+            location.reload();
+        }
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

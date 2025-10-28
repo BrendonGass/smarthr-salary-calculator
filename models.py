@@ -73,12 +73,12 @@ class EmployeeAccess:
     
     def get_active_employees(self) -> List[Dict]:
         """Get all employees with active access"""
-        return [access for access in self.access_data if access['status'] == 'ACTIVE']
+        return [access for access in self.access_data if access.get('status') == 'ACTIVE']
     
     def get_pending_submissions(self) -> List[Dict]:
         """Get employees who haven't submitted packages yet"""
         return [access for access in self.access_data 
-                if access['status'] == 'ACTIVE' and not access['package_submitted']]
+                if access.get('status') == 'ACTIVE' and not access.get('package_submitted', False)]
     
     def get_all_employees(self) -> List[Dict]:
         """Get all employees with access"""
@@ -109,23 +109,43 @@ class PackageManager:
     def __init__(self):
         self.packages_file = 'employee_packages.json'
         self.sap_uploads_file = 'sap_uploads.json'
+        self.audit_file = 'randwater_package_audit.json'
         self.load_data()
     
     def load_data(self):
         """Load package and SAP upload data"""
         # Load employee packages
-        if os.path.exists(self.packages_file):
-            with open(self.packages_file, 'r') as f:
-                self.packages = json.load(f)
-        else:
+        try:
+            if os.path.exists(self.packages_file):
+                with open(self.packages_file, 'r') as f:
+                    self.packages = json.load(f)
+            else:
+                self.packages = []
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"Warning: Corrupted packages file, reinitializing: {e}")
             self.packages = []
         
         # Load SAP uploads
-        if os.path.exists(self.sap_uploads_file):
-            with open(self.sap_uploads_file, 'r') as f:
-                self.sap_uploads = json.load(f)
-        else:
+        try:
+            if os.path.exists(self.sap_uploads_file):
+                with open(self.sap_uploads_file, 'r') as f:
+                    self.sap_uploads = json.load(f)
+            else:
+                self.sap_uploads = []
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"Warning: Corrupted SAP uploads file, reinitializing: {e}")
             self.sap_uploads = []
+        
+        # Load audit trail
+        try:
+            if os.path.exists(self.audit_file):
+                with open(self.audit_file, 'r') as f:
+                    self.audit_trail = json.load(f)
+            else:
+                self.audit_trail = []
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"Warning: Corrupted audit trail file, reinitializing: {e}")
+            self.audit_trail = []
     
     def save_data(self):
         """Save package and SAP upload data"""
@@ -134,9 +154,14 @@ class PackageManager:
         
         with open(self.sap_uploads_file, 'w') as f:
             json.dump(self.sap_uploads, f, indent=2)
+        
+        with open(self.audit_file, 'w') as f:
+            json.dump(self.audit_trail, f, indent=2)
     
     def upload_sap_data(self, filename: str, upload_date: str, 
-                        employee_data: List[Dict]) -> Dict:
+                        employee_data: List[Dict], 
+                        financial_year: str = None, 
+                        period: str = None) -> Dict:
         """Upload SAP Excel data for employee packages"""
         upload_record = {
             'id': len(self.sap_uploads) + 1,
@@ -144,7 +169,9 @@ class PackageManager:
             'upload_date': upload_date,
             'status': 'UPLOADED',
             'employee_count': len(employee_data),
-            'employee_data': employee_data
+            'employee_data': employee_data,
+            'financial_year': financial_year,
+            'period': period
         }
         
         self.sap_uploads.append(upload_record)
@@ -202,23 +229,45 @@ class PackageManager:
         self.save_data()
         return package
     
-    def update_employee_package(self, employee_id: str, updates: Dict) -> Optional[Dict]:
-        """Update employee package with new values"""
+    def update_employee_package(self, employee_id: str, updates: Dict) -> Dict:
+        """
+        Update employee package with new values and budget validation.
+        NO auto-adjustments - validation is non-blocking (warnings only).
+        """
         for package in self.packages:
             if package['employee_id'] == employee_id:
-                # Update package components
+                # First validate budget constraints (returns warnings, not blocking)
+                validation_result = self.validate_budget_constraints(package, updates)
+                
+                # Check if validation failed (hard error)
+                if not validation_result['valid']:
+                    return {
+                        'success': False,
+                        'error': validation_result['error']
+                    }
+                
+                # Update package components with user-provided values
                 for key, value in updates.items():
                     if key in package['package_components']:
-                        package['package_components'][key] = value
+                        package['package_components'][key] = float(value)
                 
                 # Recalculate TCTC
                 package['current_tctc'] = self._calculate_tctc(package['package_components'])
                 package['last_modified'] = datetime.now().isoformat()
                 
                 self.save_data()
-                return package
+                
+                # Return success with warnings (non-blocking)
+                return {
+                    'success': True,
+                    'package': package,
+                    'warnings': validation_result.get('warnings', []),
+                    'current_tctc': validation_result.get('current_tctc', package['current_tctc']),
+                    'remaining_budget': validation_result.get('remaining_budget', 0),
+                    'percentages': validation_result.get('percentages', {})
+                }
         
-        return None
+        return {'success': False, 'error': 'Package not found'}
     
     def submit_employee_package(self, employee_id: str) -> Optional[Dict]:
         """Submit completed employee package"""
@@ -248,7 +297,46 @@ class PackageManager:
     
     def get_submitted_packages(self) -> List[Dict]:
         """Get all submitted packages"""
-        return [p for p in self.packages if p['status'] == 'SUBMITTED']
+        return [p for p in self.packages if p.get('status') == 'SUBMITTED']
+    
+    def get_sap_data_for_employee(self, employee_id: str) -> Optional[Dict]:
+        """Get SAP data for a specific employee from the most recent upload"""
+        try:
+            # Find the employee's package
+            package = self.get_employee_package(employee_id)
+            if package and package.get('sap_data'):
+                return package['sap_data']
+            
+            # If no package found, search in SAP uploads
+            for upload in reversed(self.sap_uploads):  # Start with most recent
+                for employee_data in upload.get('employee_data', []):
+                    if employee_data.get('EMPLOYEECODE') == employee_id:
+                        return employee_data
+            
+            return None
+        except Exception as e:
+            logger.error(f"Error getting SAP data for employee {employee_id}: {str(e)}")
+            return None
+    
+    def add_audit_entry(self, employee_id: str, action: str, changes: Dict, 
+                       user_type: str = 'admin', user_id: str = 'system') -> None:
+        """Add an audit trail entry for package changes"""
+        audit_entry = {
+            'employee_id': employee_id,
+            'action': action,
+            'changes': changes,
+            'user_type': user_type,
+            'admin_user': user_id,  # Template expects 'admin_user' field
+            'timestamp': datetime.now().isoformat(),
+            'audit_id': len(self.audit_trail) + 1
+        }
+        
+        self.audit_trail.append(audit_entry)
+        self.save_data()
+    
+    def get_employee_audit_trail(self, employee_id: str) -> List[Dict]:
+        """Get audit trail for a specific employee"""
+        return [entry for entry in self.audit_trail if entry['employee_id'] == employee_id]
     
     def export_packages_for_sap(self) -> List[Dict]:
         """Export submitted packages in SAP format"""
@@ -287,17 +375,43 @@ class PackageManager:
         self.save_data()
     
     def _calculate_tctc(self, components: Dict) -> float:
-        """Calculate total cost to company from package components"""
+        """
+        Calculate total cost to company from package components.
+        Includes TPE, allowances, bonus, employer pension contributions, and employer group life contributions.
+        """
+        tpe = components.get('basic_salary', 0)  # TPE = Basic Salary
+        
+        # Pension option from components
+        pension_option = components.get('pension_option', 'B')  # Default to Option B
+        
+        # Calculate pension contributions based on Rand Water Provident Fund rates
+        pension_ee_rate, pension_er_rate = self._get_pension_rates(pension_option)
+        
+        # Group life option
+        group_life_option = components.get('group_life_option', 'standard')
+        
+        # Calculate contributions
+        pension_ee = tpe * (pension_ee_rate / 100)
+        pension_er = tpe * (pension_er_rate / 100)
+        
+        # Group life contributions (percentage of TPE)
+        group_life_rates = self._get_group_life_rates(group_life_option)
+        group_life_er = tpe * (group_life_rates['employer'] / 100)
+        group_life_ee = tpe * (group_life_rates['employee'] / 100)
+        
+        # TCTC calculation
         tctc = 0
-        tctc += components.get('basic_salary', 0)
+        tctc += tpe  # Basic salary (TPE)
         tctc += components.get('car_allowance', 0)
         tctc += components.get('cellphone_allowance', 0)
         tctc += components.get('data_service_allowance', 0)
         tctc += components.get('housing_allowance', 0)
         tctc += components.get('medical_aid', 0)
         tctc += components.get('bonus', 0)
+        tctc += pension_er  # Employer pension contribution
+        tctc += group_life_er  # Employer group life contribution
         
-        # Add other allowances (CASH field is a number, not a list)
+        # Add other allowances
         other_allowances = components.get('other_allowances', 0)
         if isinstance(other_allowances, (int, float)):
             tctc += other_allowances
@@ -306,6 +420,162 @@ class PackageManager:
                 tctc += allowance.get('value', 0)
         
         return round(tctc, 2)
+    
+    def _get_pension_rates(self, pension_option: str) -> tuple:
+        """
+        Get Rand Water Provident Fund contribution rates based on pension option.
+        Returns (employee_rate, employer_rate) as percentages.
+        Loads from pension_config.json if available, otherwise uses defaults.
+        """
+        try:
+            # Try to load from config file
+            config_file = 'pension_config.json'
+            if os.path.exists(config_file):
+                with open(config_file, 'r') as f:
+                    config = json.load(f)
+                    option_data = config.get('pension_rates', {}).get('options', {}).get(pension_option.upper())
+                    if option_data:
+                        return (option_data.get('employee_rate', 8.67), 
+                               option_data.get('employer_rate', 17.19))
+        except Exception as e:
+            logger.error(f"Error loading pension config: {str(e)}")
+        
+        # Fallback to hardcoded rates
+        rates = {
+            'A': (8.67, 17.19),
+            'B': (8.67, 17.19),
+            'C': (8.67, 9.450),
+            'D': (8.67, 17.19),
+            'E': (8.67, 17.19),
+            'F': (8.67, 17.19),
+            'G': (8.67, 17.19),
+            'SAMWU': (8.67, 17.19),
+            'none': (0, 0)
+        }
+        
+        return rates.get(pension_option.upper(), rates['B'])
+    
+    def _get_group_life_rates(self, group_life_option: str) -> Dict[str, float]:
+        """
+        Get Rand Water Group Life contribution rates.
+        Returns {'employee': rate%, 'employer': rate%}
+        Loads from pension_config.json if available, otherwise uses defaults.
+        """
+        try:
+            # Try to load from config file
+            config_file = 'pension_config.json'
+            if os.path.exists(config_file):
+                with open(config_file, 'r') as f:
+                    config = json.load(f)
+                    option_data = config.get('group_life_rates', {}).get('options', {}).get(group_life_option.lower())
+                    if option_data:
+                        return {
+                            'employee': option_data.get('employee_rate', 0.2),
+                            'employer': option_data.get('employer_rate', 0.5)
+                        }
+        except Exception as e:
+            logger.error(f"Error loading group life config: {str(e)}")
+        
+        # Fallback to default rates
+        rates = {
+            'standard': {'employee': 0.2, 'employer': 0.5},
+            'enhanced': {'employee': 1.0, 'employer': 2.0},
+            'none': {'employee': 0, 'employer': 0}
+        }
+        
+        return rates.get(group_life_option.lower(), rates['standard'])
+    
+    def validate_budget_constraints(self, package: Dict, proposed_changes: Dict) -> Dict:
+        """
+        Validate budget constraints for package changes according to functional rules.
+        Implements O-Q Band validation rules from PACKAGE_MANAGEMENT_FUNCTIONAL_RULES.md
+        """
+        try:
+            # Get current package data
+            components = package.get('package_components', {})
+            tctc_limit = package.get('tctc_limit', 0)
+            ctc = tctc_limit  # CTC is the fixed limit
+            
+            # Apply proposed changes to a copy of components
+            updated_components = components.copy()
+            for key, value in proposed_changes.items():
+                if key in updated_components:
+                    updated_components[key] = float(value)
+            
+            # Extract editable values
+            tpe = updated_components.get('basic_salary', 0)  # TPE = Basic Salary
+            car_allowance = updated_components.get('car_allowance', 0)
+            bonus_annual = updated_components.get('bonus', 0)
+            
+            # Fixed components (read-only from SAP data)
+            housing_allowance = updated_components.get('housing_allowance', 0)
+            cellphone_allowance = updated_components.get('cellphone_allowance', 0)
+            data_service_allowance = updated_components.get('data_service_allowance', 0)
+            medical_aid = updated_components.get('medical_aid', 0)
+            
+            # Get pension and group life options for TCTC calculation
+            pension_option = updated_components.get('pension_option', 'B')
+            group_life_option = updated_components.get('group_life_option', 'standard')
+            
+            # Calculate employer contributions
+            pension_ee_rate, pension_er_rate = self._get_pension_rates(pension_option)
+            pension_er = tpe * (pension_er_rate / 100)
+            
+            group_life_rates = self._get_group_life_rates(group_life_option)
+            group_life_er = tpe * (group_life_rates['employer'] / 100)
+            
+            # Calculate current TCTC (includes employer contributions)
+            current_tctc = (tpe + car_allowance + bonus_annual + 
+                          housing_allowance + cellphone_allowance + 
+                          data_service_allowance + medical_aid +
+                          pension_er + group_life_er)
+            
+            # Check if TCTC exceeds limit
+            if current_tctc > ctc:
+                return {
+                    'valid': False,
+                    'error': f'TCTC limit exceeded. Current: R{current_tctc:,.2f}, Limit: R{ctc:,.2f}'
+                }
+            
+            # Validation warnings (non-blocking)
+            warnings = []
+            
+            # TPE validation (50% - 70% of CTC)
+            tpe_percentage = (tpe / ctc * 100) if ctc > 0 else 0
+            if tpe_percentage < 50:
+                warnings.append(f"⚠️ TPE is {tpe_percentage:.1f}% of CTC (below 50% minimum for O-Q Band)")
+            elif tpe_percentage > 70:
+                warnings.append(f"⚠️ TPE is {tpe_percentage:.1f}% of CTC (above 70% maximum for O-Q Band)")
+            
+            # Car Allowance validation (minimum 30% of CTC)
+            car_percentage = (car_allowance / ctc * 100) if ctc > 0 else 0
+            if car_allowance > 0 and car_percentage < 30:
+                warnings.append(f"⚠️ Car Allowance is {car_percentage:.1f}% of CTC (below 30% minimum)")
+            
+            # Bonus validation (10% - 70% of CTC)
+            bonus_percentage = (bonus_annual / ctc * 100) if ctc > 0 else 0
+            if bonus_annual > 0:
+                if bonus_percentage < 10:
+                    warnings.append(f"⚠️ Bonus is {bonus_percentage:.1f}% of CTC (below 10% minimum)")
+                elif bonus_percentage > 70:
+                    warnings.append(f"⚠️ Bonus is {bonus_percentage:.1f}% of CTC (above 70% maximum)")
+            
+            # Return validation result with warnings
+            return {
+                'valid': True, 
+                'warnings': warnings,
+                'current_tctc': current_tctc,
+                'remaining_budget': ctc - current_tctc,
+                'percentages': {
+                    'tpe': tpe_percentage,
+                    'car': car_percentage,
+                    'bonus': bonus_percentage
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error validating budget constraints: {str(e)}")
+            return {'valid': False, 'error': f'Budget validation error: {str(e)}'}
     
     def _calculate_net_pay(self, package: Dict) -> Dict:
         """Calculate net pay based on package components"""

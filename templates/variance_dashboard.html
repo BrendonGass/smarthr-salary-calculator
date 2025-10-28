@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Variance Dashboard - Rand Water</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --randwater-primary: #0066CC;
+      --randwater-secondary: #00A3E0;
+    }
+    
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+    }
+    
+    .header {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      padding: 20px 0;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+    
+    .container {
+      max-width: 1400px;
+    }
+    
+    .report-card {
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+      margin-bottom: 30px;
+    }
+    
+    .variance-card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+      margin-bottom: 20px;
+    }
+    
+    .variance-positive {
+      border-left: 4px solid #28a745;
+    }
+    
+    .variance-negative {
+      border-left: 4px solid #dc3545;
+    }
+    
+    .variance-neutral {
+      border-left: 4px solid #ffc107;
+    }
+    
+    .back-btn {
+      color: white;
+      text-decoration: none;
+      padding: 10px 20px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.2);
+      transition: all 0.3s;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+    
+    .back-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      color: white;
+    }
+    
+    .stat-box {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    
+    .stat-box h3 {
+      margin: 0;
+      font-size: 2.5rem;
+    }
+    
+    .variance-indicator {
+      display: inline-block;
+      padding: 5px 15px;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+    
+    .variance-up {
+      background: #d4edda;
+      color: #155724;
+    }
+    
+    .variance-down {
+      background: #f8d7da;
+      color: #721c24;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="container">
+      <a href="{{ url_for('randwater_admin_panel') }}" class="back-btn">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
+      <h2><i class="fas fa-chart-line"></i> Variance Dashboard</h2>
+      <p class="mb-0">Compare package changes and analyze trends</p>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Summary Stats -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="stat-box">
+          <small>Total Employees</small>
+          <h3 id="totalEmp">0</h3>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-box" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+          <small>Packages Modified</small>
+          <h3 id="modifiedPackages">0</h3>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-box" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+          <small>Avg CTC Change</small>
+          <h3 id="avgChange">0%</h3>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="stat-box" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+          <small>Total Variance</small>
+          <h3 id="totalVar">R 0</h3>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="row mb-4">
+      <div class="col-md-6">
+        <div class="report-card">
+          <h5><i class="fas fa-chart-bar"></i> CTC Distribution</h5>
+          <canvas id="ctcChart"></canvas>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="report-card">
+          <h5><i class="fas fa-chart-pie"></i> Variance by Component</h5>
+          <canvas id="varianceChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed Variance Table -->
+    <div class="report-card">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5><i class="fas fa-table"></i> Detailed Variance Analysis</h5>
+        <button class="btn btn-success" onclick="exportVarianceToCSV()">
+          <i class="fas fa-file-excel"></i> Export to CSV
+        </button>
+      </div>
+      
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead class="table-primary">
+            <tr>
+              <th>Employee ID</th>
+              <th>Name</th>
+              <th>Original CTC</th>
+              <th>New CTC</th>
+              <th>Variance</th>
+              <th>% Change</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="varianceTableBody">
+            <!-- Data will be loaded via JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  
+  <script>
+    // Load variance data on page load
+    $(document).ready(function() {
+      loadVarianceData();
+    });
+    
+    function loadVarianceData() {
+      // Fetch variance data from backend
+      fetch('/api/variance_data')
+        .then(response => response.json())
+        .then(data => {
+          displayVarianceData(data);
+          renderCharts(data);
+        })
+        .catch(error => {
+          console.error('Error loading variance data:', error);
+          // Show sample data for demo
+          showSampleData();
+        });
+    }
+    
+    function showSampleData() {
+      const sampleData = {
+        totalEmployees: 3,
+        modifiedPackages: 2,
+        avgChange: 5.2,
+        totalVariance: 125000,
+        employees: [
+          {
+            employee_id: 'RW001',
+            name: 'John Doe',
+            originalCTC: 500000,
+            newCTC: 525000,
+            variance: 25000,
+            percentChange: 5.0,
+            status: 'Submitted'
+          },
+          {
+            employee_id: 'RW003',
+            name: 'Jane Smith',
+            originalCTC: 600000,
+            newCTC: 650000,
+            variance: 50000,
+            percentChange: 8.3,
+            status: 'Submitted'
+          }
+        ]
+      };
+      
+      displayVarianceData(sampleData);
+      renderCharts(sampleData);
+    }
+    
+    function displayVarianceData(data) {
+      // Update summary stats
+      $('#totalEmp').text(data.totalEmployees);
+      $('#modifiedPackages').text(data.modifiedPackages);
+      $('#avgChange').text(data.avgChange.toFixed(1) + '%');
+      $('#totalVar').text('R ' + data.totalVariance.toFixed(0).replace(/\d(?=(\d{3})+$)/g, '$&,'));
+      
+      // Populate table
+      const tbody = $('#varianceTableBody');
+      tbody.empty();
+      
+      data.employees.forEach(emp => {
+        const varianceClass = emp.variance > 0 ? 'variance-up' : 'variance-down';
+        const row = `
+          <tr>
+            <td>${emp.employee_id}</td>
+            <td>${emp.name}</td>
+            <td>R ${emp.originalCTC.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}</td>
+            <td>R ${emp.newCTC.toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}</td>
+            <td><span class="variance-indicator ${varianceClass}">
+              ${emp.variance > 0 ? '+' : ''}R ${Math.abs(emp.variance).toFixed(2).replace(/\d(?=(\d{3})+\.)/g, '$&,')}
+            </span></td>
+            <td><strong>${emp.percentChange > 0 ? '+' : ''}${emp.percentChange}%</strong></td>
+            <td><span class="badge bg-success">${emp.status}</span></td>
+          </tr>
+        `;
+        tbody.append(row);
+      });
+    }
+    
+    function renderCharts(data) {
+      // CTC Distribution Chart
+      const ctcCtx = document.getElementById('ctcChart').getContext('2d');
+      new Chart(ctcCtx, {
+        type: 'bar',
+        data: {
+          labels: data.employees.map(e => e.employee_id),
+          datasets: [{
+            label: 'Original CTC',
+            data: data.employees.map(e => e.originalCTC),
+            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+          }, {
+            label: 'New CTC',
+            data: data.employees.map(e => e.newCTC),
+            backgroundColor: 'rgba(75, 192, 192, 0.5)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+      
+      // Variance Pie Chart
+      const varianceCtx = document.getElementById('varianceChart').getContext('2d');
+      new Chart(varianceCtx, {
+        type: 'pie',
+        data: {
+          labels: data.employees.map(e => e.employee_id),
+          datasets: [{
+            data: data.employees.map(e => e.variance),
+            backgroundColor: [
+              'rgba(255, 99, 132, 0.5)',
+              'rgba(54, 162, 235, 0.5)',
+              'rgba(255, 206, 86, 0.5)',
+              'rgba(75, 192, 192, 0.5)',
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true
+        }
+      });
+    }
+    
+    function exportVarianceToCSV() {
+      alert('Exporting variance data to CSV...');
+      window.open('/export_variance_csv', '_blank');
+    }
+  </script>
+</body>
+</html>
+

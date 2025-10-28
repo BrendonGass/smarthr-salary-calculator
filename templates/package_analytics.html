@@ -365,6 +365,81 @@
       </div>
     </div>
 
+    <!-- Reports Menu -->
+    <div class="analytics-section">
+      <h3><i class="fas fa-file-alt"></i> Available Reports</h3>
+      <p class="text-muted mb-4">Generate and export detailed reports</p>
+      
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <div class="report-card-link" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); text-align: center;">
+            <div style="font-size: 2.5rem; color: var(--randwater-primary); margin-bottom: 10px;">
+              <i class="fas fa-file-invoice"></i>
+            </div>
+            <h5>Payslip Reports</h5>
+            <p class="text-muted" style="font-size: 0.9rem;">Generate bulk payslip reports with filters</p>
+            <a href="{{ url_for('payslip_reports') }}" class="btn btn-primary btn-sm mt-2">
+              <i class="fas fa-file-pdf"></i> Generate
+            </a>
+          </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+          <div class="report-card-link" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); text-align: center;">
+            <div style="font-size: 2.5rem; color: var(--randwater-secondary); margin-bottom: 10px;">
+              <i class="fas fa-calculator"></i>
+            </div>
+            <h5>Tax Reports</h5>
+            <p class="text-muted" style="font-size: 0.9rem;">View and export tax reports</p>
+            <a href="{{ url_for('tax_reports') }}" class="btn btn-primary btn-sm mt-2">
+              <i class="fas fa-file-invoice-dollar"></i> View Reports
+            </a>
+          </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+          <div class="report-card-link" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); text-align: center;">
+            <div style="font-size: 2.5rem; color: #28a745; margin-bottom: 10px;">
+              <i class="fas fa-chart-line"></i>
+            </div>
+            <h5>Variance Dashboard</h5>
+            <p class="text-muted" style="font-size: 0.9rem;">Compare package changes</p>
+            <a href="{{ url_for('variance_dashboard') }}" class="btn btn-primary btn-sm mt-2">
+              <i class="fas fa-chart-bar"></i> View Variance
+            </a>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <div class="report-card-link" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); text-align: center;">
+            <div style="font-size: 2.5rem; color: #ffc107; margin-bottom: 10px;">
+              <i class="fas fa-clipboard-list"></i>
+            </div>
+            <h5>Audit Trail</h5>
+            <p class="text-muted" style="font-size: 0.9rem;">Full system audit log</p>
+            <a href="{{ url_for('audit_trail') }}" class="btn btn-primary btn-sm mt-2">
+              <i class="fas fa-history"></i> View Audit
+            </a>
+          </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+          <div class="report-card-link" style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); text-align: center;">
+            <div style="font-size: 2.5rem; color: #6c757d; margin-bottom: 10px;">
+              <i class="fas fa-cogs"></i>
+            </div>
+            <h5>System Configuration</h5>
+            <p class="text-muted" style="font-size: 0.9rem;">View system config report</p>
+            <a href="{{ url_for('system_config_report') }}" class="btn btn-primary btn-sm mt-2">
+              <i class="fas fa-file-contract"></i> View Config
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Grade Band Distribution -->
     <div class="analytics-section">
       <h3><i class="fas fa-layer-group"></i> Grade Band Distribution</h3>

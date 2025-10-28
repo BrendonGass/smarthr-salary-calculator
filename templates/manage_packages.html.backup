@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Rand Water - Package Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --randwater-primary: #0066CC;
+      --randwater-secondary: #00A3E0;
+      --randwater-accent: #FF6600;
+      --randwater-dark: #003366;
+      --randwater-light: #E6F3FF;
+    }
+    
+    body {
+      font-family: 'Ubuntu', sans-serif;
+      background-color: #f8f9fa;
+      font-size: 0.9rem;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .randwater-header {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      padding: 1.5rem 0;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    .randwater-header h1 {
+      margin: 0;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+      font-size: 1.8rem;
+    }
+    
+    .randwater-header .tagline {
+      font-size: 1rem;
+      opacity: 0.9;
+      margin-top: 0.5rem;
+    }
+    
+    .randwater-logo {
+      max-height: 80px;
+      filter: brightness(0) invert(1);
+    }
+    
+    .gosmarthr-logo {
+      max-height: 80px;
+      margin-top: 8px;
+    }
+    
+    .branding {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      margin-right: 1rem;
+    }
+    
+    .table-container {
+      background: white;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    
+    .table-header {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      color: white;
+      padding: 1rem 1.5rem;
+      margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+      border-radius: 12px 12px 0 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+    
+    .table th {
+      background-color: var(--randwater-light);
+      border-color: var(--randwater-secondary);
+      color: var(--randwater-dark);
+      font-weight: 600;
+    }
+    
+    .status-badge {
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    
+    .status-submitted {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .status-pending {
+      background-color: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeaa7;
+    }
+    
+    .tctc-display {
+      font-weight: 700;
+      color: var(--randwater-accent);
+    }
+    
+    .package-details {
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    
+    .btn-view {
+      background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%);
+      border: none;
+      color: white;
+      padding: 0.25rem 0.5rem;
+      font-size: 0.8rem;
+    }
+    
+    .btn-view:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0, 102, 204, 0.3);
+    }
+  </style>
+</head>
+<body>
+  <div class="randwater-header">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-6">
+          <div class="d-flex align-items-center">
+            <img src="{{ config.company_logo }}" alt="Rand Water Logo" class="randwater-logo me-3">
+            <div>
+              <h1>Package Management</h1>
+              <div class="tagline">View and manage all employee compensation packages</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-6 text-end">
+          <div class="branding">
+            <img src="/static/images/smarthr_logo_white.png" alt="SmartHR Logo" class="gosmarthr-logo">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Navigation -->
+    <div class="mb-4">
+      <a href="{{ url_for('randwater_admin_panel') }}" class="btn btn-outline-secondary">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
+
+    <!-- Package Summary -->
+    <div class="row mb-4">
+      <div class="col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title text-primary">{{ packages|length }}</h5>
+            <p class="card-text">Total Packages</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title text-success">{{ packages|selectattr('is_submitted', 'equalto', true)|list|length }}</h5>
+            <p class="card-text">Submitted</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title text-warning">{{ packages|selectattr('is_submitted', 'equalto', false)|list|length }}</h5>
+            <p class="card-text">Pending</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card text-center">
+          <div class="card-body">
+            <h5 class="card-title text-info">{{ packages|map(attribute='grade_band')|unique|list|length }}</h5>
+            <p class="card-text">Grade Bands</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Packages Table -->
+    <div class="table-container">
+      <div class="table-header">
+        <i class="fas fa-briefcase"></i> Employee Packages Overview
+      </div>
+      
+      {% if packages %}
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Employee ID</th>
+              <th>Name</th>
+              <th>Grade Band</th>
+              <th>Current TCTC</th>
+              <th>TCTC Limit</th>
+              <th>Package Status</th>
+              <th>Access Status</th>
+              <th>Access Expires</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for package in packages %}
+            <tr>
+              <td><strong>{{ package.employee_id }}</strong></td>
+              <td>{{ package.employee_name or 'N/A' }}</td>
+              <td>
+                <span class="badge bg-secondary">{{ package.grade_band or 'N/A' }}</span>
+              </td>
+              <td>
+                <span class="tctc-display">R {{ "%.2f"|format(package.current_tctc) }}</span>
+              </td>
+              <td>
+                <span class="text-muted">R {{ "%.2f"|format(package.tctc_limit) }}</span>
+              </td>
+              <td>
+                {% if package.is_submitted %}
+                  <span class="status-badge status-submitted">
+                    <i class="fas fa-check-circle"></i> Submitted
+                  </span>
+                {% else %}
+                  <span class="status-badge status-pending">
+                    <i class="fas fa-clock"></i> Pending
+                  </span>
+                {% endif %}
+              </td>
+              <td>
+                {% if package.access_status == 'ACTIVE' %}
+                  <span class="badge bg-success">Active</span>
+                {% else %}
+                  <span class="badge bg-danger">Inactive</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if package.access_expires %}
+                  <small class="text-muted">{{ package.access_expires.split('T')[0] }}</small>
+                {% else %}
+                  <span class="text-muted">N/A</span>
+                {% endif %}
+              </td>
+              <td>
+                <button class="btn btn-view btn-sm" onclick="viewPackageDetails('{{ package.employee_id }}')">
+                  <i class="fas fa-eye"></i> View
+                </button>
+                <button class="btn btn-outline-primary btn-sm ms-1" onclick="editPackage('{{ package.employee_id }}')">
+                  <i class="fas fa-edit"></i> Edit
+                </button>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5">
+        <i class="fas fa-briefcase fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">No packages found</h5>
+        <p class="text-muted">Employee packages will appear here after SAP data is uploaded.</p>
+        <a href="{{ url_for('upload_sap_data') }}" class="btn btn-primary">
+          <i class="fas fa-upload"></i> Upload SAP Data
+        </a>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Package Edit Modal -->
+  <div class="modal fade" id="packageEditModal" tabindex="-1" aria-labelledby="packageEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+      <div class="modal-content">
+        <div class="modal-header" style="background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%); color: white;">
+          <h5 class="modal-title" id="packageEditModalLabel">
+            <i class="fas fa-edit"></i> Edit Package - <span id="editEmployeeId"></span>
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row">
+            <!-- Package Components -->
+            <div class="col-md-8">
+              <h6><i class="fas fa-money-bill-wave"></i> Package Components</h6>
+              <form id="packageEditForm">
+                <div class="row">
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Basic Salary</label>
+                      <input type="number" class="form-control" id="edit_basic_salary" step="0.01">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Car Allowance</label>
+                      <input type="number" class="form-control" id="edit_car_allowance" step="0.01">
+                    </div>
+                  </div>
+                  <div class="col-md-6">
+                    <div class="mb-3">
+                      <label class="form-label">Provident Fund</label>
+                      <input type="number" class="form-control" id="edit_provident_fund" step="0.01">
+                    </div>
+                    <div class="mb-3">
+                      <label class="form-label">Annual Bonus</label>
+                      <input type="number" class="form-control" id="edit_bonus" step="0.01">
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-12">
+                    <div class="alert alert-info">
+                      <strong>Current TCTC:</strong> R <span id="calculated_tctc">0.00</span> | 
+                      <strong>TCTC Limit:</strong> R <span id="tctc_limit">0.00</span>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+            <!-- Audit Trail -->
+            <div class="col-md-4">
+              <h6><i class="fas fa-history"></i> Audit Trail</h6>
+              <div id="auditTrail" style="max-height: 300px; overflow-y: auto;">
+                <div class="text-muted">Loading audit history...</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="savePackageChanges()">
+            <i class="fas fa-save"></i> Save Changes
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Package Details Modal -->
+  <div class="modal fade" id="packageDetailsModal" tabindex="-1" aria-labelledby="packageDetailsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header" style="background: linear-gradient(135deg, var(--randwater-primary) 0%, var(--randwater-secondary) 100%); color: white;">
+          <h5 class="modal-title" id="packageDetailsModalLabel">
+            <i class="fas fa-briefcase"></i> Package Details
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div id="packageDetailsContent">
+            <!-- Content will be loaded here -->
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentEmployeeId = null;
+    let originalPackageData = null;
+
+    function viewPackageDetails(employeeId) {
+      const content = document.getElementById('packageDetailsContent');
+      content.innerHTML = '<div class="text-center py-4"><i class="fas fa-spinner fa-spin"></i> Loading package details...</div>';
+      
+      const modal = new bootstrap.Modal(document.getElementById('packageDetailsModal'));
+      modal.show();
+      
+      // Fetch package data
+      fetch(`/api/admin/package/${employeeId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            displayPackageDetails(data.package);
+          } else {
+            content.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          content.innerHTML = '<div class="alert alert-danger">Error loading package details</div>';
+        });
+    }
+
+    function displayPackageDetails(packageData) {
+      const content = document.getElementById('packageDetailsContent');
+      const sap = packageData.sap_data || {};
+      const components = packageData.package_components || {};
+      
+      content.innerHTML = `
+        <div class="row">
+          <div class="col-md-6">
+            <h6><i class="fas fa-user"></i> Employee Information</h6>
+            <table class="table table-sm">
+              <tr><td><strong>Employee ID:</strong></td><td>${packageData.employee_id}</td></tr>
+              <tr><td><strong>Name:</strong></td><td>${sap.FIRSTNAME || ''} ${sap.SURNAME || ''}</td></tr>
+              <tr><td><strong>Grade Band:</strong></td><td>${sap.BAND || 'N/A'}</td></tr>
+              <tr><td><strong>Department:</strong></td><td>${sap.DEPARTMENT || 'N/A'}</td></tr>
+              <tr><td><strong>Position:</strong></td><td>${sap.JOBLONG || 'N/A'}</td></tr>
+            </table>
+            
+            <h6><i class="fas fa-money-bill-wave"></i> Package Components</h6>
+            <table class="table table-sm">
+              <tr><td><strong>Basic Salary:</strong></td><td>R ${(components.basic_salary || 0).toFixed(2)}</td></tr>
+              <tr><td><strong>Car Allowance:</strong></td><td>R ${(components.car_allowance || 0).toFixed(2)}</td></tr>
+              <tr><td><strong>Provident Fund:</strong></td><td>R ${(components.provident_fund || 0).toFixed(2)}</td></tr>
+              <tr><td><strong>Annual Bonus:</strong></td><td>R ${(components.bonus || 0).toFixed(2)}</td></tr>
+            </table>
+          </div>
+          
+          <div class="col-md-6">
+            <h6><i class="fas fa-database"></i> SAP Data (Fixed)</h6>
+            <table class="table table-sm">
+              <tr><td><strong>TPE:</strong></td><td>R ${(sap.TPE || 0).toFixed(2)}</td></tr>
+              <tr><td><strong>Housing:</strong></td><td>R ${(sap.HOUSING || 0).toFixed(2)}</td></tr>
+              <tr><td><strong>Cellphone:</strong></td><td>R ${(sap.CELLPHONEALLOWANCE || 0).toFixed(2)}</td></tr>
+              <tr><td><strong>Data Service:</strong></td><td>R ${(sap.DATASERVICEALLOWANCE || 0).toFixed(2)}</td></tr>
+              <tr><td><strong>Medical Aid:</strong></td><td>R ${(sap.MEDICALEECONTRIBUTION || 0).toFixed(2)}</td></tr>
+              <tr><td><strong>Medical Option:</strong></td><td>${sap.MEDICALOPTION || 'N/A'}</td></tr>
+            </table>
+            
+            <h6><i class="fas fa-calculator"></i> TCTC Information</h6>
+            <table class="table table-sm">
+              <tr><td><strong>Current TCTC:</strong></td><td class="text-primary"><strong>R ${(packageData.current_tctc || 0).toFixed(2)}</strong></td></tr>
+              <tr><td><strong>TCTC Limit:</strong></td><td>R ${(packageData.tctc_limit || 0).toFixed(2)}</td></tr>
+              <tr><td><strong>Utilization:</strong></td><td>${packageData.tctc_limit ? ((packageData.current_tctc / packageData.tctc_limit) * 100).toFixed(1) : 0}%</td></tr>
+            </table>
+            
+            <div class="mt-3">
+              <button class="btn btn-primary btn-sm" onclick="editPackage('${packageData.employee_id}')">
+                <i class="fas fa-edit"></i> Edit Package
+              </button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function editPackage(employeeId) {
+      currentEmployeeId = employeeId;
+      document.getElementById('editEmployeeId').textContent = employeeId;
+      
+      // Fetch package data
+      fetch(`/api/admin/package/${employeeId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            originalPackageData = data.package;
+            populateEditForm(data.package);
+            loadAuditTrail(employeeId);
+            
+            const modal = new bootstrap.Modal(document.getElementById('packageEditModal'));
+            modal.show();
+          } else {
+            alert('Error loading package data: ' + data.error);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('Error loading package data');
+        });
+    }
+
+    function populateEditForm(packageData) {
+      document.getElementById('edit_basic_salary').value = packageData.package_components.basic_salary || 0;
+      document.getElementById('edit_car_allowance').value = packageData.package_components.car_allowance || 0;
+      document.getElementById('edit_provident_fund').value = packageData.package_components.provident_fund || 0;
+      document.getElementById('edit_bonus').value = packageData.package_components.bonus || 0;
+      
+      document.getElementById('tctc_limit').textContent = (packageData.tctc_limit || 0).toFixed(2);
+      calculateTCTC();
+      
+      // Add event listeners for real-time calculation
+      ['edit_basic_salary', 'edit_car_allowance', 'edit_provident_fund', 'edit_bonus'].forEach(fieldId => {
+        document.getElementById(fieldId).addEventListener('input', calculateTCTC);
+      });
+    }
+
+    function calculateTCTC() {
+      const basicSalary = parseFloat(document.getElementById('edit_basic_salary').value) || 0;
+      const carAllowance = parseFloat(document.getElementById('edit_car_allowance').value) || 0;
+      const providentFund = parseFloat(document.getElementById('edit_provident_fund').value) || 0;
+      const bonus = parseFloat(document.getElementById('edit_bonus').value) || 0;
+      
+      // Add fixed components from SAP data if available
+      let fixedComponents = 0;
+      if (originalPackageData && originalPackageData.sap_data) {
+        fixedComponents += parseFloat(originalPackageData.sap_data.CELLPHONEALLOWANCE || 0);
+        fixedComponents += parseFloat(originalPackageData.sap_data.DATASERVICEALLOWANCE || 0);
+        fixedComponents += parseFloat(originalPackageData.sap_data.HOUSING || 0);
+        fixedComponents += parseFloat(originalPackageData.sap_data.MEDICALEECONTRIBUTION || 0);
+      }
+      
+      const totalTCTC = basicSalary + carAllowance + providentFund + (bonus / 12) + fixedComponents;
+      document.getElementById('calculated_tctc').textContent = totalTCTC.toFixed(2);
+      
+      // Color coding based on limit
+      const limit = parseFloat(document.getElementById('tctc_limit').textContent) || 0;
+      const tctcElement = document.getElementById('calculated_tctc');
+      if (totalTCTC > limit) {
+        tctcElement.parentElement.className = 'alert alert-danger';
+      } else if (totalTCTC > limit * 0.95) {
+        tctcElement.parentElement.className = 'alert alert-warning';
+      } else {
+        tctcElement.parentElement.className = 'alert alert-info';
+      }
+    }
+
+    function loadAuditTrail(employeeId) {
+      fetch(`/api/admin/package/${employeeId}/audit`)
+        .then(response => response.json())
+        .then(data => {
+          const auditDiv = document.getElementById('auditTrail');
+          if (data.success && data.audit_trail.length > 0) {
+            auditDiv.innerHTML = data.audit_trail.map(entry => `
+              <div class="audit-entry mb-2 p-2 bg-light rounded">
+                <small class="text-muted">${new Date(entry.timestamp).toLocaleString()}</small><br>
+                <strong>${entry.admin_user}</strong>: ${entry.action}<br>
+                ${entry.changes ? '<small>' + entry.changes + '</small>' : ''}
+              </div>
+            `).join('');
+          } else {
+            auditDiv.innerHTML = '<div class="text-muted">No audit history available</div>';
+          }
+        })
+        .catch(error => {
+          console.error('Error loading audit trail:', error);
+          document.getElementById('auditTrail').innerHTML = '<div class="text-danger">Error loading audit trail</div>';
+        });
+    }
+
+    function savePackageChanges() {
+      const newData = {
+        basic_salary: parseFloat(document.getElementById('edit_basic_salary').value) || 0,
+        car_allowance: parseFloat(document.getElementById('edit_car_allowance').value) || 0,
+        provident_fund: parseFloat(document.getElementById('edit_provident_fund').value) || 0,
+        bonus: parseFloat(document.getElementById('edit_bonus').value) || 0
+      };
+      
+      // Create change summary
+      const changes = [];
+      Object.keys(newData).forEach(key => {
+        const oldValue = originalPackageData.package_components[key] || 0;
+        const newValue = newData[key];
+        if (Math.abs(oldValue - newValue) > 0.01) {
+          changes.push(`${key}: R${oldValue.toFixed(2)} → R${newValue.toFixed(2)}`);
+        }
+      });
+      
+      if (changes.length === 0) {
+        alert('No changes detected');
+        return;
+      }
+      
+      if (!confirm(`Save the following changes?\n\n${changes.join('\n')}`)) {
+        return;
+      }
+      
+      // Save changes
+      fetch(`/api/admin/package/${currentEmployeeId}/update`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          package_components: newData,
+          change_summary: changes.join('; ')
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Package updated successfully');
+          
+          // Close modal and refresh page
+          const modal = bootstrap.Modal.getInstance(document.getElementById('packageEditModal'));
+          modal.hide();
+          location.reload();
+        } else {
+          alert('Error updating package: ' + data.error);
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Error updating package');
+      });
+    }
+  </script>
+</body>
+</html>

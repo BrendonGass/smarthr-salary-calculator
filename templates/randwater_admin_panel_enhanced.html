@@ -234,9 +234,14 @@
           <div class="tagline mt-2">Package Builder and Salary Simulator Management: Admin Panel</div>
         </div>
         <div class="col-md-6 text-end">
-                     <div class="branding">
-             <img src="/static/images/smarthr_logo_white.png" alt="SmartHR Logo" class="gosmarthr-logo">
-           </div>
+          <div class="branding">
+            <img src="/static/images/smarthr_logo_white.png" alt="SmartHR Logo" class="gosmarthr-logo">
+            <div class="mt-2">
+              <a href="/admin/randwater/logout" class="btn btn-outline-light btn-sm">
+                <i class="fas fa-sign-out-alt"></i> Logout
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -246,10 +251,10 @@
          <!-- Statistics Cards -->
      <div class="row">
        <div class="col-md-4">
-         <div class="stats-card" style="cursor: pointer;" onclick="showActiveEmployees()">
-           <h3>{{ stats.total_employees }}</h3>
-           <div class="label">Active Employees</div>
-         </div>
+        <div class="stats-card">
+          <h3>{{ stats.total_employees }}</h3>
+          <div class="label">Active Employees</div>
+        </div>
        </div>
        <div class="col-md-4">
          <div class="stats-card">
@@ -265,7 +270,8 @@
        </div>
      </div>
 
-    <!-- Feature Cards -->
+    <!-- TCTC Modelling Section -->
+    <h4 class="mt-4 mb-3"><i class="fas fa-calculator"></i> TCTC Modelling</h4>
     <div class="row">
       <div class="col-md-6">
         <div class="feature-card">
@@ -298,34 +304,6 @@
       <div class="col-md-6">
         <div class="feature-card">
           <div class="icon">
-            <i class="fas fa-calculator"></i>
-          </div>
-          <h4>Salary Simulator</h4>
-          <p>Create dummy payslips and test salary scenarios for offering purposes.</p>
-          <a href="{{ url_for('salary_simulator') }}" class="btn-feature">
-            <i class="fas fa-calculator"></i> Open Simulator
-          </a>
-        </div>
-      </div>
-      
-      <div class="col-md-6">
-        <div class="feature-card">
-          <div class="icon">
-            <i class="fas fa-download"></i>
-          </div>
-          <h4>Export Packages</h4>
-          <p>Generate Excel files with completed packages for SAP upload.</p>
-          <a href="{{ url_for('export_packages_for_sap') }}" class="btn-feature">
-            <i class="fas fa-download"></i> Export Packages
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <div class="row">
-      <div class="col-md-6">
-        <div class="feature-card">
-          <div class="icon">
             <i class="fas fa-briefcase"></i>
           </div>
           <h4>Package Management</h4>
@@ -339,12 +317,42 @@
       <div class="col-md-6">
         <div class="feature-card">
           <div class="icon">
+            <i class="fas fa-download"></i>
+          </div>
+          <h4>Export Packages</h4>
+          <p>Generate Excel files with completed packages for SAP upload.</p>
+          <button onclick="exportPackages()" class="btn-feature" id="exportBtn">
+            <i class="fas fa-download"></i> Export Packages
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics & Tools Section -->
+    <h4 class="mt-4 mb-3"><i class="fas fa-chart-bar"></i> Analytics & Tools</h4>
+    <div class="row">
+      <div class="col-md-6">
+        <div class="feature-card">
+          <div class="icon">
             <i class="fas fa-chart-line"></i>
           </div>
           <h4>Package Analytics</h4>
-          <p>View package statistics, TCTC distributions, and submission trends across all employees.</p>
+          <p>View comprehensive reports: payslips, tax reports, variance, audit trail, and system configuration.</p>
           <a href="{{ url_for('package_analytics') }}" class="btn-feature">
-            <i class="fas fa-chart-bar"></i> View Analytics
+            <i class="fas fa-chart-bar"></i> View All Reports & Analytics
+          </a>
+        </div>
+      </div>
+      
+      <div class="col-md-6">
+        <div class="feature-card">
+          <div class="icon">
+            <i class="fas fa-calculator"></i>
+          </div>
+          <h4>Salary Simulator</h4>
+          <p>Create dummy payslips and test salary scenarios for offering purposes.</p>
+          <a href="{{ url_for('salary_simulator') }}" class="btn-feature">
+            <i class="fas fa-calculator"></i> Open Simulator
           </a>
         </div>
       </div>
@@ -482,8 +490,8 @@
             {% for package in submitted_packages %}
             <tr>
               <td>{{ package.employee_id }}</td>
-              <td>R {{ "%.2f"|format(package.tctc_limit) }}</td>
-              <td>R {{ "%.2f"|format(package.package_components.basic_salary + package.package_components.provident_fund + package.package_components.car_allowance + package.package_components.cellphone_allowance + package.package_components.data_service_allowance + package.package_components.housing_allowance + package.package_components.medical_aid + package.package_components.bonus) }}</td>
+              <td>R {{ "%.2f"|format(package.tctc_limit|default(0)) }}</td>
+              <td>R {{ "%.2f"|format((package.package_components.basic_salary|default(0)) + (package.package_components.provident_fund|default(0)) + (package.package_components.car_allowance|default(0)) + (package.package_components.cellphone_allowance|default(0)) + (package.package_components.data_service_allowance|default(0)) + (package.package_components.housing_allowance|default(0)) + (package.package_components.medical_aid|default(0)) + (package.package_components.bonus|default(0))) }}</td>
               <td>{{ package.submitted_date.split('T')[0] }}</td>
               <td>
                 <button class="btn btn-sm btn-outline-success">
@@ -526,6 +534,91 @@
     // setInterval(function() {
     //   location.reload();
     // }, 30000);
+    
+    function exportPackages() {
+      console.log('=== EXPORT PACKAGES DEBUG START ===');
+      console.log('Export Packages button clicked');
+      
+      const exportBtn = document.getElementById('exportBtn');
+      console.log('Export button found:', exportBtn);
+      
+      if (exportBtn) {
+        exportBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Exporting...';
+        exportBtn.disabled = true;
+        console.log('Button state updated - showing spinner');
+      }
+      
+      console.log('Making request to:', '/export_packages_for_sap');
+      
+      fetch('/export_packages_for_sap', {
+        method: 'GET',
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'Accept': 'application/json'
+        }
+      })
+      .then(response => {
+        console.log('Response received:', response.status, response.statusText);
+        console.log('Response headers:', response.headers);
+        
+        if (!response.ok) {
+          console.error('HTTP Error:', response.status, response.statusText);
+          // Try to read the error response body
+          return response.json().then(errorData => {
+            console.error('Error response body:', errorData);
+            throw new Error(errorData.message || errorData.error || `HTTP error! status: ${response.status}`);
+          }).catch(jsonError => {
+            console.error('Could not parse error response as JSON:', jsonError);
+            throw new Error(`HTTP error! status: ${response.status}`);
+          });
+        }
+        
+        // Check if response is a file download
+        const contentType = response.headers.get('content-type');
+        console.log('Content-Type:', contentType);
+        
+        if (contentType && contentType.includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')) {
+          console.log('Excel file detected, triggering download...');
+          return response.blob();
+        } else {
+          console.log('Non-file response, parsing as JSON...');
+          return response.json();
+        }
+      })
+      .then(data => {
+        console.log('Success response:', data);
+        
+        if (data instanceof Blob) {
+          console.log('Creating download link for Excel file...');
+          const url = window.URL.createObjectURL(data);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'randwater_export.xlsx';
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+          console.log('File download triggered');
+        } else {
+          console.log('Non-file response received:', data);
+        }
+      })
+      .catch(error => {
+        console.error('Export error:', error);
+        console.error('Error type:', typeof error);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        alert('Export failed: ' + error.message);
+      })
+      .finally(() => {
+        console.log('Resetting button state...');
+        if (exportBtn) {
+          exportBtn.innerHTML = '<i class="fas fa-download"></i> Export Packages';
+          exportBtn.disabled = false;
+        }
+        console.log('=== EXPORT PACKAGES DEBUG END ===');
+      });
+    }
     
     // Employee view functions
     function viewEmployee(employeeId) {
@@ -648,20 +741,21 @@
       }
     }
     
-    function showActiveEmployees() {
-      const modal = new bootstrap.Modal(document.getElementById('activeEmployeesModal'));
-      modal.show();
-    }
     
     function viewEmployeePayslip(employeeId) {
+      console.log('=== VIEW PAYSLIP DEBUG START ===');
       console.log('viewEmployeePayslip called with ID:', employeeId);
+      console.log('Current URL:', window.location.href);
       
       // Get the modal element
       const modalElement = document.getElementById('payslipModal');
+      console.log('Modal element found:', modalElement);
       
       // Destroy any existing modal instance first
       const existingModal = bootstrap.Modal.getInstance(modalElement);
+      console.log('Existing modal instance:', existingModal);
       if (existingModal) {
+        console.log('Disposing existing modal...');
         existingModal.dispose();
       }
       
@@ -671,55 +765,67 @@
         keyboard: false,
         focus: true
       });
+      console.log('New modal instance created:', modal);
       
       // Show loading state
       const content = document.getElementById('payslipContent');
+      console.log('Content element found:', content);
       content.innerHTML = '<div class="text-center"><i class="fas fa-spinner fa-spin fa-2x"></i><p>Loading payslip...</p></div>';
       
       // Show the modal
+      console.log('Showing modal...');
       modal.show();
       
       // Store modal instance globally to prevent garbage collection
       window.currentPayslipModal = modal;
       
       // Fetch employee payslip data
-      fetch(`/admin/randwater/employee-payslip/${employeeId}`)
-        .then(response => response.json())
+      const payslipUrl = `/admin/randwater/employee-payslip/${employeeId}`;
+      console.log('Fetching payslip from URL:', payslipUrl);
+      
+      fetch(payslipUrl)
+        .then(response => {
+          console.log('Payslip fetch response status:', response.status);
+          console.log('Payslip fetch response headers:', response.headers);
+          return response.json();
+        })
         .then(data => {
           console.log('Payslip data received:', data);
+          console.log('Payslip data keys:', Object.keys(data || {}));
           if (data.success) {
+            console.log('Calling displayEmployeePayslip with:', data.employee, data.payslip);
             displayEmployeePayslip(data.employee, data.payslip);
           } else {
+            console.error('Payslip fetch failed:', data.error);
             content.innerHTML = `<div class="alert alert-danger">Error: ${data.error}</div>`;
           }
         })
         .catch(error => {
-          console.error('Error:', error);
+          console.error('Payslip fetch error:', error);
           content.innerHTML = '<div class="alert alert-danger">Error loading payslip</div>';
         });
+      
+      console.log('=== VIEW PAYSLIP DEBUG END ===');
     }
     
     function displayEmployeePayslip(employee, payslip) {
+      console.log('=== PAYSLIP DEBUG START ===');
+      console.log('Employee data:', employee);
+      console.log('Payslip data:', payslip);
+      console.log('Payslip keys:', Object.keys(payslip || {}));
+      console.log('Employee CTC:', employee.ctc);
+      console.log('Payslip TCTC:', payslip.tctc);
+      console.log('Payslip pensionable_salary:', payslip.pensionable_salary);
+      console.log('Payslip housing_allowance:', payslip.housing_allowance);
+      console.log('Payslip pension_employee:', payslip.pension_employee);
+      console.log('Payslip medical_employee:', payslip.medical_employee);
+      console.log('Payslip tax:', payslip.tax);
+      console.log('Payslip net_pay:', payslip.net_pay);
+      console.log('=== PAYSLIP DEBUG END ===');
+      
       const content = document.getElementById('payslipContent');
       
-      // Filter out zero amounts for cleaner display
-      const nonZeroEarnings = [];
-      if (payslip.basic_salary > 0) nonZeroEarnings.push(['Basic Salary (TPE)', payslip.basic_salary]);
-      if (payslip.car_allowance > 0) nonZeroEarnings.push(['Car Allowance', payslip.car_allowance]);
-      if (payslip.cellphone_allowance > 0) nonZeroEarnings.push(['Cellphone Allowance', payslip.cellphone_allowance]);
-      if (payslip.data_service_allowance > 0) nonZeroEarnings.push(['Data Service Allowance', payslip.data_service_allowance]);
-      if (payslip.housing_allowance > 0) nonZeroEarnings.push(['Housing Allowance', payslip.housing_allowance]);
-      if (payslip.critical_skills > 0) nonZeroEarnings.push(['Critical Skills Allowance', payslip.critical_skills]);
-      if (payslip.cash_allowance > 0) nonZeroEarnings.push(['Cash Allowance', payslip.cash_allowance]);
-      if (payslip.bonus > 0) nonZeroEarnings.push(['Annual Bonus', payslip.bonus]);
-      
-      const nonZeroDeductions = [];
-      if (payslip.pension > 0) nonZeroDeductions.push(['Pension/Provident Fund', payslip.pension]);
-      if (payslip.medical_aid > 0) nonZeroDeductions.push(['Medical Aid', payslip.medical_aid]);
-      if (payslip.uif > 0) nonZeroDeductions.push(['UIF', payslip.uif]);
-      if (payslip.tax > 0) nonZeroDeductions.push(['Tax', payslip.tax]);
-      if (payslip.bonus_tax_provision > 0) nonZeroDeductions.push(['Bonus Tax Provision', payslip.bonus_tax_provision]);
-      
+      // Rand Water Payslip Format - Based on tax calculation example
       content.innerHTML = `
         <div class="payslip-container">
           <div class="payslip-header text-center mb-4">
@@ -752,21 +858,18 @@
             <div class="col-md-6">
               <h6 class="text-success"><i class="fas fa-plus-circle"></i> Earnings</h6>
               <table class="table table-sm">
-                ${nonZeroEarnings.map(([label, amount]) => 
-                  `<tr><td>${label}:</td><td class="text-end">R ${amount.toLocaleString()}</td></tr>`
-                ).join('')}
-                <tr class="table-success"><td><strong>Total Earnings:</strong></td><td class="text-end"><strong>R ${(payslip.total_earnings || 0).toLocaleString()}</strong></td></tr>
+                <tr><td><strong>Pensionable Salary:</strong></td><td class="text-end">R ${(payslip.pensionable_salary || payslip.tpe || 0).toLocaleString()}</td></tr>
+                <tr class="table-success"><td><strong>Total Earnings:</strong></td><td class="text-end"><strong>R ${(payslip.pensionable_salary || payslip.tpe || 0).toLocaleString()}</strong></td></tr>
               </table>
             </div>
             <div class="col-md-6">
               <h6 class="text-danger"><i class="fas fa-minus-circle"></i> Deductions</h6>
               <table class="table table-sm">
-                ${nonZeroDeductions.length > 0 ? 
-                  nonZeroDeductions.map(([label, amount]) => 
-                    `<tr><td>${label}:</td><td class="text-end">R ${amount.toLocaleString()}</td></tr>`
-                  ).join('') :
-                  '<tr><td colspan="2" class="text-center text-muted">No deductions</td></tr>'
-                }
+                <tr><td>Pension - employee:</td><td class="text-end">R ${(payslip.pension_employee || 0).toLocaleString()}</td></tr>
+                <tr><td>Medical aid - employee:</td><td class="text-end">R ${(payslip.medical_employee || 0).toLocaleString()}</td></tr>
+                <tr><td>Group Life - employee:</td><td class="text-end">R ${(payslip.group_life_employee || 0).toLocaleString()}</td></tr>
+                <tr><td>UIF employee contribution:</td><td class="text-end">R ${(payslip.uif_employee || 0).toLocaleString()}</td></tr>
+                <tr><td>Tax:</td><td class="text-end">R ${(payslip.tax || 0).toLocaleString()}</td></tr>
                 <tr class="table-danger"><td><strong>Total Deductions:</strong></td><td class="text-end"><strong>R ${(payslip.total_deductions || 0).toLocaleString()}</strong></td></tr>
               </table>
             </div>
@@ -824,7 +927,7 @@
           <hr>
           <div class="row">
             <div class="col-12 text-center">
-              <h5 class="text-primary">Net Pay: <span class="badge bg-success fs-4">R ${(payslip.net_pay || 0).toLocaleString()}</span></h5>
+              <h5 class="text-primary">Net pay: <span class="badge bg-success fs-4">R ${(payslip.net_pay || 0).toLocaleString()}</span></h5>
               <small class="text-muted">Based on actual SAP data with complete tax calculation (UIF, Travel Allowance Rules, Pension Caps, Medical Credits, Age Rebates)</small>
             </div>
           </div>
@@ -925,12 +1028,12 @@
                   {% for employee in active_employees %}
                   <tr>
                     <td><strong>{{ employee.employee_id }}</strong></td>
-                    <td>{{ employee.first_name }} {{ employee.surname }}</td>
-                    <td><span class="badge bg-primary">{{ employee.grade_band }}</span></td>
-                    <td>{{ employee.department }}</td>
-                    <td>{{ employee.job_title }}</td>
-                    <td>R {{ "{:,.2f}".format(employee.basic_salary) }}</td>
-                    <td>R {{ "{:,.2f}".format(employee.ctc) }}</td>
+                    <td>{{ employee.first_name|default('') }} {{ employee.surname|default('') }}</td>
+                    <td><span class="badge bg-primary">{{ employee.grade_band|default('N/A') }}</span></td>
+                    <td>{{ employee.department|default('N/A') }}</td>
+                    <td>{{ employee.job_title|default('N/A') }}</td>
+                    <td>R {{ "{:,.2f}".format(employee.basic_salary|default(0)) }}</td>
+                    <td>R {{ "{:,.2f}".format(employee.ctc|default(0)) }}</td>
                     <td>
                       {% if employee.package_submitted %}
                         <span class="badge bg-success">Submitted</span>

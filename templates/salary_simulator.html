@@ -289,15 +289,31 @@
               <div class="mb-3">
                 <label class="form-label">Cell Phone Allowance</label>
                 <input type="number" class="form-control" id="cellPhoneAllowance" 
-                       step="0.01" min="0" placeholder="0.00" readonly>
-                <small class="text-muted">Fixed amount - cannot be changed</small>
+                       step="0.01" min="0" placeholder="0.00">
+                <div class="warning-badge">
+                  <i class="fas fa-info-circle"></i> 
+                  Editable - adjust as needed for simulation
+                </div>
               </div>
               
               <div class="mb-3">
                 <label class="form-label">Data Service Allowance</label>
                 <input type="number" class="form-control" id="dataServiceAllowance" 
-                       step="0.01" min="0" placeholder="0.00" readonly>
-                <small class="text-muted">Fixed amount - cannot be changed</small>
+                       step="0.01" min="0" placeholder="0.00">
+                <div class="warning-badge">
+                  <i class="fas fa-info-circle"></i> 
+                  Editable - adjust as needed for simulation
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label">Critical Skills Allowance</label>
+                <input type="number" class="form-control" id="criticalSkillsAllowance" 
+                       step="0.01" min="0" placeholder="0.00">
+                <div class="warning-badge">
+                  <i class="fas fa-info-circle"></i> 
+                  For specialized positions with critical skills
+                </div>
               </div>
             </div>
             
@@ -305,8 +321,21 @@
               <div class="mb-3">
                 <label class="form-label">Housing Allowance</label>
                 <input type="number" class="form-control" id="housingAllowance" 
-                       step="0.01" min="0" placeholder="0.00" readonly>
-                <small class="text-muted">Fixed amount - cannot be changed</small>
+                       step="0.01" min="0" placeholder="0.00">
+                <div class="warning-badge">
+                  <i class="fas fa-info-circle"></i> 
+                  Editable - adjust housing benefits for simulation
+                </div>
+              </div>
+              
+              <div class="mb-3">
+                <label class="form-label">Cash Component</label>
+                <input type="number" class="form-control" id="cashComponent" 
+                       step="0.01" min="0" placeholder="0.00">
+                <div class="warning-badge">
+                  <i class="fas fa-info-circle"></i> 
+                  Additional cash component beyond basic salary
+                </div>
               </div>
               
               <div class="mb-3">
@@ -447,6 +476,122 @@
         <div id="resultContent"></div>
       </div>
     </div>
+
+    <!-- Package Management Section for Simulation -->
+    <div class="container mt-5">
+      <div class="table-container">
+        <div class="table-header">
+          <i class="fas fa-briefcase"></i> Salary Simulation Package Management
+        </div>
+        
+        <!-- Package Summary -->
+        <div class="row mb-4">
+          <div class="col-md-3">
+            <div class="card text-center">
+              <div class="card-body">
+                <h5 class="card-title text-primary">1</h5>
+                <p class="card-text">Simulation Package</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center">
+              <div class="card-body">
+                <h5 class="card-title text-success" id="simulationStatus">0</h5>
+                <p class="card-text">Calculated</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center">
+              <div class="card-body">
+                <h5 class="card-title text-warning" id="simulationPending">1</h5>
+                <p class="card-text">Pending</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-md-3">
+            <div class="card text-center">
+              <div class="card-body">
+                <h5 class="card-title text-info">SIM001</h5>
+                <p class="card-text">Simulation ID</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Simulation Package Table -->
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Employee ID</th>
+                <th>Name</th>
+                <th>Grade Band</th>
+                <th>Gross Income</th>
+                <th>Total Deductions</th>
+                <th>Net Pay</th>
+                <th>Calculation Status</th>
+                <th>Last Updated</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="simulationPackageTable">
+              <tr>
+                <td><strong>SIM001</strong></td>
+                <td id="simEmployeeName">Simulation Employee</td>
+                <td>
+                  <span class="badge bg-secondary" id="simGradeBand">-</span>
+                </td>
+                <td>
+                  <span class="tctc-display" id="simGrossIncome">R 0.00</span>
+                </td>
+                <td>
+                  <span class="text-danger" id="simTotalDeductions">R 0.00</span>
+                </td>
+                <td>
+                  <span class="text-success" id="simNetPay">R 0.00</span>
+                </td>
+                <td>
+                  <span class="status-badge status-pending" id="simCalcStatus">
+                    <i class="fas fa-clock"></i> Pending
+                  </span>
+                </td>
+                <td>
+                  <small class="text-muted" id="simLastUpdated">-</small>
+                </td>
+                <td>
+                  <button class="btn btn-view btn-sm" onclick="viewSimulationDetails()">
+                    <i class="fas fa-eye"></i> View
+                  </button>
+                  <button class="btn btn-outline-primary btn-sm ms-1" onclick="exportSimulation()">
+                    <i class="fas fa-download"></i> Export
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="row mt-4">
+          <div class="col-md-6">
+            <div class="d-grid">
+              <button class="btn btn-primary" onclick="saveSimulation()">
+                <i class="fas fa-save"></i> Save Simulation
+              </button>
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="d-grid">
+              <button class="btn btn-outline-secondary" onclick="loadTemplate()">
+                <i class="fas fa-file-alt"></i> Load Template
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -570,14 +715,235 @@
       `;
       
       resultsDiv.style.display = 'block';
+      
+      // Update package management table
+      updateSimulationPackageTable(grossPay, totalDeductions, takeHome);
+    }
+    
+    function updateSimulationPackageTable(grossPay, totalDeductions, netPay) {
+      // Update the simulation package table with calculated values
+      const employeeName = document.getElementById('employeeName').value || 'Simulation Employee';
+      const bandRange = document.getElementById('bandRange').value || '-';
+      
+      document.getElementById('simEmployeeName').textContent = employeeName;
+      document.getElementById('simGradeBand').textContent = bandRange.replace('_', ' to ').toUpperCase();
+      document.getElementById('simGrossIncome').textContent = `R ${grossPay.toFixed(2)}`;
+      document.getElementById('simTotalDeductions').textContent = `R ${totalDeductions.toFixed(2)}`;
+      document.getElementById('simNetPay').textContent = `R ${netPay.toFixed(2)}`;
+      
+      // Update status
+      const statusElement = document.getElementById('simCalcStatus');
+      statusElement.innerHTML = '<i class="fas fa-check-circle"></i> Calculated';
+      statusElement.className = 'status-badge status-submitted';
+      
+      // Update counts
+      document.getElementById('simulationStatus').textContent = '1';
+      document.getElementById('simulationPending').textContent = '0';
+      
+      // Update timestamp
+      document.getElementById('simLastUpdated').textContent = new Date().toLocaleString();
     }
     
     function resetForm() {
       document.getElementById('salaryForm').reset();
       document.getElementById('results').style.display = 'none';
+      
+      // Reset package table
+      document.getElementById('simEmployeeName').textContent = 'Simulation Employee';
+      document.getElementById('simGradeBand').textContent = '-';
+      document.getElementById('simGrossIncome').textContent = 'R 0.00';
+      document.getElementById('simTotalDeductions').textContent = 'R 0.00';
+      document.getElementById('simNetPay').textContent = 'R 0.00';
+      
+      const statusElement = document.getElementById('simCalcStatus');
+      statusElement.innerHTML = '<i class="fas fa-clock"></i> Pending';
+      statusElement.className = 'status-badge status-pending';
+      
+      document.getElementById('simulationStatus').textContent = '0';
+      document.getElementById('simulationPending').textContent = '1';
+      document.getElementById('simLastUpdated').textContent = '-';
+      
       toggleMedicalOptions();
     }
     
+    function viewSimulationDetails() {
+      // Show detailed breakdown of the simulation
+      const resultsDiv = document.getElementById('results');
+      if (resultsDiv.style.display !== 'none') {
+        resultsDiv.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        alert('Please calculate the salary first to view simulation details.');
+      }
+    }
+    
+    function exportSimulation() {
+      // Export simulation data as JSON or Excel
+      const simulationData = {
+        employeeName: document.getElementById('simEmployeeName').textContent,
+        gradeBand: document.getElementById('simGradeBand').textContent,
+        grossIncome: document.getElementById('simGrossIncome').textContent,
+        totalDeductions: document.getElementById('simTotalDeductions').textContent,
+        netPay: document.getElementById('simNetPay').textContent,
+        timestamp: document.getElementById('simLastUpdated').textContent,
+        formData: {
+          tpe: document.getElementById('totalPensionableEmolument').value,
+          carAllowance: document.getElementById('carAllowance').value,
+          cellPhone: document.getElementById('cellPhoneAllowance').value,
+          dataService: document.getElementById('dataServiceAllowance').value,
+          housing: document.getElementById('housingAllowance').value,
+          cashComponent: document.getElementById('cashComponent').value,
+          criticalSkills: document.getElementById('criticalSkillsAllowance').value,
+          annualBonus: document.getElementById('annualBonus').value,
+          medicalAid: document.getElementById('medicalAidProvider').value,
+          retirementFund: document.getElementById('retirementFundName').value
+        }
+      };
+      
+      // Create and download JSON file
+      const dataStr = JSON.stringify(simulationData, null, 2);
+      const dataBlob = new Blob([dataStr], {type:'application/json'});
+      const url = URL.createObjectURL(dataBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `salary_simulation_${new Date().toISOString().split('T')[0]}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    }
+    
+    function saveSimulation() {
+      // Save simulation to local storage or send to server
+      const simulationData = {
+        id: 'SIM001',
+        employeeName: document.getElementById('employeeName').value,
+        bandRange: document.getElementById('bandRange').value,
+        formData: {
+          tpe: document.getElementById('totalPensionableEmolument').value,
+          carAllowance: document.getElementById('carAllowance').value,
+          cellPhone: document.getElementById('cellPhoneAllowance').value,
+          dataService: document.getElementById('dataServiceAllowance').value,
+          housing: document.getElementById('housingAllowance').value,
+          cashComponent: document.getElementById('cashComponent').value,
+          criticalSkills: document.getElementById('criticalSkillsAllowance').value,
+          annualBonus: document.getElementById('annualBonus').value,
+          otherAllowances: document.getElementById('otherAllowances').value,
+          medicalAid: document.getElementById('medicalAidProvider').value,
+          retirementFund: document.getElementById('retirementFundName').value,
+          subsidisedAdults: document.getElementById('subsidisedAdults').value,
+          subsidisedChildren: document.getElementById('subsidisedChildren').value
+        },
+        results: {
+          grossIncome: document.getElementById('simGrossIncome').textContent,
+          totalDeductions: document.getElementById('simTotalDeductions').textContent,
+          netPay: document.getElementById('simNetPay').textContent
+        },
+        timestamp: new Date().toISOString()
+      };
+      
+      localStorage.setItem('randwater_salary_simulation', JSON.stringify(simulationData));
+      alert('Simulation saved successfully!');
+    }
+    
+    function loadTemplate() {
+      // Load a pre-saved simulation template
+      const saved = localStorage.getItem('randwater_salary_simulation');
+      if (saved) {
+        const data = JSON.parse(saved);
+        
+        // Populate form fields
+        document.getElementById('employeeName').value = data.employeeName || '';
+        document.getElementById('bandRange').value = data.bandRange || '';
+        document.getElementById('totalPensionableEmolument').value = data.formData.tpe || '';
+        document.getElementById('carAllowance').value = data.formData.carAllowance || '';
+        document.getElementById('cellPhoneAllowance').value = data.formData.cellPhone || '';
+        document.getElementById('dataServiceAllowance').value = data.formData.dataService || '';
+        document.getElementById('housingAllowance').value = data.formData.housing || '';
+        document.getElementById('cashComponent').value = data.formData.cashComponent || '';
+        document.getElementById('criticalSkillsAllowance').value = data.formData.criticalSkills || '';
+        document.getElementById('annualBonus').value = data.formData.annualBonus || '';
+        document.getElementById('otherAllowances').value = data.formData.otherAllowances || '';
+        document.getElementById('medicalAidProvider').value = data.formData.medicalAid || '';
+        document.getElementById('retirementFundName').value = data.formData.retirementFund || '';
+        document.getElementById('subsidisedAdults').value = data.formData.subsidisedAdults || '0';
+        document.getElementById('subsidisedChildren').value = data.formData.subsidisedChildren || '0';
+        
+        alert('Template loaded successfully!');
+        toggleMedicalOptions();
+      } else {
+        alert('No saved template found.');
+      }
+    }
+    
+    function calculateSalary() {
+      // Collect form data
+      const formData = {
+        employee_name: document.getElementById('employeeName').value,
+        employee_subgroup: document.getElementById('employeeSubgroup').value,
+        band_range: document.getElementById('bandRange').value,
+        total_pensionable_emolument: parseFloat(document.getElementById('totalPensionableEmolument').value) || 0,
+        car_allowance: parseFloat(document.getElementById('carAllowance').value) || 0,
+        cellphone_allowance: parseFloat(document.getElementById('cellPhoneAllowance').value) || 0,
+        data_service_allowance: parseFloat(document.getElementById('dataServiceAllowance').value) || 0,
+        critical_skills_allowance: parseFloat(document.getElementById('criticalSkillsAllowance').value) || 0,
+        housing_allowance: parseFloat(document.getElementById('housingAllowance').value) || 0,
+        cash_component: parseFloat(document.getElementById('cashComponent').value) || 0,
+        annual_bonus: parseFloat(document.getElementById('annualBonus').value) || 0,
+        other_allowances: parseFloat(document.getElementById('otherAllowances').value) || 0,
+        retirement_fund_name: document.getElementById('retirementFundName').value,
+        retirement_fund_option: document.getElementById('retirementFundOption').value,
+        medical_aid_provider: document.getElementById('medicalAidProvider').value,
+        randwater_option: document.getElementById('randwaterOption').value,
+        bonitas_option: document.getElementById('bonitasOption').value,
+        subsidised_adults: parseInt(document.getElementById('subsidisedAdults').value) || 0,
+        subsidised_children: parseInt(document.getElementById('subsidisedChildren').value) || 0,
+        unsubsidised_adults: parseInt(document.getElementById('unsubsidisedAdults').value) || 0,
+        unsubsidised_children: parseInt(document.getElementById('unsubsidisedChildren').value) || 0
+      };
+      
+      // Validate required fields
+      if (!formData.employee_subgroup || !formData.band_range) {
+        alert('Please fill in all required fields.');
+        return;
+      }
+      
+      // Calculate salary using our correct calculation logic
+      const grossAllowances = formData.car_allowance + formData.cash_component + 
+                             formData.housing_allowance + formData.cellphone_allowance + 
+                             formData.data_service_allowance + formData.critical_skills_allowance;
+      
+      const totalEarnings = formData.total_pensionable_emolument + grossAllowances;
+      
+      // Calculate UIF (1% of total earnings, max R177.12)
+      const uif = Math.min(totalEarnings * 0.01, 177.12);
+      
+      // Calculate tax on allowances only (exclude TPE)
+      const taxableIncome = grossAllowances + (formData.car_allowance * 0.8); // 80% of car allowance taxable
+      const estimatedTax = taxableIncome * 0.25; // Rough estimate for simulation
+      
+      // Other deductions (estimates for simulation)
+      const pensionEE = formData.total_pensionable_emolument * 0.075; // 7.5% pension
+      const medicalAidEE = formData.medical_aid_provider !== 'none' ? 1500 : 0; // Estimate
+      const groupLifeEE = formData.total_pensionable_emolument * 0.012; // 1.2% group life
+      
+      const totalDeductions = pensionEE + medicalAidEE + groupLifeEE + uif + estimatedTax;
+      const netPay = totalEarnings - totalDeductions;
+      
+      // Create result object
+      const results = {
+        success: true,
+        net_pay: {
+          earnings: totalEarnings,
+          deductions: totalDeductions,
+          take_home: netPay,
+          monthly_tax: estimatedTax,
+          uif: uif,
+          employer: pensionEE * 1.5, // Employer contributions estimate
+          randwater_benefits: 0
+        }
+      };
+      
+      displayResults(results.net_pay, formData);
+    }
+
     // Initialize form
     document.addEventListener('DOMContentLoaded', function() {
       toggleMedicalOptions();
